@@ -7,11 +7,17 @@ import { fileToModel, type DocModel } from '../model';
 import { checkIntegrity, type IntegrityIssue } from './integrity';
 import { runMigrations, type JsonObject, type Migration } from './migrations';
 import type { TransactFile } from './types';
-import { TransactFileV1Schema } from './v1';
+import { TransactFileSchema } from './current';
 import type { LoadError } from './loadError';
 import { CURRENT_SCHEMA_VERSION, ENCRYPTED_FORMAT, FILE_FORMAT } from './version';
 
 export type { LoadError } from './loadError';
+
+export interface MigrationInfo {
+  from: number;
+  to: number;
+  description: string;
+}
 
 export type LoadResult =
   | {
@@ -19,7 +25,8 @@ export type LoadResult =
       model: DocModel;
       /** Schema version of the file as stored (before migration). */
       originalVersion: number;
-      migrated: Migration[];
+      /** Migrations applied (plain data, so results can cross the worker boundary). */
+      migrated: MigrationInfo[];
       integrityIssues: IntegrityIssue[];
     }
   | { ok: false; error: LoadError };
@@ -60,7 +67,7 @@ export function loadRawDocument(raw: unknown): LoadResult {
   }
   const { doc, applied: migrated } = migration;
 
-  const parsed = TransactFileV1Schema.safeParse(doc);
+  const parsed = TransactFileSchema.safeParse(doc);
   if (!parsed.success) {
     const issues = parsed.error.issues
       .slice(0, MAX_REPORTED_ISSUES)
@@ -73,7 +80,7 @@ export function loadRawDocument(raw: unknown): LoadResult {
     ok: true,
     model: fileToModel(file),
     originalVersion: fileVersion,
-    migrated,
+    migrated: migrated.map(({ from, to, description }) => ({ from, to, description })),
     integrityIssues: checkIntegrity(file),
   };
 }

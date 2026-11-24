@@ -7,4 +7,4 @@ export const ENCRYPTED_FORMAT = 'transact-encrypted';
  * The schema version this build reads and writes. Bump it together with a new
  * migration in `migrations/` and a fixture in `fixtures/`.
  */
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;

@@ -1,13 +1,16 @@
 /**
  * Schema migrations. Each migration upgrades a raw (already JSON-parsed) document by
  * exactly one version. To change the schema:
- *   1. Copy the current schema module (e.g. v1.ts → v2.ts) and make the change there.
- *   2. Add a migration `{ from: 1, to: 2, ... }` here (in a file of its own, e.g. v1-to-v2.ts).
- *   3. Bump CURRENT_SCHEMA_VERSION and point `types.ts` / `validate.ts` at the new schema.
- *   4. Add `fixtures/v2.json`; the fixture test migrates every older fixture forward.
+ *   1. Change `../current.ts` (the only schema module; old versions aren't kept as code).
+ *   2. Add a single-step migration in its own file (e.g. v2-to-v3.ts) and list it below.
+ *   3. Bump CURRENT_SCHEMA_VERSION in `../version.ts`.
+ *   4. Add `fixtures/vN.json` (pnpm gen:demo); the fixture test migrates every older
+ *      fixture forward and validates it.
  * Migrations operate on plain JSON (never on current types), so they keep working
  * as the codebase evolves.
  */
+import { v1ToV2 } from './v1-to-v2';
+
 export type JsonObject = Record<string, unknown>;
 
 export interface Migration {
@@ -17,8 +20,8 @@ export interface Migration {
   migrate: (doc: JsonObject) => JsonObject;
 }
 
-/** Ordered list of all migrations. Empty while v1 is the only schema. */
-export const migrations: readonly Migration[] = [];
+/** Ordered list of all migrations. */
+export const migrations: readonly Migration[] = [v1ToV2];
 
 export class MigrationError extends Error {
   readonly fromVersion: number;

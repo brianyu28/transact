@@ -1,5 +1,7 @@
 /**
- * Schema v1 of the Transact data file, defined as zod schemas. The TypeScript types
+ * The current schema of the Transact data file (version CURRENT_SCHEMA_VERSION), defined
+ * as zod schemas. Older versions exist only as fixtures plus the migrations that upgrade
+ * them (see migrations/). The TypeScript types
  * are inferred from these, so validation and types can never drift apart.
  *
  * Conventions:
@@ -12,6 +14,7 @@
 import { z } from 'zod';
 import { isCents } from '@/lib/money';
 import { isISODate } from '@/lib/date';
+import { CURRENT_SCHEMA_VERSION } from './version';
 
 // ── Primitives ───────────────────────────────────────────────────────────────
 
@@ -252,20 +255,37 @@ export const TaxRuleSchema = z.object({
         .min(1),
     }),
   ]),
+  /** Maximum taxable base, e.g. the Social Security wage base. */
   cap: CentsSchema.optional(),
+  /** The cap is reduced by this base (since v2): SE Social Security's cap shrinks by W-2 wages. */
+  capReducedBy: TaxBaseSchema.optional(),
+  /** Only the base above this amount is taxed, e.g. Additional Medicare. */
   threshold: CentsSchema.optional(),
+  /**
+   * Computed separately for each person in the scenario, then added up (since v2), e.g.
+   * Social Security, whose wage-base cap applies to each earner.
+   */
+  perPerson: z.literal(true).optional(),
+  /**
+   * Fractions of other taxes subtracted from this rule's base (since v2), e.g. half of
+   * self-employment tax is deductible from income for income tax.
+   */
+  lessTaxes: z.array(z.object({ taxId: IdSchema, fraction: z.number().min(0).max(1) })).optional(),
 });
 
 export const PlannerScenarioSchema = z.object({
   id: IdSchema,
   name: NameSchema,
   year: z.number().int(),
+  /** Earners in the household (since v2); incomes and deductions can belong to one. */
+  people: z.array(z.object({ id: IdSchema, name: NameSchema })).optional(),
   incomes: z.array(
     z.object({
       id: IdSchema,
       name: NameSchema,
       kind: z.enum(['w2', '1099', 'other']),
       annual: CentsSchema,
+      person: IdSchema.optional(),
     }),
   ),
   deductions: z.array(
@@ -275,6 +295,7 @@ export const PlannerScenarioSchema = z.object({
       annual: CentsSchema,
       pretax: z.boolean(),
       reduces: z.array(TaxBaseSchema),
+      person: IdSchema.optional(),
     }),
   ),
   taxes: z.array(TaxRuleSchema),
@@ -293,9 +314,9 @@ export const FileMetaSchema = z.object({
   appVersion: z.string(),
 });
 
-export const TransactFileV1Schema = z.object({
+export const TransactFileSchema = z.object({
   format: z.literal('transact'),
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(CURRENT_SCHEMA_VERSION),
   meta: FileMetaSchema,
   settings: FileSettingsSchema,
   accounts: z.array(AccountSchema),

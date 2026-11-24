@@ -35,6 +35,17 @@ function getWorker(): Worker | null {
     if (res.ok) p.resolve(res.result);
     else p.reject(new Error(res.message));
   };
+  // A crashed worker must not leave callers waiting forever.
+  const failAll = (message: string) => {
+    for (const p of pending.values()) p.reject(new Error(message));
+    pending.clear();
+  };
+  worker.onerror = (event) => {
+    failAll(`The file worker failed: ${event.message}`);
+  };
+  worker.onmessageerror = () => {
+    failAll('The file worker sent an unreadable message.');
+  };
   return worker;
 }
 

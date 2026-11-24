@@ -1,0 +1,26 @@
+@use '@/styles/tokens' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.brackets {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.bracket {
+  display: grid;
+  grid-template-columns: 100px auto 140px 28px;
+  align-items: center;
+  gap: $space-2;
+}
+
+.bracketText {
+  font-size: $font-sm;
+  color: var(--tx-text-dim);
+  white-space: nowrap;
+}

@@ -90,7 +90,13 @@ export const routes: readonly AppRoute[] = [
     component: ReportsPage,
     match: '/reports/:tab?',
   },
-  { path: '/planner', title: 'Planner', icon: IconCalculator, component: PlannerPage },
+  {
+    path: '/planner',
+    title: 'Planner',
+    icon: IconCalculator,
+    component: PlannerPage,
+    match: '/planner/:id?',
+  },
   {
     path: '/settings',
     title: 'Settings',

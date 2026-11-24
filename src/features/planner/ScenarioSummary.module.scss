@@ -1,0 +1,125 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  padding: $space-3;
+  border: 1px solid var(--tx-border);
+  border-radius: $radius-md;
+  background: var(--tx-surface);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+}
+
+.big {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+
+  @include tabular;
+}
+
+.sub {
+  font-size: $font-sm;
+  color: var(--tx-text-dim);
+
+  @include tabular;
+}
+
+.bar {
+  display: flex;
+  gap: 2px; // surface gap between parts
+  height: 14px;
+  overflow: hidden;
+  border-radius: 4px;
+
+  span {
+    min-width: 2px;
+  }
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: $space-2 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: $font-sm;
+
+  li {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: center;
+    gap: $space-2;
+  }
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legendValue {
+  text-align: right;
+
+  @include tabular;
+}
+
+.waterfall,
+.stats {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px $space-3;
+  margin: 0;
+  font-size: $font-sm;
+
+  dt {
+    color: var(--tx-text-dim);
+  }
+
+  dd {
+    margin: 0;
+    text-align: right;
+
+    @include tabular;
+  }
+}
+
+.indent {
+  display: contents;
+
+  dt {
+    padding-left: $space-3;
+  }
+}
+
+.total {
+  padding-top: $space-1;
+  border-top: 1px solid var(--tx-border);
+  color: var(--tx-text) !important;
+  font-weight: 600;
+}
+
+.dim {
+  color: var(--tx-text-faint);
+}
+
+.good {
+  color: var(--tx-positive);
+}
+
+.bad {
+  color: var(--tx-negative);
+}

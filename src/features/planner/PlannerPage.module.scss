@@ -1,0 +1,99 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  max-width: 1200px;
+  padding: $space-3 $space-4 $space-4;
+
+  @include phone {
+    padding: $space-3;
+  }
+}
+
+.empty {
+  max-width: 520px;
+  margin: 10vh auto 0;
+  padding: $space-4;
+
+  h2 {
+    margin: 0 0 $space-2;
+    font-size: $font-xl;
+  }
+
+  p {
+    color: var(--tx-text-dim);
+  }
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-1;
+  margin-bottom: $space-3;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: $space-2;
+  padding: $space-1 $space-3;
+  border: 1px solid var(--tx-border);
+  border-radius: 999px;
+  color: var(--tx-text-dim);
+  font-size: $font-sm;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--tx-text);
+    background: var(--tx-surface);
+  }
+}
+
+.active {
+  border-color: var(--tx-accent);
+  background: var(--tx-surface-active);
+  color: var(--tx-text);
+}
+
+.chipValue {
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+
+  @include tabular;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  margin-bottom: $space-3;
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: $font-xl;
+  font-weight: 600;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-items: start;
+  gap: $space-5;
+
+  // The editor tables need ~700px; stack the summary on top below that.
+  @media (max-width: 1199.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.summaryColumn {
+  position: sticky;
+  top: 0;
+
+  @media (max-width: 1199.98px) {
+    position: static;
+    order: -1;
+  }
+}

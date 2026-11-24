@@ -1,0 +1,134 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+  min-width: 0;
+}
+
+.heading {
+  margin: 0 0 $space-1;
+  padding: 0 $space-2;
+  font-size: $font-md;
+  font-weight: 600;
+}
+
+.row {
+  display: grid;
+  align-items: center;
+  gap: $space-2;
+  min-height: 32px;
+  padding: 0 $space-2;
+  border-top: 1px solid var(--tx-border);
+}
+
+.incomeRow {
+  grid-template-columns: minmax(100px, 1fr) 150px 120px 100px 28px;
+
+  &.withPerson {
+    grid-template-columns: minmax(100px, 1fr) 120px 150px 120px 100px 28px;
+  }
+}
+
+.deductionRow {
+  grid-template-columns: minmax(100px, 1fr) 110px 56px minmax(140px, 1.2fr) 28px;
+
+  &.withPerson {
+    grid-template-columns: minmax(100px, 1fr) 120px 110px 56px minmax(140px, 1.2fr) 28px;
+  }
+}
+
+.people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-1 $space-2;
+}
+
+.person {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.note {
+  margin: $space-1 0 0;
+  padding: 0 $space-2;
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+}
+
+.taxName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 2px 0;
+}
+
+.byPerson {
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+
+  @include tabular;
+}
+
+.taxRow {
+  grid-template-columns: minmax(120px, 1fr) 140px minmax(90px, 140px) 100px 70px 56px;
+
+  @include phone {
+    grid-template-columns: minmax(100px, 1fr) 90px 56px;
+
+    > :nth-child(2),
+    > :nth-child(3),
+    > :nth-child(5) {
+      display: none;
+    }
+  }
+}
+
+.head {
+  min-height: 22px;
+  border-top: 0;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+
+  @include tabular;
+}
+
+.dim {
+  color: var(--tx-text-dim);
+  font-size: $font-sm;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.linkButton {
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--tx-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}

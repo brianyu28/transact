@@ -269,3 +269,55 @@ describe('balance snapshots', () => {
     expect(Object.keys(doc().balanceSnapshots)).toHaveLength(0);
   });
 });
+
+describe('planner scenarios', () => {
+  it('creates from a template, duplicates with remapped links, and cleans dangling links', () => {
+    const id = d()('createScenario', {
+      name: 'Freelance',
+      year: 2026,
+      template: { filing: 'single', selfEmployment: true, stateRate: 0 },
+    });
+    const original = doc().planner.scenarios[id]!;
+    const federal = original.taxes.find((t) => t.name === 'Federal income tax')!;
+    expect(federal.lessTaxes).toHaveLength(2);
+
+    const copyId = d()('duplicateScenario', { id });
+    const copy = doc().planner.scenarios[copyId]!;
+    const copyFederal = copy.taxes.find((t) => t.name === 'Federal income tax')!;
+    const copyIds = new Set(copy.taxes.map((t) => t.id));
+    expect(copyFederal.lessTaxes?.every((l) => copyIds.has(l.taxId))).toBe(true);
+    expect(copy.taxes.some((t) => original.taxes.some((o) => o.id === t.id))).toBe(false);
+
+    // Deleting the SE rules removes the references to them.
+    d()('updateScenario', {
+      id,
+      changes: { taxes: original.taxes.filter((t) => !t.name.startsWith('Self')) },
+    });
+    expect(
+      doc().planner.scenarios[id]!.taxes.find((t) => t.name === 'Federal income tax')!.lessTaxes,
+    ).toBeUndefined();
+  });
+
+  it('keeps people links when duplicating and unassigns items when a person is removed', () => {
+    const id = d()('createScenario', {
+      name: 'Us',
+      year: 2026,
+      template: { filing: 'mfj', selfEmployment: false, stateRate: 0 },
+    });
+    const original = doc().planner.scenarios[id]!;
+    expect(original.people).toHaveLength(2);
+    expect(original.incomes.every((i) => original.people!.some((p) => p.id === i.person))).toBe(
+      true,
+    );
+
+    const copyId = d()('duplicateScenario', { id });
+    const copy = doc().planner.scenarios[copyId]!;
+    const copyPeople = new Set(copy.people!.map((p) => p.id));
+    expect(copy.incomes.every((i) => copyPeople.has(i.person!))).toBe(true);
+    expect(copy.people!.some((p) => original.people!.some((o) => o.id === p.id))).toBe(false);
+
+    d()('updateScenario', { id, changes: { people: [original.people![0]!] } });
+    const after = doc().planner.scenarios[id]!;
+    expect(after.incomes.filter((i) => i.person === undefined)).toHaveLength(1);
+  });
+});

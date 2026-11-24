@@ -27,5 +27,14 @@ self.onmessage = (event: MessageEvent<IoRequest>) => {
   } catch (err) {
     res = { id: req.id, ok: false, message: err instanceof Error ? err.message : String(err) };
   }
-  (self as unknown as Worker).postMessage(res, transfer);
+  try {
+    (self as unknown as Worker).postMessage(res, transfer);
+  } catch (err) {
+    // Never leave the caller waiting: report results that can't be sent.
+    (self as unknown as Worker).postMessage({
+      id: req.id,
+      ok: false,
+      message: `Couldn’t return the result: ${err instanceof Error ? err.message : String(err)}`,
+    } satisfies IoResponse);
+  }
 };

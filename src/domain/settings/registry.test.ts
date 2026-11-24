@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS } from '../schema/defaults';
-import { FileSettingsSchema } from '../schema/v1';
+import { FileSettingsSchema } from '../schema/current';
 import { fileSettingPatch, readFileSetting, SETTINGS } from './registry';
 
 describe('settings registry', () => {

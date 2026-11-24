@@ -24,6 +24,8 @@ describe('parseDocument', () => {
       const result = parseDocument(fixture(v));
       if (!result.ok) throw new Error(`v${v}: ${JSON.stringify(result.error)}`);
       expect(result.originalVersion).toBe(v);
+      expect(result.migrated).toHaveLength(CURRENT_SCHEMA_VERSION - v);
+      expect(result.model.meta.fileId).toMatch(/^fil_/);
       expect(result.integrityIssues).toEqual([]);
     }
   });
@@ -33,6 +35,12 @@ describe('parseDocument', () => {
     const result = parseDocument(text);
     if (!result.ok) throw new Error('fixture failed to load');
     expect(serializeModel(result.model)).toBe(text);
+  });
+
+  it('returns results that can cross the worker boundary (structured clone)', () => {
+    for (let v = 1; v <= CURRENT_SCHEMA_VERSION; v++) {
+      expect(() => structuredClone(parseDocument(fixture(v)))).not.toThrow();
+    }
   });
 
   it('round-trips a new empty document', () => {

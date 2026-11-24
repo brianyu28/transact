@@ -63,6 +63,7 @@ Other single sources of truth:
 - **UI mutates data only through named store commands** (they power undo/redo).
 - **Schema changes need a migration**: bump the schema version, add a single-step migration and a
   fixture, and keep older fixtures migrating cleanly (see `src/domain/schema/migrations/index.ts`).
+  The only schema module is `src/domain/schema/current.ts`; old versions exist as fixtures.
   Fixtures are generated with `pnpm gen:demo` and must not be hand-formatted.
 - **Access transactions through the helpers in `src/domain/model.ts`** (`getTransaction`,
   `putTransaction`, `removeTransaction`, `iterateTransactions`). They are stored in buckets so an

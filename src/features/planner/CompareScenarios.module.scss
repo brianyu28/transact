@@ -1,0 +1,27 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  overflow-x: auto;
+}
+
+.intro {
+  margin: 0 0 $space-2;
+  font-size: $font-sm;
+  color: var(--tx-text-dim);
+}
+
+.strong td {
+  font-weight: 600;
+}
+
+.indent {
+  padding-left: $space-4 !important;
+  font-weight: 400 !important;
+  color: var(--tx-text-dim);
+}
+
+.diff {
+  font-size: $font-xs;
+  font-weight: 400;
+  color: var(--tx-text-dim);
+}

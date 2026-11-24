@@ -3,14 +3,14 @@
  * Import entity types from here rather than from a versioned schema module.
  */
 import type { z } from 'zod';
-import type * as S from './v1';
+import type * as S from './current';
 
 export type { Id } from '@/lib/id';
 export type { Cents } from '@/lib/money';
 export type { ISODate } from '@/lib/date';
 
 export type Timestamp = string;
-export type TransactFile = z.infer<typeof S.TransactFileV1Schema>;
+export type TransactFile = z.infer<typeof S.TransactFileSchema>;
 export type FileMeta = z.infer<typeof S.FileMetaSchema>;
 export type FileSettings = z.infer<typeof S.FileSettingsSchema>;
 export type Account = z.infer<typeof S.AccountSchema>;

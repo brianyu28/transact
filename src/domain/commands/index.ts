@@ -21,6 +21,13 @@ import {
   setCategoryParent,
   updateCategory,
 } from './categories';
+import {
+  addTemplateRules,
+  createScenario,
+  deleteScenario,
+  duplicateScenario,
+  updateScenario,
+} from './planner';
 import { updateSettings } from './settings';
 import { createSnapshot, deleteSnapshot, updateSnapshot } from './snapshots';
 import {
@@ -85,6 +92,11 @@ export const commands = {
   reopenStatement,
   deleteStatement,
   addReconcileAdjustment,
+  createScenario,
+  updateScenario,
+  addTemplateRules,
+  duplicateScenario,
+  deleteScenario,
   updateSettings,
 };
 
@@ -96,6 +108,7 @@ export type CommandResult<K extends CommandName> = ReturnType<Commands[K]['run']
 export { CommandError, type CommandContext } from './define';
 export type { CustomBudgetInput, PeriodLineInput } from './budgets';
 export type { StatementInput } from './statements';
+export type { ScenarioChanges } from './planner';
 export type {
   BulkChanges,
   NewTransaction,
