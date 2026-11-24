@@ -1,0 +1,13 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-5;
+}

@@ -15,9 +15,10 @@ import type {
   CustomBudget,
   Id,
   RolloverPolicy,
+  Transaction,
 } from '../schema/types';
 import { effectiveSplits } from '../transactions/splits';
-import { createAssigner, type Assigner, type LineSpec } from './assign';
+import { createAssigner, type Assigner, type BudgetRef, type LineSpec } from './assign';
 import {
   annualKey,
   periodBounds,
@@ -107,6 +108,24 @@ function assignerCache(doc: Doc) {
       cache.set(month, assigner);
     }
     return assigner;
+  };
+}
+
+/**
+ * Which budgets a transaction counts toward (one ref per split that counts), using the
+ * same rules as the budget views. Assigners are cached per month.
+ */
+export function createBudgetResolver(doc: Doc): (t: Transaction) => BudgetRef[] {
+  const assignerFor = assignerCache(doc);
+  return (t) => {
+    if (t.transfer) return [];
+    const assigner = assignerFor(t.date);
+    const refs: BudgetRef[] = [];
+    for (const split of effectiveSplits(t)) {
+      const ref = assigner.assign(split, t.date);
+      if (ref) refs.push(ref);
+    }
+    return refs;
   };
 }
 

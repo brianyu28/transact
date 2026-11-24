@@ -1,0 +1,119 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  width: 100%;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-1 $space-3;
+  margin: 0 0 $space-2;
+  padding: 0;
+  list-style: none;
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+}
+
+.swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.plot {
+  position: relative;
+  width: 100%;
+}
+
+.grid {
+  stroke: var(--tx-chart-grid);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.zero {
+  stroke: var(--tx-text-faint);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.yLabel,
+.xLabel {
+  fill: var(--tx-text-dim);
+  font-size: 11px;
+
+  @include tabular;
+}
+
+.yLabel {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.xLabel {
+  text-anchor: middle;
+}
+
+.hoverBand {
+  fill: var(--tx-surface-hover);
+  opacity: 0.6;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  min-width: 180px;
+  padding: $space-1 $space-2;
+  border: 1px solid var(--tx-border);
+  border-radius: $radius-sm;
+  background: var(--tx-bg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  font-size: $font-sm;
+  pointer-events: none;
+  transform: translateX(12px);
+}
+
+.tooltipLeft {
+  transform: translateX(calc(-100% - 12px));
+}
+
+.tooltipTitle {
+  margin-bottom: 2px;
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+}
+
+.tooltipRow {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltipLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltipValue {
+  font-weight: 600;
+  text-align: right;
+
+  @include tabular;
+}
+
+.tooltipTotal {
+  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px solid var(--tx-border);
+}

@@ -53,6 +53,26 @@
   white-space: nowrap;
 }
 
+.labelLink {
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--tx-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
 .num {
   text-align: right;
   white-space: nowrap;

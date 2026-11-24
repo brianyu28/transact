@@ -15,6 +15,7 @@ const EXAMPLES: readonly [string, string][] = [
   ['2026-11  2026-01..2026-03', 'Month, year, day, or a range'],
   ['date:last-month', 'Also this-month, this-year, last-year, last-30-days'],
   ['>50  <=100  =42.10', 'Amount (ignoring sign)'],
+  ['budget:food  budget:unbudgeted', 'What a budget line or custom budget counts'],
   ['-tag:reimbursable', 'Any term can be negated with -'],
   ['coffee', 'Payee or note contains'],
 ];

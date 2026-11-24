@@ -1,0 +1,23 @@
+@use '@/styles/tokens' as *;
+
+.breakdown {
+  td:nth-child(2) {
+    width: 40%;
+  }
+}
+
+.barCell {
+  text-align: left !important;
+}
+
+.bar {
+  display: block;
+  height: 12px;
+  min-width: 2px;
+  border-radius: 0 4px 4px 0;
+  background: var(--tx-series-1);
+}
+
+.crumbs {
+  font-size: $font-xs;
+}

@@ -1,0 +1,15 @@
+@use '@/styles/tokens' as *;
+
+.scroll {
+  overflow-x: auto;
+}
+
+.grid td,
+.grid th {
+  min-width: 84px;
+}
+
+.budgeted {
+  color: var(--tx-text-faint);
+  font-weight: 400;
+}

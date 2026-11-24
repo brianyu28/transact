@@ -83,7 +83,13 @@ export const routes: readonly AppRoute[] = [
     component: StatementsPage,
     match: '/statements/:id?',
   },
-  { path: '/reports', title: 'Reports', icon: IconChartBar, component: ReportsPage },
+  {
+    path: '/reports',
+    title: 'Reports',
+    icon: IconChartBar,
+    component: ReportsPage,
+    match: '/reports/:tab?',
+  },
   { path: '/planner', title: 'Planner', icon: IconCalculator, component: PlannerPage },
   {
     path: '/settings',

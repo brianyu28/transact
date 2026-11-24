@@ -4,7 +4,9 @@ import { MoneyInput } from '@/components/MoneyInput/MoneyInput';
 import type { BudgetView, LineView } from '@/domain/budgets/views';
 import { useFormat } from '@/hooks/useFormat';
 import { tryRun } from '@/store/actions';
+import { useLocation } from 'wouter';
 import { BudgetBar } from './BudgetBar';
+import { filterRegisterToBudget } from './budgetLinks';
 import { budgetStatus } from './budgetStatus';
 import styles from './BudgetTable.module.scss';
 
@@ -19,6 +21,7 @@ interface BudgetTableProps {
 /** Lines with budgeted, spent, remaining and a progress bar with a pace marker. */
 export function BudgetTable({ view, editable = false, compact = false }: BudgetTableProps) {
   const format = useFormat();
+  const [, navigate] = useLocation();
   const canEdit = editable && view.period !== undefined;
   const { totals } = view;
 
@@ -68,8 +71,19 @@ export function BudgetTable({ view, editable = false, compact = false }: BudgetT
       )}
       {view.unbudgeted !== 0 && (
         <div className={clsx(styles.row, styles.extra)} role="row">
-          <Tooltip label="Spending that no budget line covers. Add a line or an “Everything Else” line to track it.">
-            <span role="cell">Unbudgeted spending</span>
+          <Tooltip label="Spending that no budget line covers. Click to see it.">
+            <span role="cell">
+              <button
+                type="button"
+                className={styles.labelLink}
+                onClick={() => {
+                  filterRegisterToBudget('unbudgeted', view.bounds);
+                  navigate('/transactions');
+                }}
+              >
+                Unbudgeted spending
+              </button>
+            </span>
           </Tooltip>
           <span role="cell" />
           <span role="cell" className={styles.num}>
@@ -99,10 +113,21 @@ function LineRow({
   const statusText =
     status === 'over' ? 'Over budget' : status === 'ahead' ? 'Ahead of pace' : 'On track';
   const periodId = view.period?.id;
+  const [, navigate] = useLocation();
   return (
     <div className={styles.row} role="row">
-      <span role="cell" className={styles.label} title={line.label}>
-        {line.label}
+      <span role="cell" className={styles.label}>
+        <button
+          type="button"
+          className={styles.labelLink}
+          title={`Show ${line.label} transactions`}
+          onClick={() => {
+            filterRegisterToBudget(line.label, view.bounds);
+            navigate('/transactions');
+          }}
+        >
+          {line.label}
+        </button>
       </span>
       <span role="cell" className={styles.num}>
         {canEdit && periodId ? (

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { budgetView, customBudgetViews, rolloverSuggestions } from '@/domain/budgets/views';
+import { getTransaction } from '@/domain/model';
+import { compileFilter } from '@/domain/transactions/filter';
+import { runFilter } from '@/domain/transactions/query';
 import { createEmptyDocument } from '@/domain/schema/defaults';
 import { createDocStore } from './docStore';
 
@@ -183,5 +186,37 @@ describe('budgets end to end', () => {
     expect(() =>
       d()('createPeriod', { cadence: 'monthly', period: '2026-03', lines: [] }),
     ).toThrow();
+  });
+
+  it('filters the register by budget, with the same precedence as the budgets', () => {
+    d()('createTemplateLine', {
+      cadence: 'monthly',
+      target: { kind: 'categories', categoryIds: [cat('Food')] },
+      defaultAmount: 1,
+    });
+    d()('createTemplateLine', {
+      cadence: 'monthly',
+      target: { kind: 'categories', categoryIds: [cat('Groceries')] },
+      defaultAmount: 1,
+    });
+    d()('createCustomBudget', {
+      name: 'Vacation',
+      tagNames: ['vac'],
+      mode: 'any',
+      dateRange: null,
+      lines: [],
+    });
+    spend('2026-03-01', 10, 'Restaurants');
+    spend('2026-03-02', 20, 'Groceries');
+    spend('2026-03-03', 30, 'Coffee', ['vac']);
+    spend('2026-03-04', 40, 'Entertainment');
+    const payees = (q: string) =>
+      runFilter(doc(), s().index!, compileFilter(q, doc(), '2026-03-15')).map(
+        (id) => getTransaction(doc(), id)!.amount / -100,
+      );
+    expect(payees('budget:food')).toEqual([10]); // groceries have their own line; coffee went to the custom budget
+    expect(payees('budget:groceries')).toEqual([20]);
+    expect(payees('budget:vacation')).toEqual([30]);
+    expect(payees('budget:unbudgeted')).toEqual([40]);
   });
 });

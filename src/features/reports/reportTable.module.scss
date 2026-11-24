@@ -1,0 +1,78 @@
+// Shared dense table styling for report table views.
+@use '@/styles/tokens' as *;
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-sm;
+
+  th {
+    padding: 0 $space-2 $space-1;
+    font-size: $font-xs;
+    font-weight: 500;
+    color: var(--tx-text-faint);
+    text-align: right;
+    white-space: nowrap;
+
+    &:first-child {
+      text-align: left;
+    }
+  }
+
+  td {
+    height: 26px;
+    padding: 0 $space-2;
+    border-top: 1px solid var(--tx-border);
+    text-align: right;
+    white-space: nowrap;
+
+    @include tabular;
+
+    &:first-child {
+      text-align: left;
+      font-weight: 500;
+    }
+  }
+
+  tfoot td {
+    border-top: 1px solid var(--tx-text-faint);
+    font-weight: 600;
+  }
+
+  tr:hover td {
+    background: var(--tx-surface);
+  }
+}
+
+.sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--tx-bg);
+}
+
+.dim {
+  color: var(--tx-text-faint);
+}
+
+.over {
+  color: var(--tx-negative);
+}
+
+.up {
+  color: var(--tx-negative);
+}
+
+.down {
+  color: var(--tx-positive);
+}
+
+.provisional {
+  font-style: italic;
+  color: var(--tx-text-dim);
+}
+
+// Over budget stays red even in months shown from defaults.
+.provisional.over {
+  color: var(--tx-negative);
+}

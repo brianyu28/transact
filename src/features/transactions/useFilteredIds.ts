@@ -17,13 +17,30 @@ export function useFilteredIds(): { ids: Id[]; filter: CompiledFilter | null } {
   const accounts = doc?.accounts;
   const categories = doc?.categories;
   const tags = doc?.tags;
+  const budgets = doc?.budgets;
+  const settings = doc?.settings;
+  const transactions = doc?.transactions;
 
+  // A `budget:` term depends on budgets and on transactions (for assignment), so only
+  // those queries recompile when transactions change.
+  const usesBudget = /(^|\s)-?budget:/i.test(debounced);
+  const budgetDeps = usesBudget ? transactions : undefined;
   const filter = useMemo(
     () =>
       accounts && categories && tags
-        ? compileFilter(debounced, { accounts, categories, tags }, today())
+        ? compileFilter(
+            debounced,
+            {
+              accounts,
+              categories,
+              tags,
+              ...(budgets && settings && transactions ? { budgets, settings, transactions } : {}),
+            },
+            today(),
+          )
         : null,
-    [debounced, accounts, categories, tags],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `transactions` only matters for budget terms (budgetDeps).
+    [debounced, accounts, categories, tags, budgets, settings, budgetDeps],
   );
 
   // Recompute when the filter or the transactions change (indexVersion), not on every

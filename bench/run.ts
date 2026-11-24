@@ -7,6 +7,12 @@ import { DocIndex } from '../src/domain/aggregates/docIndex';
 import { presetRange, sampleDates } from '../src/domain/aggregates/sampling';
 import { budgetView, customBudgetViews } from '../src/domain/budgets/views';
 import { reconcileCandidates } from '../src/domain/statements/reconcile';
+import {
+  budgetHistory,
+  monthsBetween,
+  netWorthChanges,
+  spendingByCategory,
+} from '../src/domain/reports/reports';
 import { generateDemoDocument } from '../src/domain/demo/generate';
 import { iterateTransactions } from '../src/domain/model';
 import { parseDocument } from '../src/domain/schema/document';
@@ -149,6 +155,30 @@ const cases: Case[] = [
         7,
       );
     },
+  },
+  {
+    name: 'Report: spending by category, 10 years monthly',
+    targetMs: 16,
+    runs: 20,
+    fn: () => void spendingByCategory(doc, index, monthsBetween('2016-12', '2026-11')),
+  },
+  {
+    name: 'Report: budget history, 12 months',
+    targetMs: 50,
+    runs: 10,
+    fn: () => void budgetHistory(doc, index, monthsBetween('2025-12', '2026-11'), '2026-11-24'),
+  },
+  {
+    name: 'Report: net worth changes, 10 years',
+    targetMs: 16,
+    runs: 20,
+    fn: () => void netWorthChanges(doc, index, monthsBetween('2016-12', '2026-11'), '2026-11-24'),
+  },
+  {
+    name: 'Filter all: "budget:food"',
+    targetMs: 100,
+    runs: 10,
+    fn: () => void runFilter(doc, index, compileFilter('budget:food', doc, '2026-11-24')),
   },
   {
     name: 'Query one month (all accounts)',

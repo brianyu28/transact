@@ -74,6 +74,11 @@ Other single sources of truth:
 - **Styling**: SCSS modules co-located with components (`Foo.tsx` + `Foo.module.scss`), one component
   per file. `@use '@/styles/tokens' as *;` for sizes/breakpoints; colors via `var(--tx-*)`. No
   Tailwind or CSS-in-JS. Mantine for complex controls, themed compact (`src/app/theme.ts`).
+- **Charts**: use `--tx-chart-1` for single series and `--tx-series-1…8` (in order) for
+  categorical series, with `--tx-series-other` for the folded remainder. These were validated
+  for contrast and color-vision differences in both themes. Never cycle colors past 8; fold into
+  "Other". Every chart needs a table view, and charts plot monthly or daily totals, never raw
+  transactions.
 - **Information density**: compact rows (~26px), 13px base type, tabular numbers, minimal chrome and
   explanatory text.
 - Keep dependencies minimal; justify any new one.

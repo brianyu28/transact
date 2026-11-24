@@ -1,10 +1,57 @@
-import { PlaceholderPage } from '@/components/PlaceholderPage/PlaceholderPage';
+import { clsx } from 'clsx';
+import { useState, type ComponentType } from 'react';
+import { Link, useParams } from 'wouter';
+import { presetRange } from '@/domain/aggregates/sampling';
+import { RangeControl } from '@/features/accounts/RangeControl';
+import { today, type MonthKey } from '@/lib/date';
+import { BudgetHistoryReport } from './BudgetHistoryReport';
+import { CategoryReport } from './CategoryReport';
+import { IncomeReport } from './IncomeReport';
+import { NetWorthReport } from './NetWorthReport';
+import { SpendingReport } from './SpendingReport';
+import { useReportMonths } from './useReportMonths';
+import styles from './ReportsPage.module.scss';
+
+const TABS: readonly {
+  id: string;
+  title: string;
+  component: ComponentType<{ months: MonthKey[] }>;
+}[] = [
+  { id: 'spending', title: 'Spending', component: SpendingReport },
+  { id: 'categories', title: 'Categories', component: CategoryReport },
+  { id: 'income', title: 'Income', component: IncomeReport },
+  { id: 'budgets', title: 'Budgets', component: BudgetHistoryReport },
+  { id: 'net-worth', title: 'Net worth', component: NetWorthReport },
+];
 
 export function ReportsPage() {
+  const { tab = 'spending' } = useParams<{ tab?: string }>();
+  const current = TABS.find((x) => x.id === tab) ?? TABS[0];
+  // The range is shared across report tabs.
+  const [range, setRange] = useState(() => presetRange('1y', today()));
+  const months = useReportMonths(range);
+  if (!current) return null;
+  const Report = current.component;
   return (
-    <PlaceholderPage
-      phase={6}
-      summary="Spending over time, category breakdowns, budget history and net worth."
-    />
+    <div className={styles.root}>
+      <div className={styles.bar}>
+        <nav className={styles.tabs} aria-label="Reports">
+          {TABS.map((x) => (
+            <Link
+              key={x.id}
+              href={`/reports/${x.id}`}
+              className={clsx(styles.tab, x.id === current.id && styles.active)}
+              aria-current={x.id === current.id ? 'page' : undefined}
+            >
+              {x.title}
+            </Link>
+          ))}
+        </nav>
+        <RangeControl value={range} onChange={setRange} />
+      </div>
+      <div className={styles.content}>
+        <Report months={months} />
+      </div>
+    </div>
   );
 }

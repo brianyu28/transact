@@ -1,5 +1,14 @@
 import { ActionIcon, Button, Menu, Switch } from '@mantine/core';
-import { IconArchive, IconDots, IconPencil, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  IconArchive,
+  IconDots,
+  IconListDetails,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from '@tabler/icons-react';
+import { useLocation } from 'wouter';
+import { filterRegisterToBudget } from './budgetLinks';
 import { clsx } from 'clsx';
 import { useState } from 'react';
 import type { CustomBudgetView } from '@/domain/budgets/views';
@@ -77,6 +86,7 @@ function CustomBudgetCard({ view, onEdit }: { view: CustomBudgetView; onEdit: ()
   const ranged = budget.dateRange !== undefined;
   const elapsed = ranged ? periodElapsed(view.bounds, today()) : undefined;
   const remaining = view.total - view.spent;
+  const [, navigate] = useLocation();
   const tagNames = budget.match.tags.map((id) => tags?.[id]?.name ?? '?');
 
   return (
@@ -115,6 +125,15 @@ function CustomBudgetCard({ view, onEdit }: { view: CustomBudgetView; onEdit: ()
             </ActionIcon>
           </Menu.Target>
           <Menu.Dropdown>
+            <Menu.Item
+              leftSection={<IconListDetails size={14} />}
+              onClick={() => {
+                filterRegisterToBudget(budget.name);
+                navigate('/transactions');
+              }}
+            >
+              Show transactions
+            </Menu.Item>
             <Menu.Item leftSection={<IconPencil size={14} />} onClick={onEdit}>
               Edit
             </Menu.Item>

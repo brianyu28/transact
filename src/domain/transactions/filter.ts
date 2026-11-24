@@ -9,6 +9,7 @@
  *   2026  2026-11  2026-11-24  2026-01..2026-03  2026-06..  ..2025-12
  *   date:this-month | last-month | this-year | last-year | last-30-days
  *   >50  <=100  =42.10  amount:20..80        (absolute amount)
+ *   budget:food   budget:"Trip 2026"   budget:unbudgeted   (what a budget line counts)
  *   coffee                                   (free text: payee or note contains)
  *
  * Any term can be negated with a leading "-" (e.g. -tag:reimbursable). Terms are ANDed;
@@ -25,12 +26,13 @@ import {
 } from '@/lib/date';
 import { parseMoney, type Cents } from '@/lib/money';
 import { categoryTree } from '../aggregates/lookups';
+import { createBudgetResolver, lineLabel } from '../budgets/views';
 import type { DocModel } from '../model';
 import type { Id, Transaction } from '../schema/types';
 import { effectiveSplits } from './splits';
 
 export type TermKind =
-  'account' | 'category' | 'tag' | 'payee' | 'note' | 'is' | 'date' | 'amount' | 'text';
+  'account' | 'category' | 'tag' | 'payee' | 'note' | 'is' | 'date' | 'amount' | 'budget' | 'text';
 
 export interface Term {
   raw: string;
@@ -51,6 +53,7 @@ const KEYS: Record<string, TermKind> = {
   date: 'date',
   amount: 'amount',
   amt: 'amount',
+  budget: 'budget',
 };
 
 const TERM_RE = /(-?)(?:([a-z]+):)?("([^"]*)"?|\S+)/gi;
@@ -174,7 +177,8 @@ const IS: Record<string, Pred> = {
 
 export function compileFilter(
   query: string,
-  doc: Pick<DocModel, 'accounts' | 'categories' | 'tags'>,
+  doc: Pick<DocModel, 'accounts' | 'categories' | 'tags'> &
+    Partial<Pick<DocModel, 'budgets' | 'settings' | 'transactions'>>,
   today: ISODate,
 ): CompiledFilter {
   const terms = parseQuery(query);
@@ -246,6 +250,39 @@ export function compileFilter(
       case 'amount': {
         const test = parseAmountTerm(v);
         if (test) pred = (t) => test(Math.abs(t.amount));
+        break;
+      }
+      case 'budget': {
+        const { budgets, settings, transactions } = doc;
+        if (!budgets || !settings || !transactions) break;
+        const budgetDoc = { budgets, settings, transactions, categories: doc.categories };
+        const resolve = createBudgetResolver(budgetDoc);
+        if (['unbudgeted', 'none'].includes(v.toLowerCase())) {
+          pred = (t) => resolve(t).some((r) => r.kind === 'unbudgeted');
+          break;
+        }
+        // Budget lines (by their defaults id, shared by every period) and custom budgets.
+        const named = new Map<Id, string>();
+        for (const l of Object.values(budgets.template.lines))
+          named.set(l.id, lineLabel(budgetDoc, l));
+        for (const p of Object.values(budgets.periods)) {
+          for (const l of p.lines)
+            if (!named.has(l.templateLineId)) named.set(l.templateLineId, lineLabel(budgetDoc, l));
+        }
+        const lineIds = new Set(
+          resolveNames(
+            [...named].map(([id, name]) => ({ id, name })),
+            v,
+          ).map((x) => x.id),
+        );
+        const customIds = new Set(resolveNames(Object.values(budgets.custom), v).map((b) => b.id));
+        if (lineIds.size === 0 && customIds.size === 0) break;
+        pred = (t) =>
+          resolve(t).some(
+            (r) =>
+              (r.kind === 'line' && lineIds.has(r.lineId)) ||
+              (r.kind === 'custom' && customIds.has(r.budgetId)),
+          );
         break;
       }
       case 'text': {
