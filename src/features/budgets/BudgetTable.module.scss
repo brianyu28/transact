@@ -149,4 +149,17 @@
 
 .compact .row {
   min-height: 28px;
+
+  // Home: the same columns as desktop, just tighter, so it fits beside the sidebar rail
+  // (no rollover detail here, so the budgeted column can be narrow).
+  @include tablet {
+    grid-template-columns: minmax(90px, 1fr) 104px 84px 92px minmax(64px, 160px);
+    gap: $space-2;
+  }
+}
+
+.compact .inlineInput {
+  @include tablet {
+    width: 88px;
+  }
 }

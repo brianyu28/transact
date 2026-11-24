@@ -127,6 +127,11 @@ export function TransactionEditor({
   const [autoSign, setAutoSign] = useState(isNew);
   const isSplit = transaction?.splits !== undefined;
   const compact = layout === 'row';
+  /**
+   * Touch screens open the date picker as soon as the date is focused, which gets in the
+   * way when editing another field, so the date only takes focus with a mouse or keyboard.
+   */
+  const [touch] = useState(() => window.matchMedia('(pointer: coarse)').matches);
 
   // Escape closes the editor wherever focus is. If a dropdown or popover is open, that
   // Escape closes it instead (Mantine handles it first; it's still in the DOM here).
@@ -286,11 +291,12 @@ export function TransactionEditor({
         type="date"
         aria-label="Date"
         {...label('Date')}
+        classNames={{ input: clsx(compact ? styles.input : styles.stackDate) }}
         value={form.date}
         onChange={(e) => {
           set('date', e.currentTarget.value);
         }}
-        autoFocus={!isNew && compact}
+        autoFocus={!isNew && compact && !touch}
       />
       <TextInput
         {...input}
@@ -305,7 +311,7 @@ export function TransactionEditor({
         onChange={(e) => {
           setAmount(e.currentTarget.value);
         }}
-        classNames={{ input: clsx(compact && styles.input, styles.amountInput) }}
+        classNames={{ input: clsx(compact && [styles.input, styles.amountInput]) }}
       />
       <Autocomplete
         {...input}
@@ -380,7 +386,7 @@ export function TransactionEditor({
       onChange={(e) => {
         set('note', e.currentTarget.value);
       }}
-      className={clsx(styles.note)}
+      className={clsx(compact && styles.note)}
     />
   );
 
@@ -401,6 +407,10 @@ export function TransactionEditor({
       <div
         className={styles.stack}
         onKeyDownCapture={onKeyDown}
+        // The sheet's modal focuses [data-autofocus] on open. Editing starts on the form
+        // itself rather than a field, which on touch screens would open the keyboard or the
+        // date picker; a new transaction goes to its first field as usual.
+        {...(!isNew && { 'data-autofocus': true, tabIndex: -1 })}
         role="group"
         aria-label={isNew ? 'New transaction' : 'Edit transaction'}
       >

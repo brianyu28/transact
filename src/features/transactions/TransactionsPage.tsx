@@ -9,6 +9,7 @@ import { useCommandHandlers } from '@/keyboard/useCommandHandlers';
 import { docStore, useDocStore } from '@/store/docStore';
 import { bulkActions } from './bulkActions';
 import { FilterBar } from './FilterBar';
+import { EDITOR_SHEET_QUERY, PHONE_QUERY } from './media';
 import { RegisterDialogs } from './RegisterDialogs';
 import { registerActions, registerStore, useRegister } from './registerStore';
 import { TransactionEditor } from './TransactionEditor';
@@ -18,14 +19,13 @@ import { useFilteredIds } from './useFilteredIds';
 import { isSnapshotRow, useRegisterRows } from './useRegisterRows';
 import styles from './TransactionsPage.module.scss';
 
-const PHONE_QUERY = '(max-width: 639.98px)';
-
 export function TransactionsPage() {
   const { ids, filter } = useFilteredIds();
   const editing = useRegister((s) => s.editing);
   const accounts = useDocStore((s) => s.doc?.accounts);
   const doc = useDocStore((s) => s.doc);
   const phone = useMediaQuery(PHONE_QUERY);
+  const sheet = useMediaQuery(EDITOR_SHEET_QUERY);
   const filterRef = useRef<HTMLInputElement>(null);
   const scrollTo = useRef<(id: Id) => void>(() => undefined);
   const onScrollerReady = useCallback((fn: (id: Id) => void) => {
@@ -185,7 +185,7 @@ export function TransactionsPage() {
         defaultAccountId={defaultAccountId}
         onScrollerReady={onScrollerReady}
         before={
-          editing === 'new' && !phone ? (
+          editing === 'new' && !sheet ? (
             <TransactionEditor
               layout="row"
               defaultAccountId={defaultAccountId}
@@ -204,37 +204,38 @@ export function TransactionsPage() {
       <StatusBar ids={ids} />
       <RegisterDialogs />
       {phone && (
-        <>
-          <ActionIcon
-            className={styles.fab}
-            size={48}
-            radius="xl"
-            variant="filled"
-            aria-label="New transaction"
-            disabled={noAccounts}
-            onClick={() => {
-              registerStore.setState({ editing: 'new' });
-            }}
-          >
-            <IconPlus size={22} />
-          </ActionIcon>
-          <Modal
-            opened={editing !== null}
-            onClose={stopEditing}
-            fullScreen
-            title={editing === 'new' ? 'New transaction' : 'Edit transaction'}
-          >
-            {editing !== null && (
-              <TransactionEditor
-                key={editing}
-                layout="stack"
-                transaction={editingTransaction}
-                defaultAccountId={defaultAccountId}
-                onDone={stopEditing}
-              />
-            )}
-          </Modal>
-        </>
+        <ActionIcon
+          className={styles.fab}
+          size={48}
+          radius="xl"
+          variant="filled"
+          aria-label="New transaction"
+          disabled={noAccounts}
+          onClick={() => {
+            registerStore.setState({ editing: 'new' });
+          }}
+        >
+          <IconPlus size={22} />
+        </ActionIcon>
+      )}
+      {sheet && (
+        <Modal
+          opened={editing !== null}
+          onClose={stopEditing}
+          fullScreen={phone}
+          size="lg"
+          title={editing === 'new' ? 'New transaction' : 'Edit transaction'}
+        >
+          {editing !== null && (
+            <TransactionEditor
+              key={editing}
+              layout="stack"
+              transaction={editingTransaction}
+              defaultAccountId={defaultAccountId}
+              onDone={stopEditing}
+            />
+          )}
+        </Modal>
       )}
     </div>
   );

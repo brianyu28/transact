@@ -2,8 +2,8 @@
 
 .toast {
   position: fixed;
-  right: $space-4;
-  bottom: $space-4;
+  right: calc(#{$space-4} + var(--tx-safe-right));
+  bottom: calc(#{$space-4} + var(--tx-safe-bottom));
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -15,8 +15,8 @@
   box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
 
   @include phone {
-    left: $space-3;
-    right: $space-3;
-    bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$space-2});
+    left: calc(#{$space-3} + var(--tx-safe-left));
+    right: calc(#{$space-3} + var(--tx-safe-right));
+    bottom: calc(#{$bottom-nav-height} + var(--tx-safe-bottom) + #{$space-2});
   }
 }

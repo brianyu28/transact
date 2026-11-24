@@ -36,6 +36,13 @@
   font-weight: 500;
   color: var(--tx-text-faint);
 
+  // Columns narrowed to 0 (account and tags at tablet width) show no label.
+  > * {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
   @include phone {
     display: none;
   }

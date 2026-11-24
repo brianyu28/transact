@@ -66,10 +66,29 @@
   display: flex;
   flex-direction: column;
   gap: $space-3;
+  outline: none;
+}
+
+// Fields line up on the left edge; the dialog's buttons stay bottom right.
+.stack > :global(.mantine-Button-root) {
+  align-self: flex-start;
+}
+
+// iOS centers a date input's value by default.
+.stackDate {
+  text-align: left;
+
+  &::-webkit-date-and-time-value {
+    text-align: left;
+  }
 }
 
 .stackActions {
   display: flex;
   justify-content: flex-end;
   gap: $space-2;
+}
+
+.stack .error {
+  margin-left: 0;
 }

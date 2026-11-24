@@ -25,7 +25,7 @@
 
     .brand {
       justify-content: center;
-      padding: 0;
+      padding: var(--brand-top) 0 0;
 
       // macOS window controls sit where the rail's logo is: push it out of view.
       @include titlebar-overlay {
@@ -44,7 +44,7 @@
 
     .footer {
       justify-content: center;
-      padding: $space-2 0;
+      padding: $space-2 0 calc(#{$space-2} + var(--tx-safe-bottom));
     }
   }
 
@@ -57,8 +57,13 @@
   display: flex;
   align-items: center;
   gap: $space-2;
-  height: $topbar-height;
+  // The logo sits in the screen's top-left corner: keep it clear of the status bar and,
+  // when there's no top inset (landscape), of the rounded corner.
+  --brand-top: max(var(--tx-safe-top), var(--tx-corner-clearance));
+
+  height: calc(#{$topbar-height} + var(--brand-top));
   padding: 0 $space-3;
+  padding-top: var(--brand-top);
 
   // Part of the window's title bar: drag to move, starting after the macOS controls.
   @include titlebar-overlay {
@@ -91,6 +96,7 @@
   display: flex;
   margin-top: auto;
   padding: $space-2;
+  padding-bottom: calc(#{$space-2} + var(--tx-safe-bottom));
 
   // Tablet is always a rail, so the toggle only matters on desktop.
   @include tablet {

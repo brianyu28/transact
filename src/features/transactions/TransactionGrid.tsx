@@ -12,11 +12,10 @@ import { registerActions, registerStore, useRegister } from './registerStore';
 import { rowLabels } from './rowLabels';
 import { TransactionEditor } from './TransactionEditor';
 import { SnapshotRow } from './SnapshotRow';
+import { EDITOR_SHEET_QUERY, PHONE_QUERY } from './media';
 import { TransactionRow } from './TransactionRow';
 import { isSnapshotRow } from './useRegisterRows';
 import styles from './TransactionGrid.module.scss';
-
-const PHONE_QUERY = '(max-width: 639.98px)';
 
 interface TransactionGridProps {
   ids: readonly Id[];
@@ -45,6 +44,7 @@ export function TransactionGrid({
   const editing = useRegister((s) => s.editing);
   const density = usePrefs((s) => s.density);
   const phone = useMediaQuery(PHONE_QUERY);
+  const sheet = useMediaQuery(EDITOR_SHEET_QUERY);
   const format = useFormat();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rowHeight = phone ? 52 : density === 'comfortable' ? 34 : 26;
@@ -53,7 +53,7 @@ export function TransactionGrid({
   const virtualizer = useVirtualizer({
     count: ids.length,
     getScrollElement: () => scrollerRef.current,
-    estimateSize: (i) => (ids[i] === editing && !phone ? 72 : rowHeight),
+    estimateSize: (i) => (ids[i] === editing && !sheet ? 72 : rowHeight),
     getItemKey: (i) => ids[i] ?? i,
     overscan: 16,
   });
@@ -170,7 +170,7 @@ export function TransactionGrid({
                     transform: `translateY(${item.start}px)`,
                   }}
                 >
-                  {editing === id && !phone ? (
+                  {editing === id && !sheet ? (
                     <TransactionEditor
                       transaction={t}
                       layout="row"

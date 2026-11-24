@@ -2,8 +2,9 @@
 
 .root {
   position: fixed;
-  left: 50%;
-  bottom: $space-4;
+  // Centered between the side safe areas.
+  left: calc(50% + (var(--tx-safe-left) - var(--tx-safe-right)) / 2);
+  bottom: calc(#{$space-4} + var(--tx-safe-bottom));
   z-index: 1100;
   display: flex;
   flex-direction: column;
@@ -13,7 +14,7 @@
   pointer-events: none;
 
   @include phone {
-    bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$space-2});
+    bottom: calc(#{$bottom-nav-height} + var(--tx-safe-bottom) + #{$space-2});
   }
 }
 

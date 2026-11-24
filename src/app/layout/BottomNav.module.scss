@@ -6,8 +6,8 @@
   @include phone {
     display: flex;
     flex: none;
-    height: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(#{$bottom-nav-height} + var(--tx-safe-bottom));
+    padding-bottom: var(--tx-safe-bottom);
     background: var(--tx-surface);
     border-top: 1px solid var(--tx-border);
   }

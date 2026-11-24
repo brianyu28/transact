@@ -24,8 +24,8 @@
 
 .fab {
   position: fixed;
-  right: $space-4;
-  bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$space-4});
+  right: calc(#{$space-4} + var(--tx-safe-right));
+  bottom: calc(#{$bottom-nav-height} + var(--tx-safe-bottom) + #{$space-4});
   z-index: 10;
   box-shadow: 0 4px 12px rgb(0 0 0 / 20%);
 }
