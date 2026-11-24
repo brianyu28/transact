@@ -6,7 +6,23 @@
 import { addDays, addMonths, dateParts, dayOfWeek, diffDays, type ISODate } from '@/lib/date';
 import { ID_PREFIXES, type IdKind } from '@/lib/id';
 import { putTransaction, type DocModel } from '../model';
-import { createEmptyDocument, starterCategories } from '../schema/defaults';
+import { createEmptyDocument, starterCategories, type CategoryTreeSpec } from '../schema/defaults';
+
+/** A fuller category tree than new files get, so the demo shows nested categories. */
+const DEMO_CATEGORIES: CategoryTreeSpec = [
+  ['Income', ['Salary', 'Bonus', 'Interest', 'Dividends', 'Other Income'], 'income'],
+  ['Housing', ['Rent & Mortgage', 'Utilities', 'Maintenance']],
+  ['Bills', ['Cell Service', 'Internet', 'Subscriptions', 'Insurance']],
+  ['Food', ['Groceries', 'Restaurants', 'Coffee']],
+  ['Transportation', ['Gas', 'Public Transit', 'Parking', 'Rideshare']],
+  ['Shopping', ['Clothing', 'Household', 'Electronics']],
+  ['Health', ['Medical', 'Pharmacy', 'Fitness']],
+  ['Personal', ['Personal Care', 'Education', 'Gifts', 'Charity']],
+  ['Entertainment', []],
+  ['Travel', ['Flights', 'Lodging']],
+  ['Fees & Interest', []],
+  ['Taxes', []],
+];
 import type {
   Account,
   AccountType,
@@ -82,7 +98,7 @@ export function generateDemoDocument(options: DemoOptions): DocModel {
   doc.meta.createdAt = stamp(start);
 
   // ── Reference data ──
-  const categories = starterCategories(now, makeId);
+  const categories = starterCategories(now, makeId, DEMO_CATEGORIES);
   for (const c of categories) doc.categories[c.id] = c;
   const cat = (name: string): Id => {
     const found: Category | undefined = categories.find((c) => c.name === name);

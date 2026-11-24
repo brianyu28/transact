@@ -197,13 +197,7 @@ export function TransactionEditor({
     });
     if (id === undefined) return;
     registerStore.setState({ activeId: id });
-    if (isNew && compact) {
-      // Rapid entry: keep date and account, clear the rest, stay in the entry row.
-      setForm((f) => ({ ...f, payee: '', category: '', tags: [], amount: '', note: '' }));
-      payeeRef.current?.focus();
-    } else {
-      onDone();
-    }
+    onDone();
   };
 
   const onKeyDown = (e: KeyboardEvent) => {

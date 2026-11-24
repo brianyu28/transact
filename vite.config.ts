@@ -55,7 +55,13 @@ export default defineConfig({
         description: 'Personal finance and budgeting, stored in your own files.',
         theme_color: '#1f2933',
         background_color: '#1f2933',
+        // Stable identity for the installed app, independent of start_url.
+        id: '/',
         display: 'standalone',
+        // Reopening the app focuses the open window instead of starting a second copy
+        // (two windows editing one file would only produce conflicts).
+        launch_handler: { client_mode: 'focus-existing' },
+        categories: ['finance', 'productivity'],
         start_url: './',
         scope: './',
         // Generated from assets/icon.svg by `pnpm gen:icons`.

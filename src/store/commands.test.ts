@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CommandError } from '@/domain/commands';
 import { getTransaction, iterateTransactions } from '@/domain/model';
-import { createEmptyDocument } from '@/domain/schema/defaults';
+import { testDocument } from '@/test/documents';
 import { createDocStore } from './docStore';
 
 let store: ReturnType<typeof createDocStore>;
@@ -14,7 +14,7 @@ let card: string;
 
 beforeEach(() => {
   store = createDocStore();
-  store.getState().load(createEmptyDocument({ appVersion: 'test' }));
+  store.getState().load(testDocument());
   checking = d()('createAccount', { name: 'Checking', type: 'checking' });
   card = d()('createAccount', { name: 'Card', type: 'credit' });
 });

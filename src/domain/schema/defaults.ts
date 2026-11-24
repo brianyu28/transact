@@ -17,28 +17,31 @@ export const DEFAULT_SETTINGS: FileSettings = {
   reconcileGraceDays: 7,
 };
 
-/** Generic starter categories. Top-level "Income" is the only income-kind root. */
-export const STARTER_CATEGORIES: readonly (readonly [string, readonly string[], 'income'?])[] = [
-  ['Income', ['Salary', 'Bonus', 'Interest', 'Dividends', 'Other Income'], 'income'],
-  ['Housing', ['Rent & Mortgage', 'Utilities', 'Maintenance']],
-  ['Bills', ['Cell Service', 'Internet', 'Subscriptions', 'Insurance']],
-  ['Food', ['Groceries', 'Restaurants', 'Coffee']],
-  ['Transportation', ['Gas', 'Public Transit', 'Parking', 'Rideshare']],
-  ['Shopping', ['Clothing', 'Household', 'Electronics']],
-  ['Health', ['Medical', 'Pharmacy', 'Fitness']],
-  ['Personal', ['Personal Care', 'Education', 'Gifts', 'Charity']],
+/** A category tree: [name, child names, kind]. Only top-level categories carry a kind. */
+export type CategoryTreeSpec = readonly (readonly [string, readonly string[], 'income'?])[];
+
+/**
+ * Categories in a new file: deliberately short and flat, so people add the detail they want.
+ * "Income" is the only income-kind root.
+ */
+export const STARTER_CATEGORIES: CategoryTreeSpec = [
+  ['Income', ['Salary', 'Other'], 'income'],
+  ['Bills', []],
+  ['Groceries', []],
+  ['Dining', []],
+  ['Transportation', []],
+  ['Shopping', []],
   ['Entertainment', []],
-  ['Travel', ['Flights', 'Lodging']],
-  ['Fees & Interest', []],
-  ['Taxes', []],
+  ['Travel', []],
 ];
 
 export function starterCategories(
   now: string,
   makeId: (kind: IdKind) => string = newId,
+  tree: CategoryTreeSpec = STARTER_CATEGORIES,
 ): Category[] {
   const out: Category[] = [];
-  STARTER_CATEGORIES.forEach(([name, children, kind], i) => {
+  tree.forEach(([name, children, kind], i) => {
     const parent: Category = {
       id: makeId('category'),
       name,

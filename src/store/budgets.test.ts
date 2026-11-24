@@ -3,7 +3,7 @@ import { budgetView, customBudgetViews, rolloverSuggestions } from '@/domain/bud
 import { getTransaction } from '@/domain/model';
 import { compileFilter } from '@/domain/transactions/filter';
 import { runFilter } from '@/domain/transactions/query';
-import { createEmptyDocument } from '@/domain/schema/defaults';
+import { testDocument } from '@/test/documents';
 import { createDocStore } from './docStore';
 
 let store: ReturnType<typeof createDocStore>;
@@ -30,7 +30,7 @@ const view = (cadence: 'monthly' | 'annual', key: string) =>
 
 beforeEach(() => {
   store = createDocStore();
-  store.getState().load(createEmptyDocument({ appVersion: 'test' }));
+  store.getState().load(testDocument());
   card = d()('createAccount', { name: 'Card', type: 'credit' });
 });
 
