@@ -1,0 +1,26 @@
+@use '@/styles/tokens' as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.tagsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $space-2;
+}
+
+.tags {
+  flex: 1 1 260px;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(160px, 2fr) 100px 28px;
+  align-items: center;
+  gap: $space-2;
+  margin-bottom: $space-1;
+}

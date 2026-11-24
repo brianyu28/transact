@@ -10,7 +10,7 @@ import { useFormat } from '@/hooks/useFormat';
 import { ACCOUNT_GROUPS } from './accountGroups';
 import { RangeControl } from './RangeControl';
 import { rangeLabel } from './rangeLabel';
-import { StatTile } from './StatTile';
+import { StatTile } from '@/components/StatTile/StatTile';
 import { useAccountBalances, type AccountSummary } from './useAccountBalances';
 import styles from './AccountsOverview.module.scss';
 

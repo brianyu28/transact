@@ -1,0 +1,7 @@
+@use '@/styles/tokens' as *;
+
+.input {
+  text-align: right;
+
+  @include tabular;
+}

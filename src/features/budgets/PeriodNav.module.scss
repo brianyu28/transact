@@ -1,0 +1,15 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+}
+
+.label {
+  min-width: 130px;
+  margin: 0;
+  font-size: $font-lg;
+  font-weight: 600;
+  text-align: center;
+}

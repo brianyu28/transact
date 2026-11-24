@@ -1,0 +1,25 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+}
+
+.notice {
+  padding: $space-2 $space-3;
+}
+
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-5;
+}

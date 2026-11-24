@@ -1,0 +1,61 @@
+@use '@/styles/tokens' as *;
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 110px 120px 110px 110px;
+  align-items: center;
+  gap: $space-3;
+  min-height: 34px;
+  border-top: 1px solid var(--tx-border);
+
+  @include phone {
+    grid-template-columns: minmax(80px, 1fr) 80px 80px 80px;
+
+    > :nth-child(3) {
+      display: none;
+    }
+  }
+}
+
+.head {
+  min-height: 22px;
+  border-top: 0;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+}
+
+.policy {
+  font-size: $font-xs;
+  font-weight: 400;
+  color: var(--tx-text-faint);
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+
+  @include tabular;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.dim {
+  color: var(--tx-text-dim);
+}
+
+.negative {
+  color: var(--tx-negative);
+}
+
+.totalRow {
+  font-weight: 600;
+}

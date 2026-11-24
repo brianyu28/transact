@@ -66,6 +66,7 @@ export const routes: readonly AppRoute[] = [
     icon: IconTargetArrow,
     component: BudgetsPage,
     primary: true,
+    match: '/budgets/:tab?',
   },
   {
     path: '/accounts',

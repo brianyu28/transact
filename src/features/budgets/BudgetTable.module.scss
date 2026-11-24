@@ -1,0 +1,132 @@
+@use '@/styles/tokens' as *;
+
+.table {
+  width: 100%;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 150px 110px 120px minmax(120px, 220px);
+  align-items: center;
+  gap: $space-3;
+  min-height: var(--tx-row-height);
+  padding: 2px $space-2;
+  border-top: 1px solid var(--tx-border);
+
+  @include phone {
+    grid-template-columns: minmax(90px, 1fr) 90px 90px;
+    gap: $space-2;
+
+    > :nth-child(4) {
+      display: none;
+    }
+
+    > :nth-child(5) {
+      grid-column: 1 / -1;
+      padding-bottom: $space-1;
+    }
+  }
+}
+
+.head {
+  min-height: 24px;
+  border-top: 0;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+
+  @include phone {
+    > :nth-child(5) {
+      display: none;
+    }
+  }
+}
+
+.barHead {
+  text-align: right;
+}
+
+.label {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+
+  @include tabular;
+}
+
+.budgeted {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $space-1;
+  width: 100%;
+}
+
+.inlineInput {
+  width: 100px;
+
+  input {
+    // Match the table's text size (Mantine's xs inputs are smaller).
+    font-size: $font-md;
+    height: 22px;
+    min-height: 22px;
+    padding: 0 4px;
+    border-radius: $radius-sm;
+
+    &:hover {
+      background: var(--tx-surface-hover);
+    }
+
+    &:focus {
+      background: var(--tx-bg);
+      box-shadow: 0 0 0 1px var(--tx-accent);
+    }
+  }
+}
+
+.rollover {
+  font-size: $font-xs;
+  color: var(--tx-positive);
+}
+
+.negative {
+  color: var(--tx-negative);
+}
+
+.total {
+  font-weight: 600;
+  border-top: 1px solid var(--tx-text-faint);
+}
+
+.extra {
+  color: var(--tx-text-dim);
+  font-style: italic;
+}
+
+.empty {
+  padding: $space-3 $space-2;
+  color: var(--tx-text-dim);
+}
+
+.barCell {
+  position: relative;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.compact .row {
+  min-height: 28px;
+}

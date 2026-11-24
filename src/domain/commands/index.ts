@@ -1,4 +1,18 @@
 /** Registry of all document commands. Add new commands here to make them dispatchable. */
+import {
+  createCustomBudget,
+  createPeriod,
+  createTemplateLine,
+  deleteCustomBudget,
+  deletePeriod,
+  deleteTemplateLine,
+  removePeriodLine,
+  reorderTemplateLines,
+  setCustomBudgetArchived,
+  setPeriodLine,
+  updateCustomBudget,
+  updateTemplateLine,
+} from './budgets';
 import { createAccount, deleteAccount, reorderAccounts, updateAccount } from './accounts';
 import {
   createCategory,
@@ -43,6 +57,18 @@ export const commands = {
   createSnapshot,
   updateSnapshot,
   deleteSnapshot,
+  createTemplateLine,
+  updateTemplateLine,
+  reorderTemplateLines,
+  deleteTemplateLine,
+  createPeriod,
+  setPeriodLine,
+  removePeriodLine,
+  deletePeriod,
+  createCustomBudget,
+  updateCustomBudget,
+  setCustomBudgetArchived,
+  deleteCustomBudget,
   updateSettings,
 };
 
@@ -52,6 +78,7 @@ export type CommandPayload<K extends CommandName> = Parameters<Commands[K]['run'
 export type CommandResult<K extends CommandName> = ReturnType<Commands[K]['run']>;
 
 export { CommandError, type CommandContext } from './define';
+export type { CustomBudgetInput, PeriodLineInput } from './budgets';
 export type {
   BulkChanges,
   NewTransaction,

@@ -13,7 +13,7 @@ export interface CommandInfo {
   allowInInputs?: boolean;
 }
 
-export type CommandGroup = 'General' | 'Navigation' | 'File' | 'Edit' | 'Transactions';
+export type CommandGroup = 'General' | 'Navigation' | 'File' | 'Edit' | 'Transactions' | 'Budgets';
 
 export const COMMAND_GROUPS: readonly CommandGroup[] = [
   'General',
@@ -73,6 +73,10 @@ export const COMMANDS = [
   { id: 'txn.exclude', title: 'Toggle excluded from budgets', group: 'Transactions', keys: ['-'] },
   { id: 'txn.split', title: 'Split transaction', group: 'Transactions', keys: ['s'] },
   { id: 'txn.delete', title: 'Delete', group: 'Transactions', keys: ['delete', 'mod+backspace'] },
+  // Budgets
+  { id: 'budget.prev', title: 'Previous period', group: 'Budgets', keys: ['['] },
+  { id: 'budget.next', title: 'Next period', group: 'Budgets', keys: [']'] },
+  { id: 'budget.current', title: 'Current period', group: 'Budgets', keys: ['.'] },
 ] as const satisfies readonly CommandInfo[];
 
 export type CommandId = (typeof COMMANDS)[number]['id'];

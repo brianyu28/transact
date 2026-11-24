@@ -3,7 +3,7 @@
  * demo, test fixtures and performance benchmarks, so no real data ever needs to enter
  * the repository. The same options always produce the same document.
  */
-import { addDays, dateParts, dayOfWeek, diffDays, type ISODate } from '@/lib/date';
+import { addDays, addMonths, dateParts, dayOfWeek, diffDays, type ISODate } from '@/lib/date';
 import { ID_PREFIXES, type IdKind } from '@/lib/id';
 import { putTransaction, type DocModel } from '../model';
 import { createEmptyDocument, starterCategories } from '../schema/defaults';
@@ -352,6 +352,64 @@ export function generateDemoDocument(options: DemoOptions): DocModel {
   line('annual', cats('Travel'), 3200, 0);
   line('annual', cats('Insurance'), 1400, 1);
   line('annual', cats('Gifts'), 600, 2);
+
+  // ── Budget periods: the two months before the current one, and this year ──
+  const templateLines = Object.values(doc.budgets.template.lines);
+  const periodLines = (cadence: 'monthly' | 'annual') =>
+    templateLines
+      .filter((l) => l.cadence === cadence)
+      .sort((a, b) => a.order - b.order)
+      .map((l) => ({
+        templateLineId: l.id,
+        target: structuredClone(l.target),
+        base: l.defaultAmount,
+        rollover: 0,
+      }));
+  for (const offset of [2, 1]) {
+    const period = addMonths(end, -offset).slice(0, 7);
+    const id = makeId('budgetPeriod');
+    doc.budgets.periods[id] = {
+      id,
+      cadence: 'monthly',
+      period,
+      lines: periodLines('monthly'),
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+  const annualId = makeId('budgetPeriod');
+  doc.budgets.periods[annualId] = {
+    id: annualId,
+    cadence: 'annual',
+    period: end.slice(0, 4),
+    lines: periodLines('annual'),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // ── A custom budget for the most recent trip ──
+  const lastTrip = [...tripTags.entries()].sort(([a], [b]) => b - a)[0];
+  if (lastTrip) {
+    const [year, tagId] = lastTrip;
+    const id = makeId('customBudget');
+    doc.budgets.custom[id] = {
+      id,
+      name: `Trip ${year}`,
+      match: { tags: [tagId], mode: 'any' },
+      lines: [
+        { id: makeId('budgetLine'), name: 'Travel', target: cats('Travel'), amount: 250000 },
+        { id: makeId('budgetLine'), name: 'Food', target: cats('Food'), amount: 60000 },
+        {
+          id: makeId('budgetLine'),
+          name: 'Everything else',
+          target: { kind: 'everythingElse' },
+          amount: 20000,
+        },
+      ],
+      priority: 0,
+      updatedAt: now,
+    };
+  }
 
   return doc;
 }

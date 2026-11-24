@@ -39,32 +39,32 @@ function AccountsEditor() {
   return (
     <section className={styles.section}>
       <h2 className={styles.heading}>Accounts</h2>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th className={styles.grip} aria-label="Reorder" />
-            <th>Name</th>
-            <th>Type</th>
-            <th>Institution</th>
-            <th className={styles.num}>Transactions</th>
-            <th>Status</th>
-            <th className={styles.actions} aria-label="Actions" />
-          </tr>
-        </thead>
-        <tbody>
-          <SortableProvider
-            onReorder={(_, ids) => {
-              tryRun('reorderAccounts', { ids });
-            }}
-          >
+      <SortableProvider
+        onReorder={(_, ids) => {
+          tryRun('reorderAccounts', { ids });
+        }}
+      >
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th className={styles.grip} aria-label="Reorder" />
+              <th>Name</th>
+              <th>Type</th>
+              <th>Institution</th>
+              <th className={styles.num}>Transactions</th>
+              <th>Status</th>
+              <th className={styles.actions} aria-label="Actions" />
+            </tr>
+          </thead>
+          <tbody>
             <SortableGroup ids={list.map((a) => a.id)}>
               {list.map((a) => (
                 <AccountRow key={a.id} account={a} count={usage.get(a.id) ?? 0} />
               ))}
             </SortableGroup>
-          </SortableProvider>
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </SortableProvider>
       <div className={styles.addRow}>
         <TextInput
           placeholder="New account name"

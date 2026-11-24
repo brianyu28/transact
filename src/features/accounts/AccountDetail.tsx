@@ -14,7 +14,7 @@ import { useDocStore } from '@/store/docStore';
 import { INVESTMENT_TYPES } from './accountGroups';
 import { RangeControl } from './RangeControl';
 import { filterRegisterToAccount } from './showTransactions';
-import { StatTile } from './StatTile';
+import { StatTile } from '@/components/StatTile/StatTile';
 import { UpdateBalanceDialog } from './UpdateBalanceDialog';
 import { useAccountDetail } from './useAccountDetail';
 import styles from './AccountDetail.module.scss';

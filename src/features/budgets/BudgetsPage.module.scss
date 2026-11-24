@@ -1,0 +1,40 @@
+@use '@/styles/tokens' as *;
+
+.tabs {
+  display: flex;
+  gap: $space-1;
+  padding: 0 $space-4;
+  border-bottom: 1px solid var(--tx-border);
+
+  @include phone {
+    padding: 0 $space-2;
+    overflow-x: auto;
+  }
+}
+
+.tab {
+  padding: $space-2 $space-2;
+  border-bottom: 2px solid transparent;
+  color: var(--tx-text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--tx-text);
+  }
+}
+
+.active {
+  border-bottom-color: var(--tx-accent);
+  color: var(--tx-text);
+  font-weight: 500;
+}
+
+.content {
+  max-width: 1040px;
+  padding: $space-4;
+
+  @include phone {
+    padding: $space-3;
+  }
+}

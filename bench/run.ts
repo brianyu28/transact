@@ -5,6 +5,7 @@
 import { firstDataDate, netWorthSeries } from '../src/domain/aggregates/balances';
 import { DocIndex } from '../src/domain/aggregates/docIndex';
 import { presetRange, sampleDates } from '../src/domain/aggregates/sampling';
+import { budgetView, customBudgetViews } from '../src/domain/budgets/views';
 import { generateDemoDocument } from '../src/domain/demo/generate';
 import { iterateTransactions } from '../src/domain/model';
 import { parseDocument } from '../src/domain/schema/document';
@@ -105,6 +106,24 @@ const cases: Case[] = [
         index,
         sampleDates(presetRange('3m', '2026-11-24'), '2026-11-24', firstDataDate(doc, index)),
       ),
+  },
+  {
+    name: 'Budget view: one month',
+    targetMs: 16,
+    runs: 50,
+    fn: () => void budgetView(doc, index, 'monthly', '2026-10', '2026-11-24'),
+  },
+  {
+    name: 'Budget view: one year (annual lines)',
+    targetMs: 50,
+    runs: 20,
+    fn: () => void budgetView(doc, index, 'annual', '2026', '2026-11-24'),
+  },
+  {
+    name: 'Custom budgets (all time)',
+    targetMs: 100,
+    runs: 10,
+    fn: () => void customBudgetViews(doc, index, '2026-11-24'),
   },
   {
     name: 'Query one month (all accounts)',
