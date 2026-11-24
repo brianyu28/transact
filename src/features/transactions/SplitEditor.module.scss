@@ -1,0 +1,34 @@
+@use '@/styles/tokens' as *;
+
+.grid {
+  display: grid;
+  grid-template-columns: 100px minmax(160px, 1fr) minmax(100px, 1fr) 36px 28px;
+  align-items: center;
+  gap: $space-1 $space-2;
+}
+
+.head {
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+}
+
+.amount {
+  text-align: right;
+
+  @include tabular;
+}
+
+.check {
+  display: flex;
+  justify-content: center;
+}
+
+.remaining {
+  color: var(--tx-positive);
+
+  @include tabular;
+}
+
+.off {
+  color: var(--tx-warning);
+}

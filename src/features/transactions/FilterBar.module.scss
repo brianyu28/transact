@@ -1,0 +1,59 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-1 $space-2;
+  flex: 1;
+  min-width: 0;
+}
+
+.input {
+  flex: 1 1 280px;
+  max-width: 520px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-1;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--tx-surface-active);
+  color: var(--tx-text);
+  font-size: $font-xs;
+}
+
+.kind,
+.not {
+  color: var(--tx-text-dim);
+}
+
+.problem {
+  background: color-mix(in srgb, var(--tx-negative) 15%, transparent);
+  color: var(--tx-negative);
+}
+
+.help {
+  border-collapse: collapse;
+  font-size: $font-sm;
+
+  td {
+    padding: 2px $space-2 2px 0;
+    vertical-align: top;
+  }
+
+  code {
+    white-space: nowrap;
+    font-family: var(--tx-font-mono);
+    font-size: $font-xs;
+  }
+}

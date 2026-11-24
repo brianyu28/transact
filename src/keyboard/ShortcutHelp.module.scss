@@ -1,0 +1,48 @@
+@use '@/styles/tokens' as *;
+
+.grid {
+  columns: 2 280px;
+  column-gap: $space-5;
+}
+
+.group {
+  break-inside: avoid;
+  margin-bottom: $space-4;
+}
+
+.heading {
+  margin: 0 0 $space-1;
+  font-size: $font-sm;
+  font-weight: 600;
+  color: var(--tx-text-dim);
+}
+
+.list {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  min-height: 24px;
+
+  dt {
+    color: var(--tx-text);
+  }
+
+  dd {
+    display: flex;
+    gap: $space-2;
+    margin: 0;
+  }
+}
+
+.none {
+  color: var(--tx-text-faint);
+}
+
+.footer {
+  margin: 0;
+}

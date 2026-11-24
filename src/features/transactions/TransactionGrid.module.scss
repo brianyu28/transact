@@ -1,0 +1,210 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  // checkbox · date · amount · payee · account · category · tags · flags
+  --register-columns: 28px 104px 104px minmax(140px, 1fr) minmax(90px, 150px) minmax(140px, 220px)
+    minmax(80px, 160px) 56px;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+
+  @include tablet {
+    --register-columns: 28px 96px 96px minmax(120px, 1fr) 0 minmax(120px, 180px) 0 52px;
+  }
+}
+
+.header,
+.row {
+  display: grid;
+  grid-template-columns: var(--register-columns);
+  align-items: center;
+  column-gap: $space-2;
+  // Extra room on the right so the scrollbar never covers the reconcile toggle.
+  padding: 0 $space-3 0 $space-2;
+}
+
+.header {
+  flex: none;
+  overflow: hidden;
+  // Reserve the same scrollbar space as the list below so columns line up.
+  scrollbar-gutter: stable;
+  height: 26px;
+  border-bottom: 1px solid var(--tx-border);
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+
+  @include phone {
+    display: none;
+  }
+}
+
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  contain: strict;
+}
+
+.row {
+  height: var(--tx-row-height);
+  border-bottom: 1px solid var(--tx-border);
+  cursor: default;
+  user-select: none;
+
+  &:hover {
+    background: var(--tx-surface);
+  }
+}
+
+.cell {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active,
+.active:hover {
+  box-shadow: inset 2px 0 0 var(--tx-accent);
+  background: var(--tx-surface);
+}
+
+.selected,
+.selected:hover {
+  background: var(--tx-surface-active);
+}
+
+.excludedRow {
+  color: var(--tx-text-dim);
+}
+
+.date {
+  color: var(--tx-text-dim);
+  white-space: nowrap;
+
+  @include tabular;
+}
+
+.dim {
+  color: var(--tx-text-dim);
+}
+
+.payee {
+  font-weight: 500;
+}
+
+.category {
+  color: var(--tx-text);
+}
+
+.uncategorized {
+  color: var(--tx-warning);
+}
+
+.transfer,
+.split {
+  color: var(--tx-text-dim);
+  font-style: italic;
+}
+
+.tags {
+  display: flex;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.tag {
+  flex: none;
+  max-width: 100%;
+  padding: 0 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--tx-surface-hover);
+  color: var(--tx-text-dim);
+  font-size: $font-xs;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount {
+  text-align: right;
+  white-space: nowrap;
+
+  @include tabular;
+}
+
+.positive {
+  color: var(--tx-positive);
+}
+
+.transferAmount {
+  color: var(--tx-text-dim);
+}
+
+.flags {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.flagIcon {
+  color: var(--tx-text-faint);
+}
+
+.reconcile {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tx-text-faint);
+  cursor: pointer;
+  opacity: 0.5;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.reconciled {
+  color: var(--tx-positive);
+  opacity: 1;
+}
+
+// Phone cards
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  height: 52px;
+  padding: 0 $space-3;
+  border-bottom: 1px solid var(--tx-border);
+}
+
+.cardLine {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-3;
+  min-width: 0;
+}
+
+.cardMeta {
+  font-size: $font-sm;
+  color: var(--tx-text-dim);
+}
+
+.empty {
+  padding: $space-5 $space-4;
+  color: var(--tx-text-dim);
+  text-align: center;
+}

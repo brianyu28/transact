@@ -36,6 +36,18 @@ src/
 Navigation is driven by the single route table in `src/app/routes.ts`. Adding a screen means one
 entry there plus a page component in `src/features/<name>/`.
 
+Other single sources of truth:
+
+- **Keyboard commands**: declare a command once in `src/keyboard/catalog.ts` (id, title, default keys),
+  then attach a handler where it applies with `useCommandHandlers`. Shortcuts, the ⌘K palette, the `?`
+  overlay and Settings → Keyboard all read the catalog; users can rebind any of them.
+- **Settings**: declare user-facing options in `src/domain/settings/registry.ts` (file or device
+  scope); the Settings screen renders them automatically. Device preferences live in
+  `src/store/prefsStore.ts`.
+- **Document changes**: add a command in `src/domain/commands/` and register it in
+  `src/domain/commands/index.ts`. UI code calls `tryDispatch`/`tryRun` (`src/store/actions.ts`),
+  which show rejected commands as toasts.
+
 ## Rules
 
 - **Public repository: never commit personal or real financial data.** No real names, accounts,

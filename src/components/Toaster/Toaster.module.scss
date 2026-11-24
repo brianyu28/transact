@@ -1,0 +1,61 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  position: fixed;
+  left: 50%;
+  bottom: $space-4;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $space-2;
+  transform: translateX(-50%);
+  pointer-events: none;
+
+  @include phone {
+    bottom: calc(#{$bottom-nav-height} + env(safe-area-inset-bottom) + #{$space-2});
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-1 $space-1 $space-1 $space-3;
+  min-height: 32px;
+  border-radius: $radius-md;
+  background: var(--tx-text);
+  color: var(--tx-bg);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 18%);
+  pointer-events: auto;
+
+  button[class*='CloseButton'] {
+    color: inherit;
+  }
+}
+
+.error {
+  background: var(--tx-negative);
+  color: #fff;
+}
+
+.message {
+  font-size: $font-sm;
+}
+
+.action {
+  padding: 2px $space-2;
+  border: 0;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--tx-accent);
+  font: inherit;
+  font-size: $font-sm;
+  font-weight: 600;
+  cursor: pointer;
+
+  .error & {
+    color: #fff;
+    text-decoration: underline;
+  }
+}

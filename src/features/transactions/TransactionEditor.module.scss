@@ -1,0 +1,82 @@
+@use '@/styles/tokens' as *;
+
+// Desktop: one aligned row (same columns as the grid) plus a slim note line.
+.row {
+  display: grid;
+  grid-template-columns: var(--register-columns);
+  align-items: center;
+  gap: 4px $space-2;
+  padding: 5px $space-3 5px $space-2;
+  border-bottom: 1px solid var(--tx-border);
+  background: var(--tx-surface-active);
+  box-shadow: inset 2px 0 0 var(--tx-accent);
+}
+
+.marker {
+  width: 0;
+}
+
+// Uniform compact fields that line up with row text.
+.input {
+  height: 24px;
+  min-height: 24px;
+  padding-inline: 6px;
+  border-color: var(--tx-border);
+  background: var(--tx-bg);
+  font-size: $font-sm;
+
+  &[data-with-right-section] {
+    padding-inline-end: 22px;
+  }
+}
+
+.amountInput {
+  text-align: right;
+
+  @include tabular;
+}
+
+.rowActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.secondLine {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  // From the payee column to the end.
+  grid-column: 4 / -1;
+}
+
+.note {
+  flex: 1;
+  max-width: 520px;
+}
+
+.hint {
+  margin-left: auto;
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+  white-space: nowrap;
+}
+
+.error {
+  margin-left: auto;
+  color: var(--tx-negative);
+  font-size: $font-sm;
+}
+
+// Phone: stacked fields in a full-screen sheet.
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.stackActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-2;
+}

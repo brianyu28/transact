@@ -1,0 +1,31 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.cap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--tx-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--tx-surface);
+  color: var(--tx-text-dim);
+  font-family: var(--tx-font);
+  font-size: $font-xs;
+  line-height: 1;
+}
+
+.then {
+  margin: 0 2px;
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+}

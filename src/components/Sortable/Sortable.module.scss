@@ -1,0 +1,27 @@
+.handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  color: var(--tx-text-faint);
+  cursor: grab;
+  touch-action: none;
+
+  &:hover {
+    color: var(--tx-text-dim);
+    background: var(--tx-surface-hover);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tx-accent);
+  }
+}

@@ -1,23 +1,20 @@
 import { ActionIcon } from '@mantine/core';
-import { useLocalStorage } from '@mantine/hooks';
 import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand } from '@tabler/icons-react';
 import { routes } from '@/app/routes';
+import { usePrefs } from '@/store/prefsStore';
 import { NavItem } from './NavItem';
 import styles from './Sidebar.module.scss';
-
-/** Device-local preference (not stored in the data file). */
-const COLLAPSED_KEY = 'transact:sidebar-collapsed';
 
 /**
  * Desktop sidebar. Can be collapsed to an icon rail to give content more room;
  * on tablet it is always a rail, and on phone it's replaced by the bottom nav.
  */
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useLocalStorage({
-    key: COLLAPSED_KEY,
-    defaultValue: false,
-    getInitialValueInEffect: false,
-  });
+  const collapsed = usePrefs((s) => s.sidebarCollapsed);
+  const setPref = usePrefs((s) => s.setPref);
+  const setCollapsed = (value: boolean) => {
+    setPref('sidebarCollapsed', value);
+  };
   const ToggleIcon = collapsed ? IconLayoutSidebarLeftExpand : IconLayoutSidebarLeftCollapse;
   const toggleLabel = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
 

@@ -1,0 +1,32 @@
+@use '@/styles/tokens' as *;
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.table {
+  margin-bottom: $space-4;
+
+  td:first-child {
+    width: 50%;
+  }
+}
+
+.bindings {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+}
+
+.recording {
+  color: var(--tx-accent);
+  font-size: $font-sm;
+}
+
+.conflict {
+  font-size: $font-xs;
+  color: var(--tx-warning);
+}

@@ -1,0 +1,55 @@
+@use '@/styles/tokens' as *;
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  max-width: 100%;
+}
+
+.archived {
+  color: var(--tx-text-faint);
+}
+
+.badge {
+  padding: 0 $space-1;
+  border: 1px solid var(--tx-border);
+  border-radius: $radius-sm;
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+}
+
+// checkbox-free grid: grip · name · kind · used · menu
+.header,
+.row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 110px 64px 28px;
+  align-items: center;
+  gap: $space-2;
+  padding: 0 $space-2;
+}
+
+.header {
+  padding-bottom: $space-1;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+}
+
+.row {
+  height: var(--tx-row-height);
+  border-top: 1px solid var(--tx-border);
+
+  &:hover {
+    background: var(--tx-surface);
+  }
+}
+
+.item {
+  background: var(--tx-bg);
+}
+
+.dragging {
+  box-shadow: 0 4px 16px rgb(0 0 0 / 15%);
+  opacity: 0.95;
+}

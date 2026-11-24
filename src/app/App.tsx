@@ -3,13 +3,17 @@ import '@mantine/core/styles.layer.css';
 import '@/styles/global.scss';
 
 import { MantineProvider } from '@mantine/core';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { Route, Router, Switch } from 'wouter';
 import { useHashLocation } from 'wouter/use-hash-location';
+import { Toaster } from '@/components/Toaster/Toaster';
 import { ConflictDialog } from './file/ConflictDialog';
+import { PrefsEffects } from './PrefsEffects';
 import { DocumentGate } from './file/DocumentGate';
-import { FileShortcuts } from './file/FileShortcuts';
 import { AppLayout } from './layout/AppLayout';
+import { CommandPalette } from '@/keyboard/CommandPalette';
+import { GlobalCommands } from '@/keyboard/GlobalCommands';
+import { ShortcutHelp } from '@/keyboard/ShortcutHelp';
 import { routes } from './routes';
 import { theme } from './theme';
 
@@ -27,16 +31,18 @@ export function App({ children }: AppProps) {
     <MantineProvider theme={theme} defaultColorScheme="auto">
       <Router hook={useHashLocation}>
         <Switch>
-          {routes.map(({ path, title, component: Page, standalone }) => (
-            <Route key={path} path={path}>
+          {routes.map(({ path, match, title, component: Page, standalone }) => (
+            <Route key={path} path={match ?? path}>
               <AppLayout title={title}>
-                {standalone ? (
-                  <Page />
-                ) : (
-                  <DocumentGate>
+                <Suspense fallback={null}>
+                  {standalone ? (
                     <Page />
-                  </DocumentGate>
-                )}
+                  ) : (
+                    <DocumentGate>
+                      <Page />
+                    </DocumentGate>
+                  )}
+                </Suspense>
               </AppLayout>
             </Route>
           ))}
@@ -46,9 +52,13 @@ export function App({ children }: AppProps) {
             </AppLayout>
           </Route>
         </Switch>
+        <GlobalCommands />
+        <ShortcutHelp />
       </Router>
       <ConflictDialog />
-      <FileShortcuts />
+      <CommandPalette />
+      <Toaster />
+      <PrefsEffects />
       {children}
     </MantineProvider>
   );

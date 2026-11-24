@@ -10,7 +10,8 @@ interface NavItemProps {
 
 export function NavItem({ route, variant }: NavItemProps) {
   const [location] = useLocation();
-  const active = location === route.path;
+  const active =
+    location === route.path || (route.path !== '/' && location.startsWith(`${route.path}/`));
   const Icon = route.icon;
   return (
     <Link

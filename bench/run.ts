@@ -6,6 +6,8 @@ import { DocIndex } from '../src/domain/aggregates/docIndex';
 import { generateDemoDocument } from '../src/domain/demo/generate';
 import { iterateTransactions } from '../src/domain/model';
 import { parseDocument } from '../src/domain/schema/document';
+import { compileFilter } from '../src/domain/transactions/filter';
+import { runFilter } from '../src/domain/transactions/query';
 import { serializeModel } from '../src/persistence/codec/serialize';
 import { createDocStore } from '../src/store/docStore';
 
@@ -62,6 +64,23 @@ const cases: Case[] = [
         changes: { date: edit % 2 ? '2020-01-01' : '2024-06-15' },
       });
     },
+  },
+  {
+    name: 'Filter all: "cat:food >20 -tag:reimbursable"',
+    targetMs: 50,
+    runs: 20,
+    fn: () =>
+      void runFilter(
+        doc,
+        index,
+        compileFilter('cat:food >20 -tag:reimbursable', doc, '2026-11-24'),
+      ),
+  },
+  {
+    name: 'Filter one account + month',
+    targetMs: 16,
+    runs: 50,
+    fn: () => void runFilter(doc, index, compileFilter('acct:rewards 2024-03', doc, '2026-11-24')),
   },
   {
     name: 'Query one month (all accounts)',

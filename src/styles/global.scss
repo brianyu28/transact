@@ -2,6 +2,7 @@
 // Component styles live in co-located *.module.scss files.
 
 :root {
+  --tx-row-height: 26px;
   --tx-font: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --tx-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
@@ -17,6 +18,10 @@
   --tx-positive: #1a7f4b;
   --tx-negative: #c4302b;
   --tx-warning: #b7791f;
+}
+
+:root[data-density='comfortable'] {
+  --tx-row-height: 34px;
 }
 
 :root[data-mantine-color-scheme='dark'] {

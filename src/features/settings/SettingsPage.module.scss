@@ -1,0 +1,53 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  min-height: 100%;
+
+  @include phone {
+    flex-direction: column;
+  }
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 160px;
+  flex: none;
+  padding: $space-3 $space-2;
+  border-right: 1px solid var(--tx-border);
+
+  @include phone {
+    flex-direction: row;
+    width: auto;
+    padding: $space-2 $space-3;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--tx-border);
+  }
+}
+
+.link {
+  padding: $space-1 $space-2;
+  border-radius: $radius-sm;
+  color: var(--tx-text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--tx-surface-hover);
+    color: var(--tx-text);
+  }
+}
+
+.active,
+.active:hover {
+  background: var(--tx-surface-active);
+  color: var(--tx-accent);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}

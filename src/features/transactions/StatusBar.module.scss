@@ -1,0 +1,36 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  flex: none;
+  height: 32px;
+  padding: 0 $space-3;
+  overflow: hidden;
+  border-top: 1px solid var(--tx-border);
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+  white-space: nowrap;
+}
+
+.selecting {
+  background: var(--tx-surface-active);
+  color: var(--tx-text);
+}
+
+.count {
+  font-size: $font-sm;
+  font-weight: 500;
+}
+
+.total {
+  @include tabular;
+}
+
+.actions {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+}

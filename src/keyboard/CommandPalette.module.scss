@@ -1,0 +1,44 @@
+@use '@/styles/tokens' as *;
+
+.input {
+  padding: $space-1 $space-3;
+  border-bottom: 1px solid var(--tx-border);
+}
+
+.list {
+  max-height: 50vh;
+  margin: 0;
+  padding: $space-1;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  height: 30px;
+  padding: 0 $space-2;
+  border-radius: $radius-sm;
+  cursor: pointer;
+}
+
+.active {
+  background: var(--tx-surface-active);
+}
+
+.group {
+  width: 84px;
+  flex: none;
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+}
+
+.title {
+  flex: 1;
+}
+
+.empty {
+  padding: $space-3;
+  color: var(--tx-text-faint);
+}
