@@ -53,11 +53,14 @@ export default defineConfig({
         name: 'Transact',
         short_name: 'Transact',
         description: 'Personal finance and budgeting, stored in your own files.',
-        theme_color: '#1f2933',
-        background_color: '#1f2933',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         // Stable identity for the installed app, independent of start_url.
         id: '/',
         display: 'standalone',
+        // Installed on desktop, draw the app's own top bar in place of the title bar
+        // (Chrome/Edge "window controls overlay"); other platforms use standalone.
+        display_override: ['window-controls-overlay'],
         // Reopening the app focuses the open window instead of starting a second copy
         // (two windows editing one file would only produce conflicts).
         launch_handler: { client_mode: 'focus-existing' },

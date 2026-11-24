@@ -26,6 +26,12 @@
     .brand {
       justify-content: center;
       padding: 0;
+
+      // macOS window controls sit where the rail's logo is: push it out of view.
+      @include titlebar-overlay {
+        padding-left: env(titlebar-area-x, 0px);
+        overflow: hidden;
+      }
     }
 
     .name {
@@ -53,6 +59,14 @@
   gap: $space-2;
   height: $topbar-height;
   padding: 0 $space-3;
+
+  // Part of the window's title bar: drag to move, starting after the macOS controls.
+  @include titlebar-overlay {
+    @include window-drag-region;
+
+    height: max(#{$topbar-height}, env(titlebar-area-height, 0px));
+    padding-left: max(#{$space-3}, calc(env(titlebar-area-x, 0px) + #{$space-1}));
+  }
 }
 
 .logo {

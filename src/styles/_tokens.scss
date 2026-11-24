@@ -54,3 +54,26 @@ $bp-tablet: 1024px;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
+
+// Installed desktop app with the title bar hidden (Window Controls Overlay): the app's own
+// top rows become the title bar. `env(titlebar-area-*)` gives the space the window
+// controls leave free; draggable regions move the window.
+@mixin titlebar-overlay {
+  @media (display-mode: window-controls-overlay) {
+    @content;
+  }
+}
+
+// Lets the element drag the window in titlebar-overlay mode; interactive children opt out.
+@mixin window-drag-region {
+  -webkit-app-region: drag;
+  app-region: drag;
+
+  button,
+  input,
+  a,
+  [role='button'] {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+}

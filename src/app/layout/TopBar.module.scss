@@ -14,6 +14,23 @@
     padding-left: $space-3;
     padding-right: $space-3;
   }
+
+  // Acting as the window's title bar: drag to move, and keep clear of the window
+  // controls (left on macOS, where they can reach past an icon-rail sidebar; right on
+  // Windows and Linux).
+  @include titlebar-overlay {
+    @include window-drag-region;
+
+    height: max(#{$topbar-height}, env(titlebar-area-height, 0px));
+    padding-left: max(
+      #{$space-4},
+      calc(env(titlebar-area-x, 0px) - #{$sidebar-collapsed-width} + #{$space-2})
+    );
+    padding-right: max(
+      #{$space-4},
+      calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + #{$space-2})
+    );
+  }
 }
 
 .title {
