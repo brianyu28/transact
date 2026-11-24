@@ -53,7 +53,7 @@ export default defineConfig({
         name: 'Transact',
         short_name: 'Transact',
         description: 'Personal finance and budgeting, stored in your own files.',
-        theme_color: '#ffffff',
+        theme_color: '#f7f8fa',
         background_color: '#ffffff',
         // Stable identity for the installed app, independent of start_url.
         id: '/',

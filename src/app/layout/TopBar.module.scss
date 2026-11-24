@@ -21,6 +21,9 @@
   @include titlebar-overlay {
     @include window-drag-region;
 
+    // Same color as the window chrome, so it reads as the title bar.
+    background: var(--tx-surface);
+
     height: max(#{$topbar-height}, env(titlebar-area-height, 0px));
     padding-left: max(
       #{$space-4},

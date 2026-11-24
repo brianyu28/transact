@@ -18,10 +18,11 @@ export function PrefsEffects() {
   }, [density]);
 
   // The browser/window chrome color (the installed app's title bar and window controls):
-  // match the page background (--tx-bg) so it blends in.
+  // the sidebar's --tx-surface, so the sidebar runs up into the title bar and the bar reads
+  // as one strip of window chrome above the page. Keep in sync with styles/global.scss.
   useEffect(() => {
     const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (meta) meta.content = scheme === 'dark' ? '#15181c' : '#ffffff';
+    if (meta) meta.content = scheme === 'dark' ? '#1c2025' : '#f7f8fa';
   }, [scheme]);
 
   return null;
