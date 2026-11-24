@@ -3,11 +3,21 @@ import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import pkg from './package.json' with { type: 'json' };
 
 // Relative base so the build works from any static host or sub-path
 // (Cloudflare Workers, GitHub Pages, etc.). Routing uses the URL hash.
 export default defineConfig({
   base: './',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
+  worker: { format: 'es' },
+  build: {
+    // The app shell (React + Mantine) is ~500 kB minified / ~155 kB gzipped and is
+    // precached by the service worker, so one chunk of that size is acceptable.
+    chunkSizeWarningLimit: 700,
+  },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

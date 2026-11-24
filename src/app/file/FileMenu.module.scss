@@ -1,0 +1,79 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  min-width: 0;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  min-width: 0;
+  height: 24px;
+  padding: 0 $space-2;
+  border: 0;
+  border-radius: $radius-sm;
+  background: none;
+  color: var(--tx-text-dim);
+  font: inherit;
+  font-size: $font-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--tx-surface-hover);
+    color: var(--tx-text);
+  }
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+  color: var(--tx-text);
+  font-weight: 500;
+
+  @include phone {
+    max-width: 120px;
+  }
+}
+
+.status {
+  white-space: nowrap;
+  color: var(--tx-text-faint);
+
+  &::before {
+    content: '·';
+    margin-right: $space-1;
+  }
+
+  @include phone {
+    display: none;
+  }
+}
+
+.dirty {
+  color: var(--tx-warning);
+}
+
+.kbd {
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+}
+
+.saveWide {
+  @include phone {
+    display: none;
+  }
+}
+
+.saveNarrow {
+  display: none;
+
+  @include phone {
+    display: inline-flex;
+  }
+}

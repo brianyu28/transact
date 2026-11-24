@@ -45,7 +45,14 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.config.{js,ts}', 'scripts/**/*.ts'],
+    files: ['**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
+  {
+    files: ['*.config.{js,ts}', 'scripts/**/*.ts', 'bench/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
 );

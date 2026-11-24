@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { NoticeBar } from '@/app/file/NoticeBar';
 import { BottomNav } from './BottomNav';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -19,6 +20,7 @@ export function AppLayout({ title, children }: AppLayoutProps) {
       <Sidebar />
       <div className={styles.column}>
         <TopBar title={title} />
+        <NoticeBar />
         <main className={styles.main}>{children}</main>
         <BottomNav />
       </div>

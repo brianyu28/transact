@@ -6,6 +6,9 @@ import { MantineProvider } from '@mantine/core';
 import type { ReactNode } from 'react';
 import { Route, Router, Switch } from 'wouter';
 import { useHashLocation } from 'wouter/use-hash-location';
+import { ConflictDialog } from './file/ConflictDialog';
+import { DocumentGate } from './file/DocumentGate';
+import { FileShortcuts } from './file/FileShortcuts';
 import { AppLayout } from './layout/AppLayout';
 import { routes } from './routes';
 import { theme } from './theme';
@@ -24,10 +27,16 @@ export function App({ children }: AppProps) {
     <MantineProvider theme={theme} defaultColorScheme="auto">
       <Router hook={useHashLocation}>
         <Switch>
-          {routes.map(({ path, title, component: Page }) => (
+          {routes.map(({ path, title, component: Page, standalone }) => (
             <Route key={path} path={path}>
               <AppLayout title={title}>
-                <Page />
+                {standalone ? (
+                  <Page />
+                ) : (
+                  <DocumentGate>
+                    <Page />
+                  </DocumentGate>
+                )}
               </AppLayout>
             </Route>
           ))}
@@ -38,6 +47,8 @@ export function App({ children }: AppProps) {
           </Route>
         </Switch>
       </Router>
+      <ConflictDialog />
+      <FileShortcuts />
       {children}
     </MantineProvider>
   );

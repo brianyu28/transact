@@ -26,6 +26,8 @@ export interface AppRoute {
   component: ComponentType;
   /** Shown in the phone bottom navigation (others are reachable from "More"). */
   primary?: boolean;
+  /** Usable without an open document (default: requires one). */
+  standalone?: boolean;
 }
 
 /** Single source of truth for navigation: drives the router, sidebar and bottom nav. */
@@ -55,7 +57,13 @@ export const routes: readonly AppRoute[] = [
   { path: '/statements', title: 'Statements', icon: IconReceipt, component: StatementsPage },
   { path: '/reports', title: 'Reports', icon: IconChartBar, component: ReportsPage },
   { path: '/planner', title: 'Planner', icon: IconCalculator, component: PlannerPage },
-  { path: '/settings', title: 'Settings', icon: IconSettings, component: SettingsPage },
+  {
+    path: '/settings',
+    title: 'Settings',
+    icon: IconSettings,
+    component: SettingsPage,
+    standalone: true,
+  },
 ];
 
 export function findRoute(path: string): AppRoute | undefined {

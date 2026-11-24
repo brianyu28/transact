@@ -3,3 +3,5 @@ dev-dist
 coverage
 local
 pnpm-lock.yaml
+src/domain/schema/fixtures
+*.transact.json

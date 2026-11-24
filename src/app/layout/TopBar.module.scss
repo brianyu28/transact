@@ -22,11 +22,9 @@
   font-weight: 600;
 }
 
-.status {
+.right {
   display: flex;
   align-items: center;
-  gap: $space-1;
+  min-width: 0;
   margin-left: auto;
-  font-size: $font-sm;
-  color: var(--tx-text-faint);
 }

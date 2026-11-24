@@ -7,13 +7,15 @@ User data lives in a versioned JSON file the user owns; the app opens, edits and
 
 Use **pnpm** (never npm/yarn).
 
-| Command                         | What it does                                                                        |
-| ------------------------------- | ----------------------------------------------------------------------------------- |
-| `pnpm dev`                      | Dev server                                                                          |
-| `pnpm check`                    | **Run before calling any change done**: typecheck, lint, format check, tests, build |
-| `pnpm test` / `pnpm test:watch` | Vitest                                                                              |
-| `pnpm format`                   | Prettier write                                                                      |
-| `pnpm build` / `pnpm preview`   | Production build (static `dist/`) and local preview                                 |
+| Command                         | What it does                                                                              |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| `pnpm dev`                      | Dev server                                                                                |
+| `pnpm check`                    | **Run before calling any change done**: typecheck, lint, format check, tests, build       |
+| `pnpm test` / `pnpm test:watch` | Vitest                                                                                    |
+| `pnpm format`                   | Prettier write                                                                            |
+| `pnpm build` / `pnpm preview`   | Production build (static `dist/`) and local preview                                       |
+| `pnpm bench`                    | Performance benchmarks on a synthetic ~50k-transaction file (fails if a target is missed) |
+| `pnpm gen:demo -- --out <file>` | Write a synthetic demo data file (`--years`, `--scale`, `--seed`, `--end`)                |
 
 ## Layout
 
@@ -48,7 +50,13 @@ entry there plus a page component in `src/features/<name>/`.
   carry negative balances, so net worth is a plain sum.
 - **UI mutates data only through named store commands** (they power undo/redo).
 - **Schema changes need a migration**: bump the schema version, add a single-step migration and a
-  fixture, and keep older fixtures migrating cleanly.
+  fixture, and keep older fixtures migrating cleanly (see `src/domain/schema/migrations/index.ts`).
+  Fixtures are generated with `pnpm gen:demo` and must not be hand-formatted.
+- **Access transactions through the helpers in `src/domain/model.ts`** (`getTransaction`,
+  `putTransaction`, `removeTransaction`, `iterateTransactions`). They are stored in buckets so an
+  edit doesn't copy the whole collection.
+- **Heavy work runs in the I/O worker** (`src/workers/io.worker.ts`): parsing, migration,
+  validation and serialization. Keep zod and the codec out of the main bundle.
 - **Performance matters**: assume 50k+ transactions. Use indexes and incremental aggregates, virtualize
   long lists, and chart bucketed aggregates rather than raw transactions.
 - **Styling**: SCSS modules co-located with components (`Foo.tsx` + `Foo.module.scss`), one component

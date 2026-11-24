@@ -11,9 +11,10 @@
     "moduleDetection": "force",
     "noEmit": true,
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["vite.config.ts", "pwa-assets.config.ts", "scripts"]
+  "include": ["vite.config.ts", "pwa-assets.config.ts"]
 }

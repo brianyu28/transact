@@ -1,0 +1,44 @@
+import { Button, Group, Modal, Stack, Text } from '@mantine/core';
+import { formatRelativeTime } from '@/lib/format';
+import { session, useSession } from '@/store/sessionStore';
+
+/** Shown when the file was changed elsewhere while there are local edits. */
+export function ConflictDialog() {
+  const conflict = useSession((s) => s.conflict);
+  const name = useSession((s) => s.source?.name ?? 'this file');
+
+  const when = conflict?.remoteSavedAt ? ` ${formatRelativeTime(conflict.remoteSavedAt)}` : '';
+  return (
+    <Modal
+      opened={conflict !== null}
+      onClose={() => undefined}
+      withCloseButton={false}
+      closeOnClickOutside={false}
+      closeOnEscape={false}
+      title="The file was changed elsewhere"
+      size="md"
+      centered
+    >
+      <Stack gap="sm">
+        <Text size="sm">
+          {name} was saved from another device or app{when} (revision{' '}
+          {conflict?.remoteRevision ?? '?'}), but you also have changes here. Which version do you
+          want to keep?
+        </Text>
+        <Group justify="flex-end" gap="xs">
+          <Button variant="default" onClick={() => void session.resolveConflict('save-copy')}>
+            Save mine as a copy
+          </Button>
+          <Button
+            variant="light"
+            color="red"
+            onClick={() => void session.resolveConflict('take-theirs')}
+          >
+            Use theirs
+          </Button>
+          <Button onClick={() => void session.resolveConflict('keep-mine')}>Keep mine</Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+}

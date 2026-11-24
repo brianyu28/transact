@@ -1,0 +1,25 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-2 $space-4 0;
+
+  @include phone {
+    padding: $space-2 $space-3 0;
+  }
+}
+
+.alert {
+  padding: $space-2 $space-3;
+}
+
+.list {
+  margin: 0;
+  padding-left: $space-4;
+}
+
+.preLine {
+  white-space: pre-line;
+}

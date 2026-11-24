@@ -1,0 +1,10 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  margin: 0;
+  padding: $space-3 $space-4 0;
+  font-size: $font-sm;
+  color: var(--tx-text-dim);
+
+  @include tabular;
+}
