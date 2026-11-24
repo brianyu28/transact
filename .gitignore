@@ -1,0 +1,26 @@
+# Private notes, plans and personal data — never commit
+/local/
+*.transact.json
+*.transact.enc.json
+
+# Dependencies & build output
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Claude Code local settings
+.claude/settings.local.json
+CLAUDE.local.md

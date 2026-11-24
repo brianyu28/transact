@@ -1,0 +1,56 @@
+// Design tokens shared by all SCSS modules: `@use '@/styles/tokens' as *;`
+// Colors are CSS custom properties (see global.scss) so they follow light/dark mode;
+// sizes are SCSS variables so they can be used in calc() and media queries at build time.
+
+// Spacing: 4px grid
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 24px;
+$space-6: 32px;
+
+// Type
+$font-xs: 11px;
+$font-sm: 12px;
+$font-md: 13px; // base
+$font-lg: 15px;
+$font-xl: 18px;
+
+// Density
+$row-height: 26px;
+$control-height: 28px;
+$topbar-height: 40px;
+$sidebar-width: 196px;
+$sidebar-collapsed-width: 48px;
+$bottom-nav-height: 52px;
+
+$radius-sm: 4px;
+$radius-md: 6px;
+
+// Breakpoints (max-width, exclusive)
+$bp-phone: 640px;
+$bp-tablet: 1024px;
+
+@mixin phone {
+  @media (max-width: #{$bp-phone - 0.02px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: $bp-phone) and (max-width: #{$bp-tablet - 0.02px}) {
+    @content;
+  }
+}
+
+@mixin below-desktop {
+  @media (max-width: #{$bp-tablet - 0.02px}) {
+    @content;
+  }
+}
+
+@mixin tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}

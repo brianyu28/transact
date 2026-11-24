@@ -1,0 +1,78 @@
+@use '@/styles/tokens' as *;
+
+.item {
+  display: flex;
+  align-items: center;
+  color: var(--tx-text-dim);
+  text-decoration: none;
+  border-radius: $radius-sm;
+
+  &:hover {
+    background: var(--tx-surface-hover);
+    color: var(--tx-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tx-accent);
+    outline-offset: -2px;
+  }
+}
+
+.active,
+.active:hover {
+  color: var(--tx-accent);
+  background: var(--tx-surface-active);
+}
+
+.icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar {
+  gap: $space-2;
+  height: 28px;
+  padding: 0 $space-2;
+  font-size: $font-md;
+  font-weight: 500;
+
+  // Icon-rail mode: tablet widths, or the sidebar collapsed on desktop.
+  @include tablet {
+    justify-content: center;
+    padding: 0;
+
+    .label {
+      display: none;
+    }
+  }
+
+  [data-collapsed] & {
+    justify-content: center;
+    padding: 0;
+
+    .label {
+      display: none;
+    }
+  }
+}
+
+.bottom {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  height: 100%;
+  font-size: $font-xs;
+  border-radius: 0;
+
+  .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  &.active,
+  &.active:hover {
+    background: none;
+  }
+}

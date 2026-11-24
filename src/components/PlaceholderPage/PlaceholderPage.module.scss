@@ -1,0 +1,17 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  padding: $space-4;
+  max-width: 640px;
+}
+
+.summary {
+  margin: 0 0 $space-1;
+  color: var(--tx-text-dim);
+}
+
+.phase {
+  margin: 0;
+  font-size: $font-sm;
+  color: var(--tx-text-faint);
+}

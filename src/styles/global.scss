@@ -1,0 +1,52 @@
+// Global styles: semantic color variables and base element styles.
+// Component styles live in co-located *.module.scss files.
+
+:root {
+  --tx-font: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --tx-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --tx-bg: #ffffff;
+  --tx-surface: #f7f8fa;
+  --tx-surface-hover: #eef0f3;
+  --tx-surface-active: #e6e8ff;
+  --tx-border: #e3e6ea;
+  --tx-text: #1f2933;
+  --tx-text-dim: #616e7c;
+  --tx-text-faint: #9aa5b1;
+  --tx-accent: #4c51d9;
+  --tx-positive: #1a7f4b;
+  --tx-negative: #c4302b;
+  --tx-warning: #b7791f;
+}
+
+:root[data-mantine-color-scheme='dark'] {
+  --tx-bg: #15181c;
+  --tx-surface: #1c2025;
+  --tx-surface-hover: #252a31;
+  --tx-surface-active: #2a2d55;
+  --tx-border: #2c323a;
+  --tx-text: #e4e7eb;
+  --tx-text-dim: #9aa5b1;
+  --tx-text-faint: #616e7c;
+  --tx-accent: #8f94ff;
+  --tx-positive: #4cc38a;
+  --tx-negative: #ff6b63;
+  --tx-warning: #f0b429;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--tx-bg);
+  color: var(--tx-text);
+  font-family: var(--tx-font);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}

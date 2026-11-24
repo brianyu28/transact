@@ -1,0 +1,32 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  flex: none;
+  height: $topbar-height;
+  padding: 0 $space-4;
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid var(--tx-border);
+
+  @include phone {
+    padding-left: $space-3;
+    padding-right: $space-3;
+  }
+}
+
+.title {
+  margin: 0;
+  font-size: $font-lg;
+  font-weight: 600;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  margin-left: auto;
+  font-size: $font-sm;
+  color: var(--tx-text-faint);
+}

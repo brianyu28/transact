@@ -1,0 +1,93 @@
+@use '@/styles/tokens' as *;
+
+// The icon-rail look is shared by tablet widths and the user-collapsed desktop state.
+@mixin rail {
+  @include tablet {
+    @content;
+  }
+
+  &[data-collapsed] {
+    @content;
+  }
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: $sidebar-width;
+  flex: none;
+  background: var(--tx-surface);
+  border-right: 1px solid var(--tx-border);
+  transition: width 120ms ease;
+
+  @include rail {
+    width: $sidebar-collapsed-width;
+
+    .brand {
+      justify-content: center;
+      padding: 0;
+    }
+
+    .name {
+      display: none;
+    }
+
+    .items {
+      padding: $space-1;
+    }
+
+    .footer {
+      justify-content: center;
+      padding: $space-2 0;
+    }
+  }
+
+  @include phone {
+    display: none;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  height: $topbar-height;
+  padding: 0 $space-3;
+}
+
+.logo {
+  width: 18px;
+  height: 18px;
+}
+
+.name {
+  font-weight: 600;
+  font-size: $font-lg;
+  letter-spacing: -0.01em;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: $space-1 $space-2;
+}
+
+.footer {
+  display: flex;
+  margin-top: auto;
+  padding: $space-2;
+
+  // Tablet is always a rail, so the toggle only matters on desktop.
+  @include tablet {
+    display: none;
+  }
+}
+
+.toggle {
+  color: var(--tx-text-faint);
+
+  &:hover {
+    color: var(--tx-text);
+  }
+}
