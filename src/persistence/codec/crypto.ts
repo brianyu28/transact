@@ -16,6 +16,8 @@
 import { ENCRYPTED_FORMAT } from '@/domain/schema/version';
 
 export const DEFAULT_ITERATIONS = 600_000;
+const MIN_ITERATIONS = 1_000;
+const MAX_ITERATIONS = 10_000_000;
 
 export interface EncryptionInfo {
   key: CryptoKey;
@@ -110,12 +112,36 @@ export function readEnvelope(bytes: Uint8Array): Envelope | null {
   // Cheap check before parsing: encrypted files are small JSON starting with the format.
   const head = decoder.decode(bytes.subarray(0, 200));
   if (!head.includes(ENCRYPTED_FORMAT)) return null;
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(decoder.decode(bytes)) as Partial<Envelope>;
-    return parsed.format === ENCRYPTED_FORMAT ? (parsed as Envelope) : null;
+    parsed = JSON.parse(decoder.decode(bytes));
   } catch {
     return null;
   }
+  if (!isRecord(parsed) || parsed.format !== ENCRYPTED_FORMAT) return null;
+  // The envelope comes from an untrusted file: check its shape before using any of it.
+  const { kdf, cipher } = parsed;
+  const valid =
+    typeof parsed.envelopeVersion === 'number' &&
+    typeof parsed.fileId === 'string' &&
+    typeof parsed.payload === 'string' &&
+    isRecord(kdf) &&
+    typeof kdf.name === 'string' &&
+    typeof kdf.hash === 'string' &&
+    typeof kdf.salt === 'string' &&
+    Number.isInteger(kdf.iterations) &&
+    // Bounded so a crafted file can't freeze the tab deriving a key.
+    (kdf.iterations as number) >= MIN_ITERATIONS &&
+    (kdf.iterations as number) <= MAX_ITERATIONS &&
+    isRecord(cipher) &&
+    typeof cipher.name === 'string' &&
+    typeof cipher.iv === 'string';
+  if (!valid) throw new Error('This encrypted file is damaged or wasn’t written by Transact.');
+  return parsed as unknown as Envelope;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function envelopeSalt(envelope: Envelope): Uint8Array<ArrayBuffer> {

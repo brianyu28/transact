@@ -1,6 +1,6 @@
 /**
  * Writes a synthetic demo data file.
- *   pnpm gen:demo -- --years 3 --scale 1 --seed 42 --end 2026-11-24 --out local/demo.transact.json
+ *   pnpm gen:demo -- --years 3 --scale 1 --seed 42 --end 2026-11-24 --out demo.transact.json
  */
 import { writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
@@ -16,7 +16,7 @@ const { values } = parseArgs({
     scale: { type: 'string', default: '1' },
     seed: { type: 'string', default: '42' },
     end: { type: 'string', default: today() },
-    out: { type: 'string', default: 'local/demo.transact.json' },
+    out: { type: 'string', default: 'demo.transact.json' },
     'app-version': { type: 'string', default: 'demo' },
   },
 });

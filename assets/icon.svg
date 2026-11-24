@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!--
+    Transact app icon: the source of truth for every icon size and format.
+    Full-bleed square (no rounded corners): platforms that mask icons (iOS, Android) need it
+    this way. Run `pnpm gen:icons` after editing to regenerate public/ icons.
+  -->
+  <rect width="512" height="512" fill="#1f2933" />
+  <!-- Coin edge: the far face, the side band and its ridges -->
+  <ellipse cx="256" cy="276" rx="160" ry="124" fill="#c98a12" />
+  <rect x="96" y="236" width="320" height="40" fill="#c98a12" />
+  <g stroke="#a86f08" stroke-width="5" opacity="0.55">
+      <line x1="411.0" y1="266.8" x2="411.0" y2="306.8" />
+      <line x1="398.6" y1="292.3" x2="398.6" y2="332.3" />
+      <line x1="379.3" y1="315.0" x2="379.3" y2="355.0" />
+      <line x1="354.1" y1="334.0" x2="354.1" y2="374.0" />
+      <line x1="324.1" y1="348.2" x2="324.1" y2="388.2" />
+      <line x1="290.9" y1="357.0" x2="290.9" y2="397.0" />
+      <line x1="256.0" y1="360.0" x2="256.0" y2="400.0" />
+      <line x1="221.1" y1="357.0" x2="221.1" y2="397.0" />
+      <line x1="187.9" y1="348.2" x2="187.9" y2="388.2" />
+      <line x1="157.9" y1="334.0" x2="157.9" y2="374.0" />
+      <line x1="132.7" y1="315.0" x2="132.7" y2="355.0" />
+      <line x1="113.4" y1="292.3" x2="113.4" y2="332.3" />
+  </g>
+  <!-- Coin face: rim, then the face -->
+  <ellipse cx="256" cy="236" rx="160" ry="124" fill="#e3a52a" />
+  <ellipse cx="256" cy="236" rx="134" ry="103.8" fill="#f7c948" />
+  <!-- Exchange arrows, foreshortened onto the tilted face -->
+  <g
+    transform="translate(256 236) scale(1 0.775) translate(-256 -256)"
+    fill="none"
+    stroke="#a86f08"
+    stroke-width="30"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M184 222H322M290 190l32 32-32 32" />
+    <path d="M328 294H190M222 262l-32 32 32 32" opacity="0.75" />
+  </g>
+</svg>

@@ -6,8 +6,6 @@
 export type ISODate = string;
 /** `YYYY-MM` */
 export type MonthKey = string;
-/** `YYYY` */
-export type YearKey = string;
 
 const ISO_DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MS_PER_DAY = 86_400_000;
@@ -87,10 +85,6 @@ export function monthKey(date: ISODate): MonthKey {
   return date.slice(0, 7);
 }
 
-export function yearKey(date: ISODate): YearKey {
-  return date.slice(0, 4);
-}
-
 export function startOfMonth(date: ISODate): ISODate {
   return `${date.slice(0, 7)}-01`;
 }
@@ -102,10 +96,6 @@ export function endOfMonth(date: ISODate): ISODate {
 
 export function addMonthsToKey(key: MonthKey, months: number): MonthKey {
   return monthKey(addMonths(`${key}-01`, months));
-}
-
-export function minDate(a: ISODate, b: ISODate): ISODate {
-  return a <= b ? a : b;
 }
 
 export function maxDate(a: ISODate, b: ISODate): ISODate {

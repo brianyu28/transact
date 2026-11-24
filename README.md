@@ -3,16 +3,17 @@
 A fast, information-dense personal finance and budgeting app that runs entirely in your browser.
 Your data stays in a JSON file you own. There's no account, no server and no tracking.
 
-> Early development. Not usable yet.
-
-**Planned features**
+**Features**
 
 - Transactions across bank, credit card and investment accounts, with categories, tags, splits and transfers
 - Monthly, annual and tag-based custom budgets, with rollover
 - Statement reconciliation
 - Net worth tracking and reports
-- Income, tax and deduction planner
+- Income, tax and deduction planner, including two-earner households
+- Optional passphrase encryption and Dropbox sync with automatic merging
 - Installable PWA that works offline on desktop, tablet and phone, with keyboard shortcuts throughout
+
+Try it without any data via **Try with demo data** on the welcome screen.
 
 ## Development
 
@@ -26,7 +27,25 @@ pnpm check    # typecheck, lint, format check, test, build
 
 The production build (`pnpm build`) is a static site in `dist/` that can be served by any static host.
 
-See [AGENTS.md](AGENTS.md) for architecture and conventions.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the app works and
+[AGENTS.md](AGENTS.md) for conventions and rules when contributing.
+
+## Deployment (Cloudflare Workers)
+
+The app is deployed as a Cloudflare Worker that serves only static assets
+([`wrangler.jsonc`](wrangler.jsonc)). No Worker code runs, and static asset requests are free and
+unlimited on Cloudflare's free plan.
+
+1. In the Cloudflare dashboard, go to **Workers & Pages → Create → Import a repository**, and pick
+   the GitHub repository.
+2. Set the build command to `pnpm build` and the deploy command to `npx wrangler deploy`.
+   Optionally, add a `VITE_DROPBOX_APP_KEY` build variable (see below).
+3. After the first deploy, go to the Worker's **Settings → Domains & Routes → Add → Custom
+   domain**, and enter a subdomain of a zone in your account. Cloudflare creates the DNS record
+   and certificate.
+
+Every push to the production branch then redeploys. To deploy by hand, run
+`pnpm build && npx wrangler deploy`.
 
 ## Dropbox sync (optional)
 

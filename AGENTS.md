@@ -3,6 +3,9 @@
 Transact is a client-side-only personal finance and budgeting PWA: React + TypeScript, no backend.
 User data lives in a versioned JSON file the user owns; the app opens, edits and saves it.
 
+**Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** for the data model, schema versioning, the
+transaction, balance and budget engines, persistence, sync and encryption.
+
 ## Commands
 
 Use **pnpm** (never npm/yarn).
@@ -16,6 +19,7 @@ Use **pnpm** (never npm/yarn).
 | `pnpm build` / `pnpm preview`   | Production build (static `dist/`) and local preview                                       |
 | `pnpm bench`                    | Performance benchmarks on a synthetic ~50k-transaction file (fails if a target is missed) |
 | `pnpm gen:demo -- --out <file>` | Write a synthetic demo data file (`--years`, `--scale`, `--seed`, `--end`)                |
+| `pnpm gen:icons`                | Regenerate every app icon in `public/` from `assets/icon.svg` (the only icon source)      |
 
 ## Layout
 

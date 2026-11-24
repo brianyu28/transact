@@ -1,6 +1,6 @@
 /** Identifies a Transact data file (plaintext). */
 export const FILE_FORMAT = 'transact';
-/** Identifies an encrypted Transact envelope (see local plan §5.2; not yet supported). */
+/** Identifies an encrypted Transact envelope (see `persistence/codec/crypto.ts`). */
 export const ENCRYPTED_FORMAT = 'transact-encrypted';
 
 /**

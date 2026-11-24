@@ -340,6 +340,34 @@ async function decodeModel(bytes: Uint8Array): Promise<DocModel | null> {
   return decoded.ok ? decoded.model : null;
 }
 
+/** Opens file bytes, or records a clash if they conflict with unsaved local edits. */
+async function openFromStorage(opened: OpenedFile): Promise<void> {
+  const { doc } = docStore.getState();
+  const header = await inspect(opened.bytes);
+  // Same file, unsaved local edits, and the file was saved elsewhere since: a clash.
+  if (
+    doc &&
+    selectIsDirty(docStore.getState()) &&
+    header.fileId === doc.meta.fileId &&
+    header.revision !== null &&
+    header.revision !== get().baseRevision
+  ) {
+    set({
+      conflict: {
+        origin: 'open',
+        remoteBytes: opened.bytes,
+        remoteVersion: opened.version,
+        remoteRevision: header.revision,
+        remoteSavedAt: header.savedAt,
+        opened,
+      },
+    });
+    return;
+  }
+  set({ status: 'loading' });
+  await loadOpened(opened);
+}
+
 // ── Actions ───────────────────────────────────────────────────────────────────
 
 export const session = {
@@ -458,30 +486,11 @@ export const session = {
 
   /** Opens already-read file bytes, checking for clashes with unsaved local edits. */
   openFromStorage: async (opened: OpenedFile): Promise<void> => {
-    const { doc } = docStore.getState();
-    const header = await inspect(opened.bytes);
-    // Same file, unsaved local edits, and the file was saved elsewhere since: a clash.
-    if (
-      doc &&
-      selectIsDirty(docStore.getState()) &&
-      header.fileId === doc.meta.fileId &&
-      header.revision !== null &&
-      header.revision !== get().baseRevision
-    ) {
-      set({
-        conflict: {
-          origin: 'open',
-          remoteBytes: opened.bytes,
-          remoteVersion: opened.version,
-          remoteRevision: header.revision,
-          remoteSavedAt: header.savedAt,
-          opened,
-        },
-      });
-      return;
+    try {
+      await openFromStorage(opened);
+    } catch (err) {
+      failOpen(opened.descriptor.name, errorMessage(err));
     }
-    set({ status: 'loading' });
-    await loadOpened(opened);
   },
 
   /** Reopens the most recently used file via its stored handle or path. */

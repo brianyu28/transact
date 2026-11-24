@@ -8,7 +8,7 @@
  * - Optional fields are omitted when they hold their default (false / empty), which keeps
  *   files small; code must treat `undefined` as the default.
  * - Every entity has an `id` and an `updatedAt` timestamp; deletions leave a tombstone.
- *   Together these allow entity-level merging between devices later.
+ *   Together these allow entity-level merging between devices (see `domain/sync/merge.ts`).
  * - Amounts are integer cents, signed from the account's perspective (+ = into the account).
  */
 import { z } from 'zod';

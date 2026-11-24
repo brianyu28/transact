@@ -46,4 +46,15 @@ describe('file encryption', () => {
       readEnvelope(new TextEncoder().encode('{"format":"transact","schemaVersion":2}')),
     ).toBeNull();
   });
+
+  it('refuses malformed envelopes and unreasonable key-derivation costs', async () => {
+    const salt = randomSalt();
+    const info = { key: await deriveKey('right', salt, ITER), salt, iterations: ITER };
+    const env = readEnvelope(await encryptFile(new Uint8Array([1]), 'fil_abc', info))!;
+    const encode = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
+    expect(() => readEnvelope(encode({ ...env, kdf: { ...env.kdf, iterations: 1e12 } }))).toThrow(
+      /damaged/,
+    );
+    expect(() => readEnvelope(encode({ ...env, cipher: null }))).toThrow(/damaged/);
+  });
 });

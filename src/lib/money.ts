@@ -89,10 +89,3 @@ export function parseMoney(input: string): Cents | null {
   if (!Number.isSafeInteger(value)) return null;
   return negative && value !== 0 ? -value : value;
 }
-
-/** Sums cents exactly (integers stay exact up to 2^53). */
-export function sumCents(values: Iterable<Cents>): Cents {
-  let total = 0;
-  for (const v of values) total += v;
-  return total;
-}

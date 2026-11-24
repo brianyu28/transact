@@ -72,11 +72,3 @@ export function comboCaps(combo: string): string[] {
     KEY_DISPLAY[key] ?? (key.length === 1 ? key.toUpperCase() : key),
   ];
 }
-
-/** Human-readable binding, e.g. "g t" → "G then T", "mod+s" → "⌘S". */
-export function formatBinding(binding: string): string {
-  return normalizeBinding(binding)
-    .split(' ')
-    .map((combo) => comboCaps(combo).join(IS_APPLE ? '' : '+'))
-    .join(' then ');
-}

@@ -329,10 +329,6 @@ function asFailure(err: unknown): SaveResult {
   return { ok: false, reason: 'failed', message: err instanceof Error ? err.message : String(err) };
 }
 
-export function isDropboxConfigured(): boolean {
-  return dropboxState.getState().appKey !== '';
-}
-
 export const dropboxAdapter: StorageAdapter = {
   kind: 'dropbox',
   capabilities: { writeBack: true },

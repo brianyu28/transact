@@ -106,7 +106,3 @@ export const routes: readonly AppRoute[] = [
     match: '/settings/:section?',
   },
 ];
-
-export function findRoute(path: string): AppRoute | undefined {
-  return routes.find((r) => r.path === path);
-}

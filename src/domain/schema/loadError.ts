@@ -14,7 +14,7 @@ export function describeLoadError(error: LoadError): string {
     case 'not-transact':
       return "This doesn't look like a Transact data file.";
     case 'encrypted':
-      return "This file is encrypted. This version of Transact can't open encrypted files yet.";
+      return "This file is encrypted and couldn't be decrypted.";
     case 'newer-version':
       return `This file uses schema version ${error.fileVersion}, but this version of Transact supports up to ${error.supportedVersion}. Update the app to open it.`;
     case 'migration-failed':
