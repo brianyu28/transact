@@ -1,5 +1,6 @@
 import { ActionIcon, Button, Menu, Tooltip } from '@mantine/core';
 import {
+  IconBrandDropbox,
   IconChevronDown,
   IconDeviceFloppy,
   IconFile,
@@ -10,9 +11,12 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import { clsx } from 'clsx';
+import { useStore } from 'zustand';
 import { formatRelativeTime } from '@/lib/format';
+import { dropboxState } from '@/persistence/adapters/dropbox';
 import { selectIsDirty, useDocStore } from '@/store/docStore';
 import { session, useSession } from '@/store/sessionStore';
+import { uiStore } from '@/store/uiStore';
 import { useDiscardGuard } from './useDiscardGuard';
 import styles from './FileMenu.module.scss';
 
@@ -27,6 +31,7 @@ export function FileMenu() {
   const saving = useSession((s) => s.saving);
   const lastSavedAt = useSession((s) => s.lastSavedAt);
   const [guard, discardModal] = useDiscardGuard();
+  const dropbox = useStore(dropboxState, (s) => s.connected);
 
   if (!hasDoc) return discardModal;
 
@@ -64,6 +69,16 @@ export function FileMenu() {
           >
             Save as…
           </Menu.Item>
+          {dropbox && source?.kind !== 'dropbox' && (
+            <Menu.Item
+              leftSection={<IconBrandDropbox size={14} />}
+              onClick={() => {
+                uiStore.setState({ dropboxDialog: 'save' });
+              }}
+            >
+              Save to Dropbox…
+            </Menu.Item>
+          )}
           <Menu.Divider />
           <Menu.Item
             leftSection={<IconFolderOpen size={14} />}
@@ -74,6 +89,18 @@ export function FileMenu() {
           >
             Open…
           </Menu.Item>
+          {dropbox && (
+            <Menu.Item
+              leftSection={<IconBrandDropbox size={14} />}
+              onClick={() => {
+                guard(() => {
+                  uiStore.setState({ dropboxDialog: 'open' });
+                });
+              }}
+            >
+              Open from Dropbox…
+            </Menu.Item>
+          )}
           <Menu.Item
             leftSection={<IconFilePlus size={14} />}
             onClick={() => {

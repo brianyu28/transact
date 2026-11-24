@@ -3,13 +3,15 @@
  * file. They know nothing about JSON, schemas or encryption (that's the codec's job), so
  * new backends (e.g. a cloud drive) only need to implement this interface.
  */
-export type AdapterKind = 'fs-access' | 'download';
+export type AdapterKind = 'fs-access' | 'download' | 'dropbox';
 
 /** Where the open document came from, persisted with the working copy. */
 export interface SourceDescriptor {
   kind: AdapterKind;
   /** File name shown to the user. */
   name: string;
+  /** Path within the storage (Dropbox). */
+  path?: string;
 }
 
 /**
@@ -18,6 +20,8 @@ export interface SourceDescriptor {
  */
 export interface VersionToken {
   lastModified?: number;
+  /** Dropbox revision. */
+  rev?: string;
 }
 
 export interface OpenedFile {
@@ -30,8 +34,8 @@ export interface OpenedFile {
 
 export type SaveResult =
   | { ok: true; version: VersionToken; descriptor: SourceDescriptor; handle?: unknown }
-  /** The file changed since `base`; `remoteBytes` is its current content. */
-  | { ok: false; reason: 'changed'; remoteBytes: Uint8Array }
+  /** The file changed since `base`; `remoteBytes` is its current content, `version` its version. */
+  | { ok: false; reason: 'changed'; remoteBytes: Uint8Array; version?: VersionToken }
   | { ok: false; reason: 'cancelled' }
   | { ok: false; reason: 'failed'; message: string };
 
@@ -45,6 +49,11 @@ export interface StorageAdapter {
   open(): Promise<OpenedFile | null>;
   /** Re-reads a previously opened file from its persisted handle. */
   reopen?(handle: unknown, descriptor: SourceDescriptor): Promise<OpenedFile | null>;
+  /**
+   * Current version of a previously opened file, without prompting the user (used to
+   * notice changes made elsewhere). Null if it can't be checked right now.
+   */
+  peekVersion?(handle: unknown, descriptor: SourceDescriptor): Promise<VersionToken | null>;
   /** Saves to the existing file. `force` skips the change check. */
   save(
     bytes: Uint8Array,

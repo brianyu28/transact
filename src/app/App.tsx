@@ -8,6 +8,8 @@ import { Route, Router, Switch } from 'wouter';
 import { useHashLocation } from 'wouter/use-hash-location';
 import { Toaster } from '@/components/Toaster/Toaster';
 import { ConflictDialog } from './file/ConflictDialog';
+import { UnlockDialog } from './file/UnlockDialog';
+import { DropboxDialog } from './file/DropboxDialog';
 import { PrefsEffects } from './PrefsEffects';
 import { DocumentGate } from './file/DocumentGate';
 import { AppLayout } from './layout/AppLayout';
@@ -56,6 +58,8 @@ export function App({ children }: AppProps) {
         <ShortcutHelp />
       </Router>
       <ConflictDialog />
+      <UnlockDialog />
+      <DropboxDialog />
       <CommandPalette />
       <Toaster />
       <PrefsEffects />

@@ -31,6 +31,16 @@ export interface RecentFile {
   source: SourceDescriptor;
 }
 
+/** A remembered (non-extractable) decryption key for one file on this device. */
+export interface StoredKey {
+  key: CryptoKey;
+  salt: Uint8Array;
+  iterations: number;
+}
+
+const keyKey = (fileId: string) => `key:${fileId}`;
+const baseKey = (fileId: string) => `base:${fileId}`;
+
 export const workingCopyStore = {
   load: () => get<WorkingCopy>(WORKING_COPY, db()),
   save: (copy: WorkingCopy) => set(WORKING_COPY, copy, db()),
@@ -40,6 +50,18 @@ export const workingCopyStore = {
   saveHandle: (fileId: string, handle: unknown) => set(handleKey(fileId), handle, db()),
 
   loadRecent: () => get<RecentFile>(RECENT, db()),
+
+  /** Encryption keys remembered on this device ("Remember on this device"). */
+  loadKey: (fileId: string) => get<StoredKey>(keyKey(fileId), db()),
+  saveKey: (fileId: string, key: StoredKey) => set(keyKey(fileId), key, db()),
+  deleteKey: (fileId: string) => del(keyKey(fileId), db()),
+
+  /**
+   * The file as last read from or written to storage: the common base for merging when
+   * another device changed the file too. Stored as file bytes (encrypted if the file is).
+   */
+  loadBase: (fileId: string) => get<Uint8Array>(baseKey(fileId), db()),
+  saveBase: (fileId: string, bytes: Uint8Array) => set(baseKey(fileId), bytes, db()),
   saveRecent: (recent: RecentFile) => set(RECENT, recent, db()),
 
   /** Removes everything Transact stores in this browser's IndexedDB. */

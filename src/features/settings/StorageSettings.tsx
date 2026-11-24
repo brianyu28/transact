@@ -2,6 +2,8 @@ import { Button, Group, Modal, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { isFsAccessSupported } from '@/persistence/adapters/fsAccess';
 import { session, useSession } from '@/store/sessionStore';
+import { DropboxSettings } from './DropboxSettings';
+import { EncryptionSettings } from './EncryptionSettings';
 import styles from './StorageSettings.module.scss';
 
 /** Where data is stored, and clearing everything kept in this browser. */
@@ -18,15 +20,19 @@ export function StorageSettings() {
         <dd>{!hasDocument ? 'No file open' : (source?.name ?? 'Not saved yet')}</dd>
         <dt>Saving</dt>
         <dd>
-          {isFsAccessSupported()
-            ? 'Saves directly to the file on disk.'
-            : 'This browser saves by downloading a new copy of the file.'}
+          {source?.kind === 'dropbox'
+            ? 'Saves to Dropbox. Changes saved from another device are merged with yours.'
+            : isFsAccessSupported()
+              ? 'Saves directly to the file on disk.'
+              : 'This browser saves by downloading a new copy of the file.'}
         </dd>
         <dt>Working copy</dt>
         <dd>
           Unsaved changes are kept in this browser automatically, so they survive closing the tab.
         </dd>
       </dl>
+      <EncryptionSettings />
+      <DropboxSettings />
       <Button variant="light" color="red" onClick={open}>
         Clear local data…
       </Button>

@@ -144,3 +144,67 @@ describe('session', () => {
     expect(sessionStore.getState().loadError?.message).toMatch(/schema version 99/);
   });
 });
+
+describe('merging', () => {
+  it('merges edits from both devices when a save conflicts', async () => {
+    await session.newDocument('empty');
+    addAccount('Shared');
+    await session.save();
+    // Another device adds an account and saves.
+    const other = decodeDocument(disk.bytes!);
+    if (!other.ok) throw new Error('bad disk file');
+    const remote = other.model;
+    remote.accounts.acc_remote = {
+      ...Object.values(remote.accounts)[0]!,
+      id: 'acc_remote',
+      name: 'Remote',
+    };
+    writeDisk(encodeDocument({ ...remote, meta: { ...remote.meta, revision: 2 } }));
+    addAccount('Local');
+
+    await session.save();
+    expect(sessionStore.getState().conflict).not.toBeNull();
+    await session.resolveConflict('merge');
+
+    expect(sessionStore.getState().conflict).toBeNull();
+    expect(diskRevision()).toBe(3);
+    const saved = decodeDocument(disk.bytes!);
+    expect(
+      saved.ok &&
+        Object.values(saved.model.accounts)
+          .map((a) => a.name)
+          .sort(),
+    ).toEqual(['Local', 'Remote', 'Shared']);
+    expect(sessionStore.getState().notices.find((n) => n.kind === 'merged')).toMatchObject({
+      fromRemote: 1,
+      conflicts: [],
+    });
+  });
+});
+
+describe('encryption', () => {
+  it('saves encrypted and asks for the passphrase when reopened', async () => {
+    await session.newDocument('empty');
+    addAccount('Secret');
+    await session.setPassphrase('correct horse', false);
+    await session.save();
+    const text = new TextDecoder().decode(disk.bytes!);
+    expect(text).toContain('transact-encrypted');
+    expect(text).not.toContain('Secret');
+
+    await session.close();
+    await session.open();
+    expect(sessionStore.getState().locked).not.toBeNull();
+    await expect(session.unlock('wrong passphrase', false)).rejects.toThrow(/passphrase/);
+    await session.unlock('correct horse', true);
+    expect(sessionStore.getState().locked).toBeNull();
+    expect(sessionStore.getState().encryption).not.toBeNull();
+    expect(Object.values(docStore.getState().doc!.accounts).map((a) => a.name)).toEqual(['Secret']);
+
+    // The remembered key opens it without asking again.
+    await session.close();
+    await session.open();
+    expect(sessionStore.getState().locked).toBeNull();
+    expect(docStore.getState().doc).not.toBeNull();
+  });
+});

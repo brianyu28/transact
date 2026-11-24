@@ -22,21 +22,43 @@ export function ConflictDialog() {
       <Stack gap="sm">
         <Text size="sm">
           {name} was saved from another device or app{when} (revision{' '}
-          {conflict?.remoteRevision ?? '?'}), but you also have changes here. Which version do you
-          want to keep?
+          {conflict?.remoteRevision ?? '?'}), but you also have changes here.
         </Text>
-        <Group justify="flex-end" gap="xs">
-          <Button variant="default" onClick={() => void session.resolveConflict('save-copy')}>
-            Save mine as a copy
-          </Button>
-          <Button
-            variant="light"
-            color="red"
-            onClick={() => void session.resolveConflict('take-theirs')}
-          >
-            Use theirs
-          </Button>
-          <Button onClick={() => void session.resolveConflict('keep-mine')}>Keep mine</Button>
+        <Text size="sm" c="dimmed">
+          Merging keeps both sets of changes. Where the same item was edited on both sides, your
+          edit wins and the merge lists it.
+        </Text>
+        <Button fullWidth onClick={() => void session.resolveConflict('merge')} data-autofocus>
+          Merge both (recommended)
+        </Button>
+        <Group justify="space-between" gap="xs" wrap="nowrap">
+          <Text size="xs" c="dimmed">
+            Or:
+          </Text>
+          <Group gap="xs" wrap="nowrap">
+            <Button
+              size="compact-sm"
+              variant="default"
+              onClick={() => void session.resolveConflict('keep-mine')}
+            >
+              Keep only mine
+            </Button>
+            <Button
+              size="compact-sm"
+              variant="default"
+              onClick={() => void session.resolveConflict('save-copy')}
+            >
+              Save mine as a copy
+            </Button>
+            <Button
+              size="compact-sm"
+              variant="light"
+              color="red"
+              onClick={() => void session.resolveConflict('take-theirs')}
+            >
+              Use theirs
+            </Button>
+          </Group>
         </Group>
       </Stack>
     </Modal>

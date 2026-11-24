@@ -1,8 +1,17 @@
 import { Alert, Anchor } from '@mantine/core';
-import { IconAlertTriangle, IconHistory, IconInfoCircle } from '@tabler/icons-react';
+import {
+  IconAlertTriangle,
+  IconCloud,
+  IconGitMerge,
+  IconHistory,
+  IconInfoCircle,
+  IconLock,
+  IconRefresh,
+} from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { formatRelativeTime, pluralize } from '@/lib/format';
 import { downloadAdapter } from '@/persistence/adapters/download';
+import type { MergeConflict } from '@/domain/sync/merge';
 import { session, useSession, type Notice } from '@/store/sessionStore';
 import styles from './NoticeBar.module.scss';
 
@@ -57,6 +66,56 @@ function render(notice: Notice): {
             {notice.issues.length > 5 && <li>…and {notice.issues.length - 5} more</li>}
           </ul>
         ),
+      };
+    case 'merged': {
+      const label = (r: MergeConflict['resolution']) =>
+        r === 'kept-local'
+          ? 'kept your edit'
+          : r === 'kept-remote'
+            ? 'kept the other edit'
+            : 'kept the edit over a deletion';
+      return {
+        color: notice.conflicts.length > 0 ? 'yellow' : 'accent',
+        icon: <IconGitMerge size={16} />,
+        title: `Merged ${pluralize(notice.fromRemote, 'change')} from the other copy`,
+        body:
+          notice.conflicts.length === 0 ? (
+            'Both sets of edits were combined and saved.'
+          ) : (
+            <>
+              {pluralize(notice.conflicts.length, 'item')} changed on both sides:
+              <ul className={styles.list}>
+                {notice.conflicts.slice(0, 5).map((c) => (
+                  <li key={`${c.collection}:${c.id}`}>
+                    {c.label}: {label(c.resolution)}
+                  </li>
+                ))}
+                {notice.conflicts.length > 5 && <li>…and {notice.conflicts.length - 5} more</li>}
+              </ul>
+            </>
+          ),
+      };
+    }
+    case 'reloaded':
+      return {
+        color: 'accent',
+        icon: <IconRefresh size={16} />,
+        title: 'Loaded the latest version',
+        body: `The file was saved elsewhere${notice.savedAt ? ` ${formatRelativeTime(notice.savedAt)}` : ''}; you had no unsaved changes, so it was reloaded.`,
+      };
+    case 'encryption':
+      return {
+        color: 'accent',
+        icon: <IconLock size={16} />,
+        title: 'Encryption changed',
+        body: notice.message,
+      };
+    case 'dropbox-connected':
+      return {
+        color: 'accent',
+        icon: <IconCloud size={16} />,
+        title: 'Connected to Dropbox',
+        body: 'Open a file from Dropbox or save this one there from the file menu.',
       };
     case 'error':
       return {

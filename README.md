@@ -28,6 +28,29 @@ The production build (`pnpm build`) is a static site in `dist/` that can be serv
 
 See [AGENTS.md](AGENTS.md) for architecture and conventions.
 
+## Dropbox sync (optional)
+
+Transact can keep the data file in Dropbox so it can be used from several devices. It talks
+to Dropbox directly from the browser (OAuth with PKCE, no server) and only has access to its
+own app folder. Edits saved from two devices are merged.
+
+1. Create an app at <https://www.dropbox.com/developers/apps>: Scoped access, App folder.
+2. Under Permissions, enable `files.metadata.read`, `files.content.read` and
+   `files.content.write`.
+3. Under OAuth 2 → Redirect URIs, add each URL the app is served from, e.g.
+   `http://localhost:5173/` and your deployed URL (with the trailing slash, without `#/…`).
+4. Provide the app key at build time (`VITE_DROPBOX_APP_KEY=… pnpm build`, or in `.env.local`
+   for `pnpm dev`), or paste it under Settings → Storage on each device.
+
+The app key is not a secret; PKCE needs no client secret.
+
+## Encryption (optional)
+
+Settings → Storage → Encrypt with a passphrase writes the file as AES-256-GCM, with the key
+derived from the passphrase by PBKDF2-SHA-256 (600,000 iterations). A lost passphrase can't be
+recovered. Each device can remember the key (as a non-extractable key in IndexedDB) so it
+doesn't ask every time.
+
 ## License
 
 [MIT](LICENSE)

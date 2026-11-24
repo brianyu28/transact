@@ -58,6 +58,8 @@ export interface DocActions {
   /** Non-undoable metadata update (e.g. revision bump on save). */
   updateMeta(recipe: (meta: Draft<DocModel['meta']>) => void): void;
   markSaved(editSeq: number): void;
+  /** Marks the document as having unsaved changes (e.g. after turning on encryption). */
+  markDirty(): void;
 }
 
 export type DocStore = DocState & DocActions;
@@ -198,6 +200,10 @@ export function createDocStore() {
 
       markSaved(editSeq) {
         set({ savedSeq: editSeq });
+      },
+
+      markDirty() {
+        set((s) => ({ editSeq: s.editSeq + 1 }));
       },
     };
   });

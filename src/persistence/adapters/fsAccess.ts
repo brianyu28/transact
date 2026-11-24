@@ -66,6 +66,12 @@ export const fsAccessAdapter: StorageAdapter = {
     return read(h);
   },
 
+  async peekVersion(handle: unknown) {
+    const h = handle as FileSystemFileHandle | undefined;
+    if (!h || (await h.queryPermission?.({ mode: 'read' })) !== 'granted') return null;
+    return { lastModified: (await h.getFile()).lastModified };
+  },
+
   async save(bytes, { handle, base, force }) {
     const h = handle as FileSystemFileHandle;
     try {
@@ -79,6 +85,7 @@ export const fsAccessAdapter: StorageAdapter = {
             ok: false,
             reason: 'changed',
             remoteBytes: new Uint8Array(await current.arrayBuffer()),
+            version: { lastModified: current.lastModified },
           };
         }
       }
