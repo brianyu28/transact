@@ -1,0 +1,22 @@
+.root {
+  display: block;
+  overflow: visible;
+}
+
+.line {
+  fill: none;
+  stroke: var(--tx-chart-1);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  fill: var(--tx-chart-1);
+  stroke: var(--tx-bg);
+  stroke-width: 1.5;
+}
+
+.empty {
+  display: block;
+}

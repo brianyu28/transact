@@ -15,12 +15,14 @@ export interface FormatMoneyOptions {
   symbol?: boolean;
   /** 'auto' (default): minus sign for negatives; 'always': also '+' for positives; 'never'. */
   sign?: 'auto' | 'always' | 'never';
+  /** 'compact' gives e.g. "$12K" (for chart axes and tight spaces). */
+  notation?: 'standard' | 'compact';
 }
 
 const formatters = new Map<string, Intl.NumberFormat>();
 
 function formatter(opts: Required<FormatMoneyOptions>): Intl.NumberFormat {
-  const key = `${opts.locale}|${opts.currency}|${opts.symbol}|${opts.sign}`;
+  const key = `${opts.locale}|${opts.currency}|${opts.symbol}|${opts.sign}|${opts.notation}`;
   let f = formatters.get(key);
   if (!f) {
     const signDisplay = opts.sign === 'always' ? 'exceptZero' : opts.sign;
@@ -29,6 +31,9 @@ function formatter(opts: Required<FormatMoneyOptions>): Intl.NumberFormat {
         ? { style: 'currency', currency: opts.currency }
         : { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
       signDisplay,
+      ...(opts.notation === 'compact'
+        ? { notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 1 }
+        : {}),
     });
     formatters.set(key, f);
   }
@@ -42,6 +47,7 @@ export function formatMoney(cents: Cents, options: FormatMoneyOptions = {}): str
     locale: options.locale ?? 'en-US',
     symbol: options.symbol ?? true,
     sign: options.sign ?? 'auto',
+    notation: options.notation ?? 'standard',
   };
   return formatter(opts).format(cents / 100);
 }

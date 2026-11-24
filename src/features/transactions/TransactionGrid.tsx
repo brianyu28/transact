@@ -1,6 +1,7 @@
 import { useMediaQuery } from '@mantine/hooks';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import { balanceAfterTransaction } from '@/domain/aggregates/balances';
 import { getTransaction } from '@/domain/model';
 import type { Id, Transaction } from '@/domain/schema/types';
 import { useFormat } from '@/hooks/useFormat';
@@ -17,6 +18,8 @@ const PHONE_QUERY = '(max-width: 639.98px)';
 
 interface TransactionGridProps {
   ids: readonly Id[];
+  /** When set (filtered to one account), shows a running balance instead of the account. */
+  balanceAccountId: Id | null;
   defaultAccountId: Id | null;
   /** Called with a function that scrolls a row into view (for keyboard navigation). */
   onScrollerReady: (scrollTo: (id: Id) => void) => void;
@@ -27,12 +30,14 @@ interface TransactionGridProps {
 
 export function TransactionGrid({
   ids,
+  balanceAccountId,
   defaultAccountId,
   onScrollerReady,
   before,
   empty,
 }: TransactionGridProps) {
   const doc = useDocStore((s) => s.doc);
+  const index = useDocStore((s) => s.index);
   const activeId = useRegister((s) => s.activeId);
   const selected = useRegister((s) => s.selected);
   const editing = useRegister((s) => s.editing);
@@ -98,7 +103,9 @@ export function TransactionGrid({
         <span>Date</span>
         <span className={styles.amount}>Amount</span>
         <span>Payee</span>
-        <span>Account</span>
+        <span className={balanceAccountId ? styles.amount : undefined}>
+          {balanceAccountId ? 'Balance' : 'Account'}
+        </span>
         <span>Category</span>
         <span>Tags</span>
         <span />
@@ -141,6 +148,11 @@ export function TransactionGrid({
                       labels={rowLabels(t, doc)}
                       date={format.date(t.date)}
                       amount={format.money(t.amount)}
+                      balance={
+                        balanceAccountId && index
+                          ? format.money(balanceAfterTransaction(doc, index, t))
+                          : undefined
+                      }
                       active={activeId === id}
                       selected={selected.has(id)}
                       phone={phone}

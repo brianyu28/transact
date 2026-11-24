@@ -8,6 +8,7 @@ import {
   updateCategory,
 } from './categories';
 import { updateSettings } from './settings';
+import { createSnapshot, deleteSnapshot, updateSnapshot } from './snapshots';
 import { createTag, deleteTag, updateTag } from './tags';
 import {
   createTransaction,
@@ -39,6 +40,9 @@ export const commands = {
   setTransferAccount,
   setSplits,
   deleteTransactions,
+  createSnapshot,
+  updateSnapshot,
+  deleteSnapshot,
   updateSettings,
 };
 

@@ -73,6 +73,7 @@ export const routes: readonly AppRoute[] = [
     icon: IconWallet,
     component: AccountsPage,
     primary: true,
+    match: '/accounts/:id?',
   },
   { path: '/statements', title: 'Statements', icon: IconReceipt, component: StatementsPage },
   { path: '/reports', title: 'Reports', icon: IconChartBar, component: ReportsPage },

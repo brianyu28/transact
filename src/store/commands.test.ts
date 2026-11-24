@@ -253,3 +253,19 @@ describe('saveTransaction', () => {
     expect(getTransaction(doc(), id)!.tags).toEqual([tag]);
   });
 });
+
+describe('balance snapshots', () => {
+  it('keeps one snapshot per account and date', () => {
+    const a = d()('createSnapshot', { accountId: checking, date: '2026-11-01', balance: 100000 });
+    const b = d()('createSnapshot', {
+      accountId: checking,
+      date: '2026-11-01',
+      balance: 120000,
+      note: 'fixed',
+    });
+    expect(b).toBe(a);
+    expect(doc().balanceSnapshots[a]).toMatchObject({ balance: 120000, note: 'fixed' });
+    d()('deleteSnapshot', { id: a });
+    expect(Object.keys(doc().balanceSnapshots)).toHaveLength(0);
+  });
+});

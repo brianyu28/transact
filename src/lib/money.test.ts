@@ -53,5 +53,6 @@ describe('formatMoney', () => {
   it('supports sign and symbol options', () => {
     expect(formatMoney(1200, { sign: 'always' })).toBe('+$12.00');
     expect(formatMoney(-1200, { symbol: false })).toBe('-12.00');
+    expect(formatMoney(1234500, { notation: 'compact' })).toBe('$12.3K');
   });
 });

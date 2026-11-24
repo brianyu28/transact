@@ -2,7 +2,9 @@
  * Performance benchmarks against a synthetic ~50k-transaction file (about 10 years of
  * heavy use). Run with `pnpm bench`; exits non-zero if a target is missed.
  */
+import { firstDataDate, netWorthSeries } from '../src/domain/aggregates/balances';
 import { DocIndex } from '../src/domain/aggregates/docIndex';
+import { presetRange, sampleDates } from '../src/domain/aggregates/sampling';
 import { generateDemoDocument } from '../src/domain/demo/generate';
 import { iterateTransactions } from '../src/domain/model';
 import { parseDocument } from '../src/domain/schema/document';
@@ -81,6 +83,28 @@ const cases: Case[] = [
     targetMs: 16,
     runs: 50,
     fn: () => void runFilter(doc, index, compileFilter('acct:rewards 2024-03', doc, '2026-11-24')),
+  },
+  {
+    name: 'Net worth, all time monthly (cached ledgers)',
+    targetMs: 16,
+    runs: 50,
+    fn: () =>
+      void netWorthSeries(
+        doc,
+        index,
+        sampleDates(presetRange('all', '2026-11-24'), '2026-11-24', firstDataDate(doc, index)),
+      ),
+  },
+  {
+    name: 'Net worth, 3 months daily (cached ledgers)',
+    targetMs: 16,
+    runs: 50,
+    fn: () =>
+      void netWorthSeries(
+        doc,
+        index,
+        sampleDates(presetRange('3m', '2026-11-24'), '2026-11-24', firstDataDate(doc, index)),
+      ),
   },
   {
     name: 'Query one month (all accounts)',

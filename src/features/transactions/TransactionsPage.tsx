@@ -175,6 +175,7 @@ export function TransactionsPage() {
       </div>
       <TransactionGrid
         ids={ids}
+        balanceAccountId={filteredAccount}
         defaultAccountId={defaultAccountId}
         onScrollerReady={onScrollerReady}
         before={

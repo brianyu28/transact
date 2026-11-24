@@ -1,0 +1,128 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  max-width: 1040px;
+  padding: $space-3 $space-4 $space-4;
+
+  @include phone {
+    padding: $space-3;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: $space-2;
+  font-size: $font-sm;
+  color: var(--tx-text-dim);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--tx-text);
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-3;
+}
+
+.name {
+  margin: 0;
+  font-size: $font-xl;
+  font-weight: 600;
+}
+
+.meta {
+  margin: 2px 0 0;
+  font-size: $font-sm;
+  color: var(--tx-text-dim);
+}
+
+.actions {
+  display: flex;
+  gap: $space-2;
+}
+
+.summary {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-2;
+}
+
+.heading {
+  margin: $space-5 0 $space-2;
+  font-size: $font-md;
+  font-weight: 600;
+}
+
+.empty {
+  max-width: 560px;
+  color: var(--tx-text-dim);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 0 $space-2 $space-1;
+    font-size: $font-xs;
+    font-weight: 500;
+    color: var(--tx-text-faint);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    height: var(--tx-row-height);
+    padding: 0 $space-2;
+    border-top: 1px solid var(--tx-border);
+    white-space: nowrap;
+  }
+
+  tr:hover td {
+    background: var(--tx-surface);
+  }
+}
+
+.num {
+  text-align: right !important;
+
+  @include tabular;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.dim {
+  color: var(--tx-text-faint);
+}
+
+.up {
+  color: var(--tx-positive);
+}
+
+.down {
+  color: var(--tx-negative);
+}
+
+.note {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--tx-text-dim);
+  text-overflow: ellipsis;
+}
+
+.actionsCell {
+  width: 1%;
+  text-align: right;
+}

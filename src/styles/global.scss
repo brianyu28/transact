@@ -18,6 +18,9 @@
   --tx-positive: #1a7f4b;
   --tx-negative: #c4302b;
   --tx-warning: #b7791f;
+  // Chart tokens (validated with the dataviz palette checks for each mode).
+  --tx-chart-1: #4c51d9;
+  --tx-chart-grid: #eceef1;
 }
 
 :root[data-density='comfortable'] {
@@ -37,6 +40,8 @@
   --tx-positive: #4cc38a;
   --tx-negative: #ff6b63;
   --tx-warning: #f0b429;
+  --tx-chart-1: #7c82ff;
+  --tx-chart-grid: #262b32;
 }
 
 html,

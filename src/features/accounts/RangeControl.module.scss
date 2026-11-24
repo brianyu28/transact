@@ -1,0 +1,19 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $space-2;
+}
+
+.dates {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+}
+
+.dash {
+  color: var(--tx-text-faint);
+}

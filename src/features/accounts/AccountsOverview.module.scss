@@ -1,0 +1,145 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  max-width: 1040px;
+  padding: $space-4;
+
+  @include phone {
+    padding: $space-3;
+  }
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $space-3;
+  margin-bottom: $space-3;
+}
+
+.tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-5;
+}
+
+.chart {
+  margin-bottom: $space-5;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-1;
+}
+
+.heading {
+  margin: 0;
+  font-size: $font-md;
+  font-weight: 600;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px 120px 130px;
+  align-items: center;
+  gap: $space-3;
+  min-height: 34px;
+  padding: 0 $space-2;
+  border-top: 1px solid var(--tx-border);
+
+  @include phone {
+    grid-template-columns: minmax(0, 1fr) 90px 110px;
+  }
+}
+
+.head {
+  min-height: 24px;
+  border-top: 0;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+}
+
+.group {
+  min-height: 28px;
+  margin-top: $space-2;
+  border-top: 0;
+  font-size: $font-sm;
+  font-weight: 600;
+  color: var(--tx-text-dim);
+
+  .num {
+    color: var(--tx-text-dim);
+  }
+}
+
+.account {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--tx-surface);
+  }
+}
+
+.closed {
+  opacity: 0.55;
+}
+
+.name {
+  display: flex;
+  align-items: baseline;
+  gap: $space-2;
+  min-width: 0;
+}
+
+.accountName {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.institution {
+  overflow: hidden;
+  font-size: $font-xs;
+  color: var(--tx-text-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @include phone {
+    display: none;
+  }
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+
+  @include tabular;
+}
+
+.balance {
+  font-weight: 600;
+}
+
+.up {
+  color: var(--tx-positive);
+}
+
+.down {
+  color: var(--tx-negative);
+}
+
+.dim {
+  color: var(--tx-text-faint);
+}
+
+.hideNarrow {
+  @include phone {
+    display: none;
+  }
+}

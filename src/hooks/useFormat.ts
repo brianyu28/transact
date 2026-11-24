@@ -11,6 +11,8 @@ const DATE_OPTIONS: Record<DateFormatPref, Intl.DateTimeFormatOptions> = {
 };
 
 export interface Formatters {
+  /** Compact money, e.g. "$12.3K". */
+  moneyCompact: (cents: Cents) => string;
   money: (
     cents: Cents,
     options?: { sign?: 'auto' | 'always' | 'never'; symbol?: boolean },
@@ -30,6 +32,7 @@ export function useFormat(): Formatters {
       currency,
       locale,
       money: (cents, options) => formatMoney(cents, { currency, locale, ...options }),
+      moneyCompact: (cents) => formatMoney(cents, { currency, locale, notation: 'compact' }),
       date: (date) =>
         dateFormat === 'iso' ? date : formatDate(date, locale, DATE_OPTIONS[dateFormat]),
     }),

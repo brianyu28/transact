@@ -11,6 +11,8 @@ interface TransactionRowProps {
   labels: RowLabels;
   date: string;
   amount: string;
+  /** Running balance (shown instead of the account when filtered to one account). */
+  balance?: string | undefined;
   active: boolean;
   selected: boolean;
   phone: boolean;
@@ -26,6 +28,7 @@ export const TransactionRow = memo(function TransactionRow({
   labels,
   date,
   amount,
+  balance,
   active,
   selected,
   phone,
@@ -105,9 +108,15 @@ export const TransactionRow = memo(function TransactionRow({
       <span className={clsx(styles.cell, styles.truncate, styles.payee)} role="gridcell">
         {t.payee}
       </span>
-      <span className={clsx(styles.cell, styles.truncate, styles.dim)} role="gridcell">
-        {labels.account}
-      </span>
+      {balance !== undefined ? (
+        <span className={clsx(styles.cell, styles.amount, styles.dim)} role="gridcell">
+          {balance}
+        </span>
+      ) : (
+        <span className={clsx(styles.cell, styles.truncate, styles.dim)} role="gridcell">
+          {labels.account}
+        </span>
+      )}
       <span
         className={clsx(styles.cell, styles.truncate, styles[labels.categoryKind])}
         role="gridcell"

@@ -1,0 +1,50 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  position: relative;
+  width: 100%;
+}
+
+.plot {
+  width: 100%;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: $space-1 $space-2;
+  border: 1px solid var(--tx-border);
+  border-radius: $radius-sm;
+  background: var(--tx-bg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+  font-size: $font-sm;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+.tooltipDate {
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+}
+
+.tooltipValue {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+
+  @include tabular;
+}
+
+// Line key (not a box) for the series in the tooltip.
+.key {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--tx-chart-1);
+}
