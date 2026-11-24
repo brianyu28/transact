@@ -1,5 +1,8 @@
-import { PlaceholderPage } from '@/components/PlaceholderPage/PlaceholderPage';
+import { useParams } from 'wouter';
+import { ReconcileWorkspace } from './ReconcileWorkspace';
+import { StatementsList } from './StatementsList';
 
 export function StatementsPage() {
-  return <PlaceholderPage phase={5} summary="Statement history and reconciliation." />;
+  const { id } = useParams<{ id?: string }>();
+  return id ? <ReconcileWorkspace id={id} /> : <StatementsList />;
 }

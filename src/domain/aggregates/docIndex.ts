@@ -55,6 +55,10 @@ export class DocIndex {
   readonly categoryByMonth = new Map<MonthKey, Map<Id, Cents>>();
   /** account → date → net change on that day (all transactions, including transfers). */
   readonly accountDailyDelta = new Map<Id, Map<ISODate, Cents>>();
+  /** Per account, `date|id` keys of transactions not yet reconciled (for statements). */
+  readonly unreconciled = new Map<Id, Set<string>>();
+  /** Per statement, `date|id` keys of its transactions. */
+  readonly byStatement = new Map<Id, Set<string>>();
   /** Incremented on every change. */
   version = 0;
   /** Per-account change counters (for caching balance series). */
@@ -93,6 +97,22 @@ export class DocIndex {
       accountKeys = [];
       this.byAccount.set(t.accountId, accountKeys);
     }
+    if (t.statementId) {
+      let members = this.byStatement.get(t.statementId);
+      if (!members) {
+        members = new Set();
+        this.byStatement.set(t.statementId, members);
+      }
+      members.add(key);
+    }
+    if (!t.reconciled) {
+      let set = this.unreconciled.get(t.accountId);
+      if (!set) {
+        set = new Set();
+        this.unreconciled.set(t.accountId, set);
+      }
+      set.add(key);
+    }
     if (sorted) {
       insertSorted(this.byDate, key);
       insertSorted(accountKeys, key);
@@ -108,6 +128,8 @@ export class DocIndex {
     removeSorted(this.byDate, key);
     const accountKeys = this.byAccount.get(t.accountId);
     if (accountKeys) removeSorted(accountKeys, key);
+    this.unreconciled.get(t.accountId)?.delete(key);
+    if (t.statementId) this.byStatement.get(t.statementId)?.delete(key);
     this.applyAmounts(t, -1);
   }
 

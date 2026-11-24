@@ -1,7 +1,7 @@
 import { useMediaQuery } from '@mantine/hooks';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCallback, useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
-import { balanceAfterTransaction } from '@/domain/aggregates/balances';
+import { balanceAfterTransaction, getLedger } from '@/domain/aggregates/balances';
 import { getTransaction } from '@/domain/model';
 import type { Id, Transaction } from '@/domain/schema/types';
 import { useFormat } from '@/hooks/useFormat';
@@ -11,7 +11,9 @@ import { usePrefs } from '@/store/prefsStore';
 import { registerActions, registerStore, useRegister } from './registerStore';
 import { rowLabels } from './rowLabels';
 import { TransactionEditor } from './TransactionEditor';
+import { SnapshotRow } from './SnapshotRow';
 import { TransactionRow } from './TransactionRow';
+import { isSnapshotRow } from './useRegisterRows';
 import styles from './TransactionGrid.module.scss';
 
 const PHONE_QUERY = '(max-width: 639.98px)';
@@ -118,6 +120,41 @@ export function TransactionGrid({
           <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
             {virtualizer.getVirtualItems().map((item) => {
               const id = ids[item.index] as Id;
+              if (isSnapshotRow(id)) {
+                const snapshot = doc.balanceSnapshots[id];
+                const anchor =
+                  snapshot && index
+                    ? getLedger(doc, index, snapshot.accountId).anchors.find(
+                        (a) => a.snapshot.id === id,
+                      )
+                    : undefined;
+                if (!anchor) return null;
+                return (
+                  <div
+                    key={item.key}
+                    data-index={item.index}
+                    ref={virtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      transform: `translateY(${item.start}px)`,
+                    }}
+                  >
+                    <SnapshotRow
+                      anchor={anchor}
+                      date={format.date(anchor.snapshot.date)}
+                      adjustment={format.money(anchor.adjustment, { sign: 'always' })}
+                      balance={format.money(anchor.snapshot.balance)}
+                      active={activeId === id}
+                      onClick={() => {
+                        registerStore.setState({ activeId: id });
+                      }}
+                    />
+                  </div>
+                );
+              }
               const t = getTransaction(doc, id);
               if (!t) return null;
               return (

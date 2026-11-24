@@ -20,6 +20,8 @@ function snapshot(index: DocIndex) {
     byAccount: sortMap(index.byAccount),
     categoryByMonth: sortMap(index.categoryByMonth).map(([k, v]) => [k, sortMap(v)]),
     accountDailyDelta: sortMap(index.accountDailyDelta).map(([k, v]) => [k, sortMap(v)]),
+    unreconciled: sortMap(index.unreconciled).map(([k, v]) => [k, [...v].sort()]),
+    byStatement: sortMap(index.byStatement).map(([k, v]) => [k, [...v].sort()]),
   };
 }
 
@@ -37,7 +39,13 @@ describe('DocIndex', () => {
 
     // Edit: move a transaction to another date, amount and category.
     const edited = getTransaction(working, ids[10]!)!;
-    const changed: Transaction = { ...edited, date: '2026-01-15', amount: edited.amount - 1234 };
+    const changed: Transaction = {
+      ...edited,
+      date: '2026-01-15',
+      amount: edited.amount - 1234,
+      reconciled: true,
+      statementId: 'stm_aaaaaaaaaaaa',
+    };
     delete changed.categoryId;
     putTransaction(working, changed);
     index.update(edited, changed);

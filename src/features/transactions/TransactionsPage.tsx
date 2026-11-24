@@ -15,6 +15,7 @@ import { TransactionEditor } from './TransactionEditor';
 import { StatusBar } from './StatusBar';
 import { TransactionGrid } from './TransactionGrid';
 import { useFilteredIds } from './useFilteredIds';
+import { isSnapshotRow, useRegisterRows } from './useRegisterRows';
 import styles from './TransactionsPage.module.scss';
 
 const PHONE_QUERY = '(max-width: 639.98px)';
@@ -34,6 +35,7 @@ export function TransactionsPage() {
   // New transactions default to the filtered account, else the first open account.
   const filteredAccount =
     filter?.accountIds?.size === 1 ? ([...filter.accountIds][0] ?? null) : null;
+  const rows = useRegisterRows(ids, filter, filteredAccount);
   const defaultAccountId =
     filteredAccount ??
     (accounts ? (sortedAccounts({ accounts }).find((a) => !a.closed)?.id ?? null) : null);
@@ -41,19 +43,23 @@ export function TransactionsPage() {
   // Keep the cursor on a visible row.
   useEffect(() => {
     const { activeId } = registerStore.getState();
-    if (activeId && !ids.includes(activeId)) registerStore.setState({ activeId: ids[0] ?? null });
-  }, [ids]);
+    if (activeId && !rows.includes(activeId)) registerStore.setState({ activeId: rows[0] ?? null });
+  }, [rows]);
 
   const move = (delta: number) => {
     const { activeId } = registerStore.getState();
-    const i = activeId ? ids.indexOf(activeId) : -1;
-    const next = ids[Math.max(0, Math.min(ids.length - 1, i + delta))];
+    const i = activeId ? rows.indexOf(activeId) : -1;
+    const next = rows[Math.max(0, Math.min(rows.length - 1, i + delta))];
     if (next) {
       registerStore.setState({ activeId: next });
       scrollTo.current(next);
     }
   };
   const notEditing = () => registerStore.getState().editing === null;
+  const activeIsTransaction = () => {
+    const { activeId } = registerStore.getState();
+    return activeId !== null && !isSnapshotRow(activeId);
+  };
   const hasTargets = () => notEditing() && registerActions.targets().length > 0;
   const activeTransaction = () => {
     const { activeId } = registerStore.getState();
@@ -91,7 +97,7 @@ export function TransactionsPage() {
         const { activeId } = registerStore.getState();
         if (activeId) registerActions.toggleSelected(activeId);
       },
-      enabled: () => notEditing() && registerStore.getState().activeId !== null,
+      enabled: () => notEditing() && activeIsTransaction(),
     },
     'txn.selectAll': {
       run: () => {
@@ -107,7 +113,7 @@ export function TransactionsPage() {
       run: () => {
         registerStore.setState({ editing: registerStore.getState().activeId });
       },
-      enabled: () => notEditing() && registerStore.getState().activeId !== null,
+      enabled: () => notEditing() && activeIsTransaction(),
     },
     'txn.category': {
       run: () => {
@@ -174,7 +180,7 @@ export function TransactionsPage() {
         </Button>
       </div>
       <TransactionGrid
-        ids={ids}
+        ids={rows}
         balanceAccountId={filteredAccount}
         defaultAccountId={defaultAccountId}
         onScrollerReady={onScrollerReady}

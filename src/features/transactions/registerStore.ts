@@ -56,6 +56,7 @@ export const registerActions = {
   targets: (): Id[] => {
     const { selected, activeId } = registerStore.getState();
     if (selected.size > 0) return [...selected];
-    return activeId ? [activeId] : [];
+    // Balance-update rows (snp_…) can be the cursor but aren't transactions.
+    return activeId?.startsWith('txn_') ? [activeId] : [];
   },
 };

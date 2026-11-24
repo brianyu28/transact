@@ -23,6 +23,15 @@ import {
 } from './categories';
 import { updateSettings } from './settings';
 import { createSnapshot, deleteSnapshot, updateSnapshot } from './snapshots';
+import {
+  addReconcileAdjustment,
+  createStatement,
+  deleteStatement,
+  finishStatement,
+  reopenStatement,
+  setStatementMembership,
+  updateStatement,
+} from './statements';
 import { createTag, deleteTag, updateTag } from './tags';
 import {
   createTransaction,
@@ -69,6 +78,13 @@ export const commands = {
   updateCustomBudget,
   setCustomBudgetArchived,
   deleteCustomBudget,
+  createStatement,
+  updateStatement,
+  setStatementMembership,
+  finishStatement,
+  reopenStatement,
+  deleteStatement,
+  addReconcileAdjustment,
   updateSettings,
 };
 
@@ -79,6 +95,7 @@ export type CommandResult<K extends CommandName> = ReturnType<Commands[K]['run']
 
 export { CommandError, type CommandContext } from './define';
 export type { CustomBudgetInput, PeriodLineInput } from './budgets';
+export type { StatementInput } from './statements';
 export type {
   BulkChanges,
   NewTransaction,

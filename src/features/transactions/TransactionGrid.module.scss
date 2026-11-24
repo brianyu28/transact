@@ -203,6 +203,15 @@
   color: var(--tx-text-dim);
 }
 
+.snapshotRow {
+  background: var(--tx-surface);
+  font-style: italic;
+}
+
+.snapshotLabel {
+  color: var(--tx-text-dim);
+}
+
 .empty {
   padding: $space-5 $space-4;
   color: var(--tx-text-dim);

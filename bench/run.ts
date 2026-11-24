@@ -6,6 +6,7 @@ import { firstDataDate, netWorthSeries } from '../src/domain/aggregates/balances
 import { DocIndex } from '../src/domain/aggregates/docIndex';
 import { presetRange, sampleDates } from '../src/domain/aggregates/sampling';
 import { budgetView, customBudgetViews } from '../src/domain/budgets/views';
+import { reconcileCandidates } from '../src/domain/statements/reconcile';
 import { generateDemoDocument } from '../src/domain/demo/generate';
 import { iterateTransactions } from '../src/domain/model';
 import { parseDocument } from '../src/domain/schema/document';
@@ -124,6 +125,30 @@ const cases: Case[] = [
     targetMs: 100,
     runs: 10,
     fn: () => void customBudgetViews(doc, index, '2026-11-24'),
+  },
+  {
+    name: 'Reconcile candidates (busiest account, one month)',
+    targetMs: 16,
+    runs: 50,
+    fn: () => {
+      const busiest =
+        [...index.byAccount.entries()].sort((a, b) => b[1].length - a[1].length)[0]?.[0] ?? '';
+      reconcileCandidates(
+        doc,
+        index,
+        {
+          id: 'stm_bench0000000',
+          accountId: busiest,
+          startDate: '2026-10-01',
+          endDate: '2026-10-31',
+          openingBalance: 0,
+          closingBalance: 0,
+          status: 'open',
+          updatedAt: '2026-11-24T00:00:00.000Z',
+        },
+        7,
+      );
+    },
   },
   {
     name: 'Query one month (all accounts)',

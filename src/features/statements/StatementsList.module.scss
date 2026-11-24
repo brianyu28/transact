@@ -1,0 +1,89 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  max-width: 1040px;
+  padding: $space-4;
+
+  @include phone {
+    padding: $space-3;
+  }
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-2;
+  margin-bottom: $space-3;
+}
+
+.empty {
+  max-width: 520px;
+  color: var(--tx-text-dim);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(170px, 1.2fr) 110px 110px 110px 120px 140px;
+  align-items: center;
+  gap: $space-3;
+  min-height: 32px;
+  padding: 0 $space-2;
+  border-top: 1px solid var(--tx-border);
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--tx-surface);
+  }
+
+  @include phone {
+    grid-template-columns: minmax(0, 1fr) 100px;
+    row-gap: 0;
+    padding: $space-1 $space-2;
+
+    > :nth-child(3),
+    > :nth-child(4),
+    > :nth-child(5) {
+      display: none;
+    }
+  }
+}
+
+.head {
+  min-height: 22px;
+  border-top: 0;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+
+  &:hover {
+    background: none;
+  }
+}
+
+.account {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.period {
+  color: var(--tx-text-dim);
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+
+  @include tabular;
+}
+
+.dim {
+  color: var(--tx-text-dim);
+}
+
+.strong {
+  font-weight: 600;
+}
