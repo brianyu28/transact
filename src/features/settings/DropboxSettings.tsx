@@ -3,6 +3,7 @@ import { IconBrandDropbox } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useStore } from 'zustand';
 import {
+  DROPBOX_FOLDER,
   connectDropbox,
   disconnectDropbox,
   dropboxState,
@@ -24,7 +25,7 @@ export function DropboxSettings() {
         <dt>Dropbox</dt>
         <dd>
           {connected
-            ? 'Connected on this device. Files live in Apps/Transact in your Dropbox; Transact can’t see anything else there.'
+            ? `Connected on this device. Files live in ${DROPBOX_FOLDER} in your Dropbox; Transact can’t see anything else there.`
             : 'Keep your file in Dropbox to use it from several devices. Changes made on two devices are merged.'}
         </dd>
       </dl>

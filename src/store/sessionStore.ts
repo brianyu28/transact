@@ -14,6 +14,7 @@ import { describeLoadError, type LoadError } from '@/domain/schema/loadError';
 import type { IntegrityIssue } from '@/domain/schema/integrity';
 import { mergeDocuments, type MergeConflict } from '@/domain/sync/merge';
 import { today } from '@/lib/date';
+import { displayFileName } from '@/lib/format';
 import { newId } from '@/lib/id';
 import { adapterFor, preferredAdapter } from '@/persistence/adapters';
 import {
@@ -313,7 +314,7 @@ function failOpen(fileName: string, error: LoadError | string) {
   const message = typeof error === 'string' ? error : describeLoadError(error);
   if (docStore.getState().doc) {
     set({ status: 'ready' });
-    addNotice({ kind: 'error', title: `Couldn't open ${fileName}`, message });
+    addNotice({ kind: 'error', title: `Couldn't open ${displayFileName(fileName)}`, message });
   } else {
     set({ status: 'empty', loadError: { fileName, message } });
   }

@@ -1,5 +1,6 @@
 import { Button, Checkbox, Group, Modal, PasswordInput, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
+import { displayFileName } from '@/lib/format';
 import { session, useSession } from '@/store/sessionStore';
 
 /** Asks for the passphrase of an encrypted file. */
@@ -43,7 +44,9 @@ export function UnlockDialog() {
         }}
       >
         <Stack gap="sm">
-          <Text size="sm">{locked?.fileName} is encrypted. Enter its passphrase to open it.</Text>
+          <Text size="sm">
+            {displayFileName(locked?.fileName ?? '')} is encrypted. Enter its passphrase to open it.
+          </Text>
           <PasswordInput
             label="Passphrase"
             value={passphrase}

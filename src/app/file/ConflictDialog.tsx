@@ -1,11 +1,11 @@
 import { Button, Group, Modal, Stack, Text } from '@mantine/core';
-import { formatRelativeTime } from '@/lib/format';
+import { displayFileName, formatRelativeTime } from '@/lib/format';
 import { session, useSession } from '@/store/sessionStore';
 
 /** Shown when the file was changed elsewhere while there are local edits. */
 export function ConflictDialog() {
   const conflict = useSession((s) => s.conflict);
-  const name = useSession((s) => s.source?.name ?? 'this file');
+  const name = useSession((s) => (s.source ? displayFileName(s.source.name) : 'this file'));
 
   const when = conflict?.remoteSavedAt ? ` ${formatRelativeTime(conflict.remoteSavedAt)}` : '';
   return (

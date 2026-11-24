@@ -10,7 +10,7 @@ function pickFile(): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json,application/json';
+    input.accept = '.json,.transact,application/json';
     input.addEventListener('change', () => {
       resolve(input.files?.[0] ?? null);
     });

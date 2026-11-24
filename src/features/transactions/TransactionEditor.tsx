@@ -57,7 +57,7 @@ function initialState(t: Transaction | undefined, defaultAccountId: Id | null): 
     payee: t.payee,
     category: peer ? transferValue(peer.accountId) : categoryValue(t.categoryId),
     tags: (t.tags ?? []).map((id) => doc.tags[id]?.name ?? '').filter(Boolean),
-    amount: t.amount > 0 ? `+${centsToInput(t.amount)}` : centsToInput(t.amount),
+    amount: centsToInput(t.amount),
     note: t.note ?? '',
   };
 }
@@ -78,6 +78,35 @@ function isOverlayOpen(): boolean {
   );
 }
 
+/**
+ * True if Enter belongs to the focused control rather than saving: a button, a dropdown
+ * with a highlighted option (Enter picks it), or a tag being typed (Enter adds it).
+ * An open dropdown with nothing highlighted, such as payee suggestions, doesn't count.
+ */
+function enterIsHandledByControl(target: HTMLElement): boolean {
+  if (target.tagName === 'BUTTON') return true;
+  // Inputs inside popovers (e.g. the tags popover) handle their own Enter.
+  if (target.closest('.mantine-Popover-dropdown')) return true;
+  if (
+    target instanceof HTMLInputElement &&
+    target.closest('.mantine-TagsInput-root') &&
+    target.value.trim() !== ''
+  ) {
+    return true;
+  }
+  if (target.getAttribute('aria-expanded') !== 'true') return false;
+  const listId = target.getAttribute('aria-controls');
+  const list = listId ? document.getElementById(listId) : null;
+  return list?.querySelector('[data-combobox-selected]') != null;
+}
+
+/** Gives an amount the sign its category implies: positive for income, negative otherwise. */
+function withSign(amount: string, income: boolean): string {
+  if (amount === '') return amount;
+  if (income) return amount.replace(/^[-+]/, '');
+  return amount.startsWith('-') ? amount : `-${amount.replace(/^\+/, '')}`;
+}
+
 export function TransactionEditor({
   transaction,
   layout,
@@ -90,8 +119,12 @@ export function TransactionEditor({
   const transactions = useDocStore((s) => s.doc?.transactions);
   const [form, setForm] = useState<FormState>(() => initialState(transaction, defaultAccountId));
   const [error, setError] = useState<string | null>(null);
-  const payeeRef = useRef<HTMLInputElement>(null);
   const isNew = transaction === undefined;
+  /**
+   * New transactions: while true, the amount's sign follows the chosen category (income
+   * positive, expense negative). Turned off once the person types a sign themselves.
+   */
+  const [autoSign, setAutoSign] = useState(isNew);
   const isSplit = transaction?.splits !== undefined;
   const compact = layout === 'row';
 
@@ -118,6 +151,35 @@ export function TransactionEditor({
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
     setError(null);
+  };
+
+  const isIncome = (value: CategoryValue) => {
+    const { categoryId } = parseCategoryValue(value);
+    if (categoryId === null || !categories) return false;
+    return categoryTree(categories).byId.get(categoryId)?.kind === 'income';
+  };
+
+  const setCategory = (value: CategoryValue) => {
+    const signed = autoSign && value !== '';
+    const income = isIncome(value);
+    setForm((f) => ({
+      ...f,
+      category: value,
+      amount: signed ? withSign(f.amount, income) : f.amount,
+    }));
+    setError(null);
+  };
+
+  const setAmount = (value: string) => {
+    const signChanged = /^-/.test(value) !== /^-/.test(form.amount) || value.startsWith('+');
+    if (signChanged) {
+      setAutoSign(false);
+      set('amount', value);
+      return;
+    }
+    // Typing into an empty amount after choosing a category: apply that category's sign.
+    const signed = autoSign && form.amount === '' && form.category !== '';
+    set('amount', signed ? withSign(value, isIncome(form.category)) : value);
   };
 
   const accountOptions = useMemo(
@@ -161,7 +223,7 @@ export function TransactionEditor({
     if (!isNew || form.category) return;
     const info = payees.get(payee.toLowerCase());
     if (info?.lastCategoryId && categories?.[info.lastCategoryId]) {
-      set('category', categoryValue(info.lastCategoryId));
+      setCategory(categoryValue(info.lastCategoryId));
     }
   };
 
@@ -175,11 +237,7 @@ export function TransactionEditor({
       return;
     }
     const { categoryId, transferAccountId } = parseCategoryValue(form.category);
-    const income =
-      categoryId !== null && categories
-        ? categoryTree(categories).byId.get(categoryId)?.kind === 'income'
-        : false;
-    const amount = resolveAmount(form.amount, { previous: transaction?.amount, income });
+    const amount = resolveAmount(form.amount);
     if (amount === null) {
       setError('Enter an amount.');
       return;
@@ -200,11 +258,11 @@ export function TransactionEditor({
     onDone();
   };
 
+  // Runs in the capture phase: controls change their state (e.g. clear the highlighted
+  // option) while handling Enter, so the check must happen before they see the key.
   const onKeyDown = (e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
     if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
-    // Open dropdowns and buttons handle Enter themselves.
-    if (target.getAttribute('aria-expanded') === 'true' || target.tagName === 'BUTTON') return;
+    if (enterIsHandledByControl(e.target as HTMLElement)) return;
     e.preventDefault();
     save();
   };
@@ -238,18 +296,19 @@ export function TransactionEditor({
         {...input}
         aria-label="Amount"
         {...label('Amount')}
-        placeholder="-0.00"
+        placeholder="0.00"
         inputMode="decimal"
+        // New entries start at the amount; the date usually stays as today.
+        autoFocus={isNew && compact}
         value={form.amount}
         disabled={isSplit}
         onChange={(e) => {
-          set('amount', e.currentTarget.value);
+          setAmount(e.currentTarget.value);
         }}
         classNames={{ input: clsx(compact && styles.input, styles.amountInput) }}
       />
       <Autocomplete
         {...input}
-        ref={payeeRef}
         aria-label="Payee"
         {...label('Payee')}
         placeholder="Payee"
@@ -262,7 +321,6 @@ export function TransactionEditor({
         onBlur={() => {
           onPayeeChosen(form.payee);
         }}
-        autoFocus={isNew && compact}
         filter={({ options }) => options}
       />
       <Select
@@ -295,7 +353,7 @@ export function TransactionEditor({
           {...label('Category')}
           value={form.category}
           onChange={(v) => {
-            set('category', v);
+            setCategory(v);
           }}
           transfersFrom={form.accountId}
         />
@@ -342,7 +400,7 @@ export function TransactionEditor({
     return (
       <div
         className={styles.stack}
-        onKeyDown={onKeyDown}
+        onKeyDownCapture={onKeyDown}
         role="group"
         aria-label={isNew ? 'New transaction' : 'Edit transaction'}
       >
@@ -363,7 +421,7 @@ export function TransactionEditor({
   return (
     <div
       className={styles.row}
-      onKeyDown={onKeyDown}
+      onKeyDownCapture={onKeyDown}
       role="group"
       aria-label={isNew ? 'New transaction' : 'Edit transaction'}
     >
@@ -384,11 +442,7 @@ export function TransactionEditor({
       <span className={styles.secondLine}>
         {note}
         {splitButton}
-        {error ? (
-          <span className={styles.error}>{error}</span>
-        ) : (
-          <span className={styles.hint}>Enter to save · Esc to cancel</span>
-        )}
+        {error && <span className={styles.error}>{error}</span>}
       </span>
     </div>
   );

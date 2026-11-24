@@ -6,7 +6,7 @@
 import type { OpenedFile, SaveResult, SourceDescriptor, StorageAdapter } from '../types';
 
 const PICKER_TYPES: FilePickerAcceptType[] = [
-  { description: 'Transact data file', accept: { 'application/json': ['.json'] } },
+  { description: 'Transact data file', accept: { 'application/json': ['.json', '.transact'] } },
 ];
 
 export function isFsAccessSupported(): boolean {

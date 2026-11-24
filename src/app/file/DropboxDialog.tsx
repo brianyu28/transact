@@ -1,8 +1,8 @@
 import { Button, Group, Loader, Modal, Stack, Text, TextInput } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { formatRelativeTime } from '@/lib/format';
+import { displayFileName, fileExtension, formatRelativeTime } from '@/lib/format';
 import { today } from '@/lib/date';
-import { listDropboxFiles, type DropboxFile } from '@/persistence/adapters/dropbox';
+import { DROPBOX_FOLDER, listDropboxFiles, type DropboxFile } from '@/persistence/adapters/dropbox';
 import { FILE_EXTENSION } from '@/persistence/types';
 import { session, useSession } from '@/store/sessionStore';
 import { uiStore, useUi } from '@/store/uiStore';
@@ -64,7 +64,7 @@ function OpenPane() {
               void session.openFromDropbox(f.path);
             }}
           >
-            <span className={styles.name}>{f.name}</span>
+            <span className={styles.name}>{displayFileName(f.name)}</span>
             <span className={styles.meta}>
               {formatRelativeTime(f.modified)} · {Math.ceil(f.size / 1024).toLocaleString()} KB
             </span>
@@ -77,8 +77,12 @@ function OpenPane() {
 
 function SavePane() {
   const current = useSession((s) => s.source?.name);
-  const [name, setName] = useState(current ?? `Transact ${today()}${FILE_EXTENSION}`);
-  const fileName = name.trim().endsWith('.json') ? name.trim() : `${name.trim()}${FILE_EXTENSION}`;
+  // The field shows the name without its extension; saving keeps the current file's
+  // extension (or the default) unless one is typed.
+  const [name, setName] = useState(current ? displayFileName(current) : `Transact ${today()}`);
+  const trimmed = name.trim();
+  const extension = (current && fileExtension(current)) || FILE_EXTENSION;
+  const fileName = fileExtension(trimmed) ? trimmed : `${trimmed}${extension}`;
   return (
     <form
       onSubmit={(e) => {
@@ -97,7 +101,7 @@ function SavePane() {
           data-autofocus
         />
         <Text size="xs" c="dimmed">
-          Saved in your Dropbox under Apps/Transact. Later saves go to this copy.
+          Saved in your Dropbox under {DROPBOX_FOLDER}. Later saves go to this copy.
         </Text>
         <Group justify="flex-end" gap="xs">
           <Button variant="default" onClick={close}>

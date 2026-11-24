@@ -51,9 +51,11 @@ Every push to the production branch then redeploys. To deploy by hand, run
 
 Transact can keep the data file in Dropbox so it can be used from several devices. It talks
 to Dropbox directly from the browser (OAuth with PKCE, no server) and only has access to its
-own app folder. Edits saved from two devices are merged.
+own app folder (`Apps/Transact Finance` for the hosted app). Edits saved from two devices are merged.
 
-1. Create an app at <https://www.dropbox.com/developers/apps>: Scoped access, App folder.
+1. Create an app at <https://www.dropbox.com/developers/apps>: Scoped access, App folder. Dropbox
+   names the folder after the app (`Apps/<app name>`); if yours isn't "Transact Finance", update
+   `DROPBOX_FOLDER` in `src/persistence/adapters/dropbox.ts` so the app shows the right location.
 2. Under Permissions, enable `files.metadata.read`, `files.content.read` and
    `files.content.write`.
 3. Under OAuth 2 → Redirect URIs, add each URL the app is served from, e.g.

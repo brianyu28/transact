@@ -12,7 +12,7 @@ import {
 } from '@tabler/icons-react';
 import { clsx } from 'clsx';
 import { useStore } from 'zustand';
-import { formatRelativeTime } from '@/lib/format';
+import { displayFileName, formatRelativeTime } from '@/lib/format';
 import { dropboxState } from '@/persistence/adapters/dropbox';
 import { selectIsDirty, useDocStore } from '@/store/docStore';
 import { session, useSession } from '@/store/sessionStore';
@@ -35,7 +35,7 @@ export function FileMenu() {
 
   if (!hasDoc) return discardModal;
 
-  const name = source?.name ?? 'Untitled';
+  const name = source ? displayFileName(source.name) : 'Untitled';
   const status = saving
     ? 'Saving…'
     : dirty

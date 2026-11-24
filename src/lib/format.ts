@@ -16,3 +16,16 @@ export function formatRelativeTime(iso: string, now: number = Date.now()): strin
 export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
   return `${count.toLocaleString()} ${count === 1 ? singular : plural}`;
 }
+
+/** Data file extensions, longest first: `.transact.json`, `.transact` and plain `.json`. */
+const FILE_EXTENSION_RE = /\.transact\.json$|\.transact$|\.json$/i;
+
+/** The extension of a data file name ("" if it has none of the data file extensions). */
+export function fileExtension(name: string): string {
+  return FILE_EXTENSION_RE.exec(name)?.[0] ?? '';
+}
+
+/** A file name for display: "Budget.transact.json" → "Budget". The real name is unchanged. */
+export function displayFileName(name: string): string {
+  return name.replace(FILE_EXTENSION_RE, '') || name;
+}

@@ -20,6 +20,12 @@ const TOKEN_URL = 'https://api.dropboxapi.com/oauth2/token';
 const API = 'https://api.dropboxapi.com/2';
 const CONTENT = 'https://content.dropboxapi.com/2';
 
+/**
+ * Where the app folder appears in the user's Dropbox. Dropbox names it after the Dropbox
+ * app ("Transact" was taken). Builds using their own Dropbox app should change this.
+ */
+export const DROPBOX_FOLDER = 'Apps/Transact Finance';
+
 const TOKENS_KEY = 'transact:dropbox';
 const APP_KEY_KEY = 'transact:dropbox-app-key';
 const PENDING_KEY = 'transact:dropbox-pending';
@@ -257,7 +263,7 @@ export async function listDropboxFiles(): Promise<DropboxFile[]> {
       cursor: string;
     };
     for (const e of page.entries) {
-      if (e['.tag'] === 'file' && e.name.toLowerCase().endsWith('.json')) files.push(toFile(e));
+      if (e['.tag'] === 'file' && /\.(json|transact)$/i.test(e.name)) files.push(toFile(e));
     }
     if (!page.has_more) break;
     response = await call(`${API}/files/list_folder/continue`, {

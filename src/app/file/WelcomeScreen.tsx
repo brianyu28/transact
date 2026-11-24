@@ -8,6 +8,7 @@ import {
   IconHistory,
 } from '@tabler/icons-react';
 import { useStore } from 'zustand';
+import { displayFileName } from '@/lib/format';
 import { dropboxState } from '@/persistence/adapters/dropbox';
 import { isFsAccessSupported } from '@/persistence/adapters/fsAccess';
 import { session, useSession } from '@/store/sessionStore';
@@ -46,7 +47,7 @@ export function WelcomeScreen() {
           color="red"
           variant="light"
           icon={<IconAlertTriangle size={16} />}
-          title={`Couldn’t open ${loadError.fileName}`}
+          title={`Couldn’t open ${displayFileName(loadError.fileName)}`}
         >
           <span className={styles.preLine}>{loadError.message}</span>
         </Alert>
@@ -58,7 +59,7 @@ export function WelcomeScreen() {
             leftSection={<IconHistory size={16} />}
             onClick={() => void session.reopenRecent()}
           >
-            Reopen {recent.source.name}
+            Reopen {displayFileName(recent.source.name)}
           </Button>
         )}
         <Button
