@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayFileName, fileExtension } from './format';
+import { displayFileName, fileExtension, formatBytes } from './format';
 
 describe('displayFileName', () => {
   it('hides data file extensions', () => {
@@ -15,5 +15,15 @@ describe('displayFileName', () => {
     expect(fileExtension('a.transact')).toBe('.transact');
     expect(fileExtension('a.json')).toBe('.json');
     expect(fileExtension('a')).toBe('');
+  });
+});
+
+describe('formatBytes', () => {
+  it('uses bytes, then KB/MB with one decimal below 10', () => {
+    expect(formatBytes(1)).toBe('1 byte');
+    expect(formatBytes(812)).toBe('812 bytes');
+    expect(formatBytes(1536)).toBe('1.5 KB');
+    expect(formatBytes(200 * 1024)).toBe('200 KB');
+    expect(formatBytes(3.25 * 1024 * 1024)).toBe('3.3 MB');
   });
 });

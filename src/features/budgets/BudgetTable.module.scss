@@ -47,9 +47,12 @@
 }
 
 .label {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  min-width: 0;
   overflow: hidden;
   font-weight: 500;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

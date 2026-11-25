@@ -190,6 +190,8 @@ export const TemplateLineSchema = z.object({
   defaultAmount: CentsSchema,
   rolloverPolicy: RolloverPolicySchema,
   order: z.number(),
+  /** Why the line is set the way it is (since v4). Not copied into created periods. */
+  note: NoteSchema.optional(),
 });
 
 export const BudgetPeriodSchema = z.object({
@@ -267,6 +269,8 @@ export const TaxRuleSchema = z.object({
   ]),
   /** Maximum taxable base, e.g. the Social Security wage base. */
   cap: CentsSchema.optional(),
+  /** Left out of the calculation without deleting it (since v4). */
+  disabled: z.literal(true).optional(),
   /** The cap is reduced by this base (since v2): SE Social Security's cap shrinks by W-2 wages. */
   capReducedBy: TaxBaseSchema.optional(),
   /** Only the base above this amount is taxed, e.g. Additional Medicare. */
@@ -297,6 +301,8 @@ export const TaxRuleSchema = z.object({
 export const PlannerScenarioSchema = z.object({
   id: IdSchema,
   name: NameSchema,
+  /** Free-text notes about the scenario (since v4). */
+  description: NoteSchema.optional(),
   year: z.number().int(),
   /** Earners in the household (since v2); incomes and deductions can belong to one. */
   people: z.array(z.object({ id: IdSchema, name: NameSchema })).optional(),
@@ -307,6 +313,8 @@ export const PlannerScenarioSchema = z.object({
       kind: z.enum(['w2', '1099', 'other']),
       annual: CentsSchema,
       person: IdSchema.optional(),
+      /** Left out of the calculation without deleting it (since v4). */
+      disabled: z.literal(true).optional(),
     }),
   ),
   deductions: z.array(
@@ -317,6 +325,8 @@ export const PlannerScenarioSchema = z.object({
       pretax: z.boolean(),
       reduces: z.array(TaxBaseSchema),
       person: IdSchema.optional(),
+      /** Left out of the calculation without deleting it (since v4). */
+      disabled: z.literal(true).optional(),
     }),
   ),
   taxes: z.array(TaxRuleSchema),
@@ -325,6 +335,8 @@ export const PlannerScenarioSchema = z.object({
    * counted as left over after the budget.
    */
   savings: CentsSchema.optional(),
+  /** Savings left out of the calculation, keeping the amount (since v4). */
+  savingsDisabled: z.literal(true).optional(),
   updatedAt: TimestampSchema,
 });
 

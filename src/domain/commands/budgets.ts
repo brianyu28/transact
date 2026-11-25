@@ -81,6 +81,7 @@ export const updateTemplateLine = defineCommand<{
     defaultAmount?: Cents;
     name?: string;
     rolloverPolicy?: RolloverPolicy;
+    note?: string;
   };
 }>({
   label: 'Edit budget line',
@@ -92,6 +93,7 @@ export const updateTemplateLine = defineCommand<{
       ...(changes.defaultAmount !== undefined ? { defaultAmount: changes.defaultAmount } : {}),
       ...(changes.rolloverPolicy ? { rolloverPolicy: changes.rolloverPolicy } : {}),
       ...(changes.name !== undefined ? { name: changes.name.trim() || undefined } : {}),
+      ...(changes.note !== undefined ? { note: changes.note.trim() || undefined } : {}),
     });
     draft.budgets.template.updatedAt = now;
   },
@@ -126,7 +128,10 @@ export interface PeriodLineInput {
   rollover: Cents;
 }
 
-/** Creates a month or year budget from the defaults, with the chosen amounts and rollovers. */
+/**
+ * Creates a month or year budget from the defaults, with the chosen amounts and rollovers.
+ * Notes on default lines stay with the defaults; a period's lines start without one.
+ */
 export const createPeriod = defineCommand<
   { cadence: BudgetTier; period: string; lines: readonly PeriodLineInput[] },
   Id

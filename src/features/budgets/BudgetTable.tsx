@@ -1,6 +1,7 @@
 import { Tooltip } from '@mantine/core';
 import { clsx } from 'clsx';
 import { MoneyInput } from '@/components/MoneyInput/MoneyInput';
+import { NoteButton } from '@/components/NoteButton/NoteButton';
 import type { BudgetView, LineView } from '@/domain/budgets/views';
 import { useFormat } from '@/hooks/useFormat';
 import { tryRun } from '@/store/actions';
@@ -115,7 +116,7 @@ function LineRow({
   const periodId = view.period?.id;
   const [, navigate] = useLocation();
   return (
-    <div className={styles.row} role="row">
+    <div className={clsx(styles.row, 'tx-note-row')} role="row">
       <span role="cell" className={styles.label}>
         <button
           type="button"
@@ -128,6 +129,19 @@ function LineRow({
         >
           {line.label}
         </button>
+        {canEdit && periodId && !compact && (
+          <NoteButton
+            note={line.note}
+            subject={line.label}
+            onSave={(note) => {
+              tryRun('setPeriodLine', {
+                periodId,
+                templateLineId: line.lineId,
+                changes: { note },
+              });
+            }}
+          />
+        )}
       </span>
       <span role="cell" className={styles.num}>
         {canEdit && periodId ? (

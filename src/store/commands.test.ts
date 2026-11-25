@@ -298,6 +298,32 @@ describe('planner scenarios', () => {
     ).toBeUndefined();
   });
 
+  it('stores a description and switched-off savings, and keeps them when duplicating', () => {
+    const id = d()('createScenario', { name: 'Plan', year: 2026, template: null });
+    d()('updateScenario', {
+      id,
+      changes: {
+        description: '  What if I go part-time?  ',
+        savings: 1200_00,
+        savingsDisabled: true,
+      },
+    });
+    const s = doc().planner.scenarios[id]!;
+    expect(s.description).toBe('What if I go part-time?');
+    expect(s.savingsDisabled).toBe(true);
+    expect(s.savings).toBe(1200_00);
+
+    const copyId = d()('duplicateScenario', { id });
+    const copy = doc().planner.scenarios[copyId]!;
+    expect(copy.description).toBe('What if I go part-time?');
+    expect(copy.savings).toBe(1200_00);
+    expect(copy.savingsDisabled).toBe(true);
+
+    d()('updateScenario', { id, changes: { description: ' ', savingsDisabled: false } });
+    expect(doc().planner.scenarios[id]!.description).toBeUndefined();
+    expect(doc().planner.scenarios[id]!.savingsDisabled).toBeUndefined();
+  });
+
   it('keeps people links when duplicating and unassigns items when a person is removed', () => {
     const id = d()('createScenario', {
       name: 'Us',

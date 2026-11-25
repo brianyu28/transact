@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { ComponentType } from 'react';
 import { Link, useParams } from 'wouter';
+import { AboutSettings } from './AboutSettings';
 import { AccountsSettings } from './AccountsSettings';
 import { CategoriesSettings } from './CategoriesSettings';
 import { GeneralSettings } from './GeneralSettings';
@@ -16,6 +17,7 @@ const SECTIONS: readonly { id: string; title: string; component: ComponentType }
   { id: 'tags', title: 'Tags', component: TagsSettings },
   { id: 'keyboard', title: 'Keyboard', component: KeyboardSettings },
   { id: 'storage', title: 'Storage', component: StorageSettings },
+  { id: 'about', title: 'About', component: AboutSettings },
 ];
 
 export function SettingsPage() {

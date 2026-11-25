@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
@@ -23,12 +24,32 @@ function productionHeaders(): Record<string, string> {
   return headers;
 }
 
+/**
+ * The commit being built and when it was made, shown in Settings → About. Falls back to the
+ * CI's commit variable (Cloudflare Workers Builds) when git isn't usable.
+ */
+function buildInfo(): { commit: string | null; commitDate: string | null; builtAt: string } {
+  const builtAt = new Date().toISOString();
+  try {
+    const [commit, commitDate] = execFileSync('git', ['log', '-1', '--format=%H%n%cI'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+      .trim()
+      .split('\n');
+    return { commit: commit || null, commitDate: commitDate || null, builtAt };
+  } catch {
+    return { commit: process.env.WORKERS_CI_COMMIT_SHA ?? null, commitDate: null, builtAt };
+  }
+}
+
 // Relative base so the build works from any static host or sub-path
 // (Cloudflare Workers, GitHub Pages, etc.). Routing uses the URL hash.
 export default defineConfig({
   base: './',
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_INFO__: JSON.stringify(buildInfo()),
   },
   worker: { format: 'es' },
   preview: { headers: productionHeaders() },

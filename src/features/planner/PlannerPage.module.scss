@@ -76,6 +76,16 @@
   font-weight: 600;
 }
 
+.description {
+  max-width: 720px;
+  margin: (-$space-2) 0 $space-3;
+  color: var(--tx-text-dim);
+
+  textarea {
+    padding: 0;
+  }
+}
+
 .columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;

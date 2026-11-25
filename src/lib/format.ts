@@ -17,6 +17,19 @@ export function pluralize(count: number, singular: string, plural = `${singular}
   return `${count.toLocaleString()} ${count === 1 ? singular : plural}`;
 }
 
+/** A byte count for display: "812 bytes", "4.2 KB", "1.3 MB" (1 KB = 1024 bytes). */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return pluralize(bytes, 'byte');
+  const units = ['KB', 'MB', 'GB'];
+  let value = bytes / 1024;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit++;
+  }
+  return `${value.toLocaleString(undefined, { maximumFractionDigits: value < 10 ? 1 : 0 })} ${units[unit] ?? ''}`;
+}
+
 /** Data file extensions, longest first: `.transact.json`, `.transact` and plain `.json`. */
 const FILE_EXTENSION_RE = /\.transact\.json$|\.transact$|\.json$/i;
 

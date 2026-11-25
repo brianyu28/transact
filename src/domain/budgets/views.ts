@@ -33,6 +33,8 @@ type Doc = Pick<DocModel, 'budgets' | 'categories' | 'settings' | 'transactions'
 
 export interface EffectiveLine extends LineSpec {
   name: string | undefined;
+  /** The created period's note for this line (default-line notes stay with the defaults). */
+  note: string | undefined;
   base: Cents;
   rollover: Cents;
 }
@@ -51,6 +53,7 @@ export function linesFor(
         lineId: l.templateLineId,
         target: l.target,
         name: l.name,
+        note: l.note,
         base: l.base,
         rollover: l.rollover,
       })),
@@ -63,6 +66,7 @@ export function linesFor(
       lineId: l.id,
       target: l.target,
       name: l.name,
+      note: undefined,
       base: l.defaultAmount,
       rollover: 0,
     }));

@@ -306,6 +306,9 @@ engine decides which budget each split counts toward.
 - Annual periods follow the `budgetYearStartMonth` setting. With a July start, period `2026` runs
   from 2026-07-01 to 2027-06-30 (`budgets/periods.ts`).
 - Editing the template doesn't change periods that already exist, so history stays stable.
+- Template lines and period lines each have an optional `note`. Notes aren't copied when a period
+  is created: a default line's note explains the default, a period line's note explains that
+  period.
 
 ### 11.2 Rollover
 
@@ -396,6 +399,10 @@ and users can edit everything.
   user ticks it, and rules not from the template are never touched.
 - **Savings** (`savings`, yearly) is set aside from take-home pay and isn't counted as left over
   after the budget.
+- **Disabled lines**: incomes, deductions and tax rules marked `disabled` (and savings with
+  `savingsDisabled`) are kept but left out of the calculation, for trying "what if" without
+  deleting anything. `computeScenario` filters them; a rule that subtracts a disabled tax treats
+  it as zero.
 
 - **Incomes** are typed `w2`, `1099` or `other`, and may belong to a **person** in the household.
 - **Deductions** are pre-tax or post-tax, and list the bases they reduce (a 401(k) reduces taxable

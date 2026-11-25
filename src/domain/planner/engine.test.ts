@@ -44,6 +44,37 @@ describe('tax engine', () => {
     expect(r.marginalRate).toBeCloseTo(0.22 + 0.0765);
   });
 
+  it('leaves disabled incomes, deductions and taxes out', () => {
+    const base = scenario(
+      [
+        { id: 'pli_a', name: 'Salary', kind: 'w2', annual: $(100_000) },
+        { id: 'pli_x', name: 'Bonus', kind: 'w2', annual: $(20_000), disabled: true },
+      ],
+      { selfEmployment: false, stateRate: 0 },
+      [
+        {
+          id: 'pli_d',
+          name: '401(k)',
+          annual: $(10_000),
+          pretax: true,
+          reduces: ['taxableIncome'],
+          disabled: true,
+        },
+      ],
+    );
+    const r = computeScenario(base);
+    expect(r.gross).toBe($(100_000));
+    expect(r.pretaxDeductions).toBe(0);
+    expect(tax(r, 'Federal income tax')).toBe($(13_170));
+
+    const noMedicare = computeScenario({
+      ...base,
+      taxes: base.taxes.map((t) => (t.name === 'Medicare' ? { ...t, disabled: true as const } : t)),
+    });
+    expect(tax(noMedicare, 'Medicare')).toBeUndefined();
+    expect(noMedicare.takeHome).toBe(r.takeHome + $(1_450));
+  });
+
   it('caps Social Security and adds Additional Medicare above the threshold', () => {
     const r = computeScenario(
       scenario([{ id: 'pli_a', name: 'Salary', kind: 'w2', annual: $(250_000) }]),

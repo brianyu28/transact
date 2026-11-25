@@ -341,6 +341,7 @@ export function generateDemoDocument(options: DemoOptions): DocModel {
     dollars: number,
     order: number,
     name?: string,
+    note?: string,
   ) => {
     const l: TemplateLine = {
       id: makeId('budgetLine'),
@@ -351,13 +352,21 @@ export function generateDemoDocument(options: DemoOptions): DocModel {
       order,
     };
     if (name) l.name = name;
+    if (note) l.note = note;
     doc.budgets.template.lines[l.id] = l;
   };
   const cats = (...names: string[]) => ({
     kind: 'categories' as const,
     categoryIds: names.map(cat),
   });
-  line('monthly', cats('Housing'), 2350, 0);
+  line(
+    'monthly',
+    cats('Housing'),
+    2350,
+    0,
+    undefined,
+    'Rent plus utilities; the lease renews in June.',
+  );
   line('monthly', cats('Food'), 950, 1);
   line('monthly', cats('Bills'), 260, 2);
   line('monthly', cats('Transportation'), 220, 3);
@@ -384,11 +393,17 @@ export function generateDemoDocument(options: DemoOptions): DocModel {
   for (const offset of [2, 1]) {
     const period = addMonths(end, -offset).slice(0, 7);
     const id = makeId('budgetPeriod');
+    const lines = periodLines('monthly');
+    const first = lines[0];
+    if (offset === 1 && first) {
+      first.base += 15000;
+      Object.assign(first, { note: 'Raised for a one-off repair this month.' });
+    }
     doc.budgets.periods[id] = {
       id,
       cadence: 'monthly',
       period,
-      lines: periodLines('monthly'),
+      lines,
       createdAt: now,
       updatedAt: now,
     };

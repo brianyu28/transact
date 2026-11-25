@@ -1,10 +1,10 @@
-import { Button, Menu, NumberInput } from '@mantine/core';
+import { Button, Menu, NumberInput, Textarea } from '@mantine/core';
 import { IconCalendarRepeat, IconCopy, IconDots, IconPlus, IconTrash } from '@tabler/icons-react';
 import { clsx } from 'clsx';
 import { useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'wouter';
 import { InlineEdit } from '@/components/InlineEdit/InlineEdit';
-import { computeScenario } from '@/domain/planner/engine';
+import { computeScenario, scenarioSavings } from '@/domain/planner/engine';
 import { needsTaxYearUpdate, planTaxYearUpdate } from '@/domain/planner/taxYearUpdate';
 import { US_TAX_YEARS, usTaxYearFor } from '@/domain/planner/taxYears';
 import type { PlannerScenario } from '@/domain/schema/types';
@@ -235,6 +235,25 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
           </Menu.Dropdown>
         </Menu>
       </header>
+      <Textarea
+        // Remount when the description changes elsewhere (undo/redo).
+        key={scenario.description ?? ''}
+        className={styles.description}
+        variant="unstyled"
+        size="sm"
+        autosize
+        minRows={1}
+        maxRows={8}
+        maxLength={10_000}
+        aria-label="Scenario description"
+        placeholder="Add a description…"
+        defaultValue={scenario.description ?? ''}
+        onBlur={(e) => {
+          const description = e.currentTarget.value;
+          if (description.trim() !== (scenario.description ?? ''))
+            tryRun('updateScenario', { id: scenario.id, changes: { description } });
+        }}
+      />
       <TaxYearUpdateDialog
         scenario={scenario}
         year={updatingTo}
@@ -247,7 +266,7 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
         <div className={styles.summaryColumn}>
           <ScenarioSummary
             result={result}
-            savings={scenario.savings ?? 0}
+            savings={scenarioSavings(scenario)}
             budgetPerYear={context.budgetPerYear}
             actualIncome={context.actualIncome}
           />

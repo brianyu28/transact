@@ -1,0 +1,24 @@
+@use '@/styles/tokens' as *;
+
+.button {
+  flex: none;
+}
+
+// No note yet: faint, and only visible while the row is hovered or focused (always on touch).
+.empty {
+  color: var(--tx-text-faint);
+  opacity: 0;
+
+  &:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    opacity: 0.6;
+  }
+}
+
+:global(.tx-note-row):hover .empty,
+:global(.tx-note-row):focus-within .empty {
+  opacity: 1;
+}

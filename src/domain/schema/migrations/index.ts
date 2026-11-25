@@ -11,6 +11,7 @@
  */
 import { v1ToV2 } from './v1-to-v2';
 import { v2ToV3 } from './v2-to-v3';
+import { v3ToV4 } from './v3-to-v4';
 
 export type JsonObject = Record<string, unknown>;
 
@@ -22,7 +23,7 @@ export interface Migration {
 }
 
 /** Ordered list of all migrations. */
-export const migrations: readonly Migration[] = [v1ToV2, v2ToV3];
+export const migrations: readonly Migration[] = [v1ToV2, v2ToV3, v3ToV4];
 
 export class MigrationError extends Error {
   readonly fromVersion: number;

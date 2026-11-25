@@ -15,6 +15,7 @@ import { TAX_BASE_LABELS, type PlannerResult, type TaxBase } from '@/domain/plan
 import type { PlannerScenario, TaxRule } from '@/domain/schema/types';
 import { useFormat } from '@/hooks/useFormat';
 import { newId } from '@/lib/id';
+import type { ScenarioChanges } from '@/domain/commands/planner';
 import { tryRun } from '@/store/actions';
 import { TaxRuleDialog } from './TaxRuleDialog';
 import styles from './ScenarioEditor.module.scss';
@@ -44,11 +45,7 @@ export function ScenarioEditor({
 }) {
   const format = useFormat();
   const [editingRule, setEditingRule] = useState<TaxRule | null>(null);
-  const save = (
-    changes: Partial<
-      Pick<PlannerScenario, 'people' | 'incomes' | 'deductions' | 'taxes' | 'savings'>
-    >,
-  ) => {
+  const save = (changes: ScenarioChanges) => {
     tryRun('updateScenario', { id: scenario.id, changes });
   };
   const { incomes, deductions, taxes } = scenario;
@@ -85,6 +82,25 @@ export function ScenarioEditor({
     else Reflect.deleteProperty(next, 'person');
     return next;
   };
+  /** Sets or clears an item's `disabled` flag without storing `false`. */
+  const withEnabled = <T extends { disabled?: true | undefined }>(item: T, enabled: boolean): T => {
+    const next = { ...item };
+    if (enabled) Reflect.deleteProperty(next, 'disabled');
+    else next.disabled = true;
+    return next;
+  };
+  const includeBox = (name: string, enabled: boolean, onChange: (enabled: boolean) => void) => (
+    <Tooltip label={enabled ? 'Included · uncheck to leave out' : 'Left out · check to include'}>
+      <Checkbox
+        size="xs"
+        aria-label={`Include ${name}`}
+        checked={enabled}
+        onChange={(e) => {
+          onChange(e.currentTarget.checked);
+        }}
+      />
+    </Tooltip>
+  );
 
   return (
     <div className={styles.root}>
@@ -161,6 +177,7 @@ export function ScenarioEditor({
             styles.head,
           )}
         >
+          <span />
           <span>Source</span>
           {hasPeople && <span>Person</span>}
           <span>Type</span>
@@ -171,8 +188,16 @@ export function ScenarioEditor({
         {incomes.map((income, i) => (
           <div
             key={income.id}
-            className={clsx(styles.row, styles.incomeRow, hasPeople && styles.withPerson)}
+            className={clsx(
+              styles.row,
+              styles.incomeRow,
+              hasPeople && styles.withPerson,
+              income.disabled && styles.off,
+            )}
           >
+            {includeBox(income.name, !income.disabled, (enabled) => {
+              save({ incomes: incomes.map((x, j) => (j === i ? withEnabled(x, enabled) : x)) });
+            })}
             <TextInput
               size="xs"
               variant="unstyled"
@@ -254,6 +279,7 @@ export function ScenarioEditor({
             styles.head,
           )}
         >
+          <span />
           <span>Name</span>
           {hasPeople && <span>Person</span>}
           <span className={styles.num}>Per year</span>
@@ -264,8 +290,18 @@ export function ScenarioEditor({
         {deductions.map((d, i) => (
           <div
             key={d.id}
-            className={clsx(styles.row, styles.deductionRow, hasPeople && styles.withPerson)}
+            className={clsx(
+              styles.row,
+              styles.deductionRow,
+              hasPeople && styles.withPerson,
+              d.disabled && styles.off,
+            )}
           >
+            {includeBox(d.name, !d.disabled, (enabled) => {
+              save({
+                deductions: deductions.map((x, j) => (j === i ? withEnabled(x, enabled) : x)),
+              });
+            })}
             <TextInput
               size="xs"
               variant="unstyled"
@@ -366,6 +402,7 @@ export function ScenarioEditor({
       <section>
         <h3 className={styles.heading}>Taxes</h3>
         <div className={clsx(styles.row, styles.taxRow, styles.head)}>
+          <span />
           <span>Tax</span>
           <span>On</span>
           <span>Rate</span>
@@ -373,10 +410,14 @@ export function ScenarioEditor({
           <span className={styles.num}>Of income</span>
           <span />
         </div>
-        {result.taxes.map((line) => {
-          const rule = line.rule;
+        {taxes.map((rule) => {
+          // Disabled rules have no result line.
+          const line = result.taxes.find((l) => l.rule.id === rule.id);
           return (
-            <div key={rule.id} className={clsx(styles.row, styles.taxRow)}>
+            <div key={rule.id} className={clsx(styles.row, styles.taxRow, !line && styles.off)}>
+              {includeBox(rule.name, !rule.disabled, (enabled) => {
+                save({ taxes: taxes.map((t) => (t.id === rule.id ? withEnabled(t, enabled) : t)) });
+              })}
               <span className={styles.taxName}>
                 <button
                   type="button"
@@ -387,7 +428,7 @@ export function ScenarioEditor({
                 >
                   {rule.name}
                 </button>
-                {hasPeople && line.byPerson && line.byPerson.length > 0 && (
+                {hasPeople && line?.byPerson && line.byPerson.length > 0 && (
                   <span className={styles.byPerson}>
                     {line.byPerson
                       .map((p) => `${personName(p.person)} ${format.money(p.amount)}`)
@@ -397,9 +438,11 @@ export function ScenarioEditor({
               </span>
               <span className={styles.dim}>{TAX_BASE_LABELS[rule.base]}</span>
               <span className={styles.dim}>{rateSummary(rule)}</span>
-              <span className={styles.num}>{format.money(line.amount)}</span>
+              <span className={styles.num}>{line ? format.money(line.amount) : '—'}</span>
               <span className={clsx(styles.num, styles.dim)}>
-                {result.gross > 0 ? `${((line.amount / result.gross) * 100).toFixed(1)}%` : '—'}
+                {line && result.gross > 0
+                  ? `${((line.amount / result.gross) * 100).toFixed(1)}%`
+                  : '—'}
               </span>
               <span className={styles.actions}>
                 <Tooltip label="Edit rule">
@@ -449,10 +492,16 @@ export function ScenarioEditor({
         <h3 className={styles.heading}>Savings</h3>
         <div className={clsx(styles.row, styles.savingsRow, styles.head)}>
           <span />
+          <span />
           <span className={styles.num}>Per month</span>
           <span className={styles.num}>Per year</span>
         </div>
-        <div className={clsx(styles.row, styles.savingsRow)}>
+        <div
+          className={clsx(styles.row, styles.savingsRow, scenario.savingsDisabled && styles.off)}
+        >
+          {includeBox('savings', !scenario.savingsDisabled, (enabled) => {
+            save({ savingsDisabled: !enabled });
+          })}
           <span className={styles.dim}>Set aside from take-home pay</span>
           <MoneyInput
             size="xs"

@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
 import { useMemo } from 'react';
-import { computeScenario } from '@/domain/planner/engine';
+import { computeScenario, scenarioSavings } from '@/domain/planner/engine';
 import type { PlannerScenario } from '@/domain/schema/types';
 import { useFormat } from '@/hooks/useFormat';
 import t from '@/features/reports/reportTable.module.scss';
@@ -15,7 +15,7 @@ export function CompareScenarios({ scenarios }: { scenarios: PlannerScenario[] }
     () =>
       scenarios.map((s) => ({
         scenario: s,
-        result: { ...computeScenario(s), savings: s.savings ?? 0 },
+        result: { ...computeScenario(s), savings: scenarioSavings(s) },
       })),
     [scenarios],
   );

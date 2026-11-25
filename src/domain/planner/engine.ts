@@ -221,9 +221,22 @@ function compute(
 
 const MARGINAL_STEP = 100_00; // $100
 
+/** The scenario's yearly savings, or 0 when savings are switched off. */
+export function scenarioSavings(scenario: Pick<PlannerScenario, 'savings' | 'savingsDisabled'>) {
+  return scenario.savingsDisabled ? 0 : (scenario.savings ?? 0);
+}
+
+/** Calculates take-home pay; incomes, deductions and taxes marked `disabled` are left out. */
 export function computeScenario(
-  scenario: Pick<PlannerScenario, 'incomes' | 'deductions' | 'taxes'>,
+  input: Pick<PlannerScenario, 'incomes' | 'deductions' | 'taxes'> &
+    Partial<Pick<PlannerScenario, 'people'>>,
 ): PlannerResult {
+  const scenario = {
+    ...input,
+    incomes: input.incomes.filter((i) => !i.disabled),
+    deductions: input.deductions.filter((d) => !d.disabled),
+    taxes: input.taxes.filter((t) => !t.disabled),
+  };
   const result = compute(scenario);
   const largest = [...scenario.incomes].sort((a, b) => b.annual - a.annual)[0];
   let marginalRate = 0;

@@ -91,6 +91,8 @@ export interface SessionState {
   /** Set while the open file is encrypted (the key never leaves memory / IndexedDB). */
   encryption: EncryptionInfo | null;
   locked: Locked | null;
+  /** Size in bytes of the open document as it is (or would be) saved, encryption included. */
+  fileSize: number | null;
 }
 
 const DEVICE_ID_KEY = 'transact:device-id';
@@ -118,6 +120,7 @@ const initialState: SessionState = {
   recent: null,
   encryption: null,
   locked: null,
+  fileSize: null,
 };
 
 export const sessionStore = createStore<SessionState>()(() => initialState);
@@ -196,8 +199,10 @@ function flushWorkingCopy(): Promise<void> {
     const { doc } = docStore.getState();
     if (!doc) return;
     const { source, baseRevision, baseVersion } = get();
+    const bytes = await encodeForStorage(doc);
+    set({ fileSize: bytes.length });
     await workingCopyStore.save({
-      bytes: await encodeForStorage(doc),
+      bytes,
       fileId: doc.meta.fileId,
       baseRevision,
       baseVersion,
@@ -414,6 +419,7 @@ export const session = {
             baseRevision: copy.baseRevision,
             baseVersion: copy.baseVersion,
             lastSavedAt: result.model.meta.savedAt,
+            fileSize: copy.bytes.length,
           });
           if (copy.dirty) addNotice({ kind: 'restored', updatedAt: copy.updatedAt });
         },

@@ -4,6 +4,7 @@ import { clsx } from 'clsx';
 import { useState } from 'react';
 import { CategoryMultiSelect } from '@/components/CategoryMultiSelect/CategoryMultiSelect';
 import { MoneyInput } from '@/components/MoneyInput/MoneyInput';
+import { NoteButton } from '@/components/NoteButton/NoteButton';
 import { DragHandle, SortableGroup, SortableProvider } from '@/components/Sortable/Sortable';
 import { useSortableItem } from '@/components/Sortable/useSortableItem';
 import { lineLabel } from '@/domain/budgets/views';
@@ -95,7 +96,11 @@ function LineRow({ line }: { line: TemplateLine }) {
   if (!doc) return null;
   const label = lineLabel(doc, { target: line.target });
   return (
-    <div ref={setNodeRef} style={style} className={clsx(styles.row, isDragging && styles.dragging)}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={clsx(styles.row, 'tx-note-row', isDragging && styles.dragging)}
+    >
       <DragHandle handle={handle} label={`Reorder ${label}`} />
       {line.target.kind === 'everythingElse' ? (
         <span className={styles.everythingElse}>Everything Else</span>
@@ -151,17 +156,26 @@ function LineRow({ line }: { line: TemplateLine }) {
             });
         }}
       />
-      <Tooltip label="Delete line">
-        <ActionIcon
-          color="gray"
-          aria-label={`Delete ${label}`}
-          onClick={() => {
-            if (tryRun('deleteTemplateLine', { id: line.id })) toastWithUndo(`Deleted ${label}`);
+      <span className={styles.actions}>
+        <NoteButton
+          note={line.note}
+          subject={line.name ?? label}
+          onSave={(note) => {
+            tryRun('updateTemplateLine', { id: line.id, changes: { note } });
           }}
-        >
-          <IconTrash size={14} />
-        </ActionIcon>
-      </Tooltip>
+        />
+        <Tooltip label="Delete line">
+          <ActionIcon
+            color="gray"
+            aria-label={`Delete ${label}`}
+            onClick={() => {
+              if (tryRun('deleteTemplateLine', { id: line.id })) toastWithUndo(`Deleted ${label}`);
+            }}
+          >
+            <IconTrash size={14} />
+          </ActionIcon>
+        </Tooltip>
+      </span>
     </div>
   );
 }

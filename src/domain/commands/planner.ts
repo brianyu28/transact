@@ -40,7 +40,10 @@ export const createScenario = defineCommand<
 });
 
 export type ScenarioChanges = Partial<
-  Pick<PlannerScenario, 'name' | 'year' | 'people' | 'incomes' | 'deductions' | 'taxes' | 'savings'>
+  Pick<
+    PlannerScenario,
+    'name' | 'year' | 'people' | 'incomes' | 'deductions' | 'taxes' | 'savings' | 'description'
+  > & { savingsDisabled: boolean }
 >;
 
 export const updateScenario = defineCommand<{ id: Id; changes: ScenarioChanges }>({
@@ -52,6 +55,15 @@ export const updateScenario = defineCommand<{ id: Id; changes: ScenarioChanges }
       s.name = changes.name.trim();
     }
     if (changes.year !== undefined) s.year = changes.year;
+    if (changes.description !== undefined) {
+      const description = changes.description.trim();
+      if (description) s.description = description;
+      else Reflect.deleteProperty(s, 'description');
+    }
+    if (changes.savingsDisabled !== undefined) {
+      if (changes.savingsDisabled) s.savingsDisabled = true;
+      else Reflect.deleteProperty(s, 'savingsDisabled');
+    }
     if (changes.incomes) s.incomes = structuredClone(changes.incomes);
     if (changes.deductions) s.deductions = structuredClone(changes.deductions);
     if (changes.taxes) s.taxes = cleanTaxes(structuredClone(changes.taxes));
@@ -129,6 +141,7 @@ export const duplicateScenario = defineCommand<{ id: Id }, Id>({
     const scenario: PlannerScenario = {
       id: newId('plannerScenario'),
       name: `${copy.name} (copy)`,
+      ...(copy.description ? { description: copy.description } : {}),
       year: copy.year,
       ...(copy.people?.length
         ? { people: copy.people.map((p) => ({ ...p, id: people.get(p.id) ?? p.id })) }
@@ -144,6 +157,8 @@ export const duplicateScenario = defineCommand<{ id: Id }, Id>({
         ...remapPerson(d.person),
       })),
       taxes: copy.taxes,
+      ...(copy.savings ? { savings: copy.savings } : {}),
+      ...(copy.savingsDisabled ? { savingsDisabled: true as const } : {}),
       updatedAt: now,
     };
     draft.planner.scenarios[scenario.id] = scenario;

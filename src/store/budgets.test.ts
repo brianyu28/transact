@@ -94,6 +94,33 @@ describe('budgets end to end', () => {
     ).toBe(0);
   });
 
+  it('keeps notes on default lines and period lines separate', () => {
+    const food = d()('createTemplateLine', {
+      cadence: 'monthly',
+      target: { kind: 'categories', categoryIds: [cat('Food')] },
+      defaultAmount: 50000,
+    });
+    d()('updateTemplateLine', { id: food, changes: { note: ' Family of four ' } });
+    expect(doc().budgets.template.lines[food]!.note).toBe('Family of four');
+
+    const period = d()('createPeriod', {
+      cadence: 'monthly',
+      period: '2026-01',
+      lines: [{ templateLineId: food, base: 50000, rollover: 0 }],
+    });
+    expect(doc().budgets.periods[period]!.lines[0]!.note).toBeUndefined();
+    expect(view('monthly', '2026-01').lines[0]!.note).toBeUndefined();
+    // Uncreated periods show the defaults, but not their notes.
+    expect(view('monthly', '2026-02').lines[0]!.note).toBeUndefined();
+
+    d()('setPeriodLine', { periodId: period, templateLineId: food, changes: { note: 'Party' } });
+    expect(view('monthly', '2026-01').lines[0]!.note).toBe('Party');
+    expect(doc().budgets.template.lines[food]!.note).toBe('Family of four');
+
+    d()('updateTemplateLine', { id: food, changes: { note: '' } });
+    expect(doc().budgets.template.lines[food]!.note).toBeUndefined();
+  });
+
   it('shows defaults provisionally for periods that were not created', () => {
     d()('createTemplateLine', {
       cadence: 'monthly',

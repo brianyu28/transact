@@ -24,23 +24,23 @@
 }
 
 .incomeRow {
-  grid-template-columns: minmax(100px, 1fr) 150px 120px 100px 28px;
+  grid-template-columns: 20px minmax(100px, 1fr) 150px 120px 100px 28px;
 
   &.withPerson {
-    grid-template-columns: minmax(100px, 1fr) 120px 150px 120px 100px 28px;
+    grid-template-columns: 20px minmax(100px, 1fr) 120px 150px 120px 100px 28px;
   }
 }
 
 .deductionRow {
-  grid-template-columns: minmax(100px, 1fr) 110px 56px minmax(140px, 1.2fr) 28px;
+  grid-template-columns: 20px minmax(100px, 1fr) 110px 56px minmax(140px, 1.2fr) 28px;
 
   &.withPerson {
-    grid-template-columns: minmax(100px, 1fr) 120px 110px 56px minmax(140px, 1.2fr) 28px;
+    grid-template-columns: 20px minmax(100px, 1fr) 120px 110px 56px minmax(140px, 1.2fr) 28px;
   }
 }
 
 .savingsRow {
-  grid-template-columns: minmax(100px, 1fr) 120px 100px 28px;
+  grid-template-columns: 20px minmax(100px, 1fr) 120px 100px 28px;
 }
 
 .people {
@@ -79,17 +79,22 @@
 }
 
 .taxRow {
-  grid-template-columns: minmax(120px, 1fr) 140px minmax(90px, 140px) 100px 70px 56px;
+  grid-template-columns: 20px minmax(120px, 1fr) 140px minmax(90px, 140px) 100px 70px 56px;
 
   @include phone {
-    grid-template-columns: minmax(100px, 1fr) 90px 56px;
+    grid-template-columns: 20px minmax(100px, 1fr) 90px 56px;
 
-    > :nth-child(2),
     > :nth-child(3),
-    > :nth-child(5) {
+    > :nth-child(4),
+    > :nth-child(6) {
       display: none;
     }
   }
+}
+
+// Left out of the calculation: everything but the include checkbox fades.
+.off > :not(:first-child) {
+  opacity: 0.45;
 }
 
 .head {

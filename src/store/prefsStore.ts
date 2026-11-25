@@ -18,6 +18,8 @@ export interface DevicePrefs {
   sidebarCollapsed: boolean;
   /** Whether the Income report counts transactions excluded from budgets. */
   incomeIncludesExcluded: boolean;
+  /** Whether the planner's results show amounts per month or per year. */
+  plannerPeriod: 'month' | 'year';
   /** User overrides of keyboard shortcuts: command id → key sequences. */
   keybindings: Record<string, string[]>;
 }
@@ -28,6 +30,7 @@ export const DEFAULT_PREFS: DevicePrefs = {
   dateFormat: 'medium',
   sidebarCollapsed: false,
   incomeIncludesExcluded: true,
+  plannerPeriod: 'month',
   keybindings: {},
 };
 
@@ -68,6 +71,7 @@ export const prefsStore = createStore<DevicePrefs & PrefsActions>()(
         dateFormat,
         sidebarCollapsed,
         incomeIncludesExcluded,
+        plannerPeriod,
         keybindings,
       }) => ({
         theme,
@@ -75,6 +79,7 @@ export const prefsStore = createStore<DevicePrefs & PrefsActions>()(
         dateFormat,
         sidebarCollapsed,
         incomeIncludesExcluded,
+        plannerPeriod,
         keybindings,
       }),
     },

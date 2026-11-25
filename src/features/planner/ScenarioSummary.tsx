@@ -1,9 +1,10 @@
-import { Alert } from '@mantine/core';
+import { Alert, SegmentedControl } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { clsx } from 'clsx';
 import type { PlannerResult } from '@/domain/planner/engine';
 import { useFormat } from '@/hooks/useFormat';
 import { seriesColor } from '@/features/reports/useReportMonths';
+import { prefsStore, usePrefs } from '@/store/prefsStore';
 import styles from './ScenarioSummary.module.scss';
 
 interface ScenarioSummaryProps {
@@ -12,11 +13,14 @@ interface ScenarioSummaryProps {
   savings: number;
   /** Yearly total of the default budget (12 × monthly + annual). */
   budgetPerYear: number;
-  /** Actual income over the last 12 months, for comparison. */
+  /** Actual income over the last 12 months, for comparison (averaged in the month view). */
   actualIncome: number;
 }
 
-/** Gross → taxes → deductions → take-home, and how it compares with the budget. */
+/**
+ * Gross → taxes → deductions → take-home, and how it compares with the budget, per month
+ * or per year (a device preference). Amounts are yearly; the month view divides by 12.
+ */
 export function ScenarioSummary({
   result,
   savings,
@@ -24,6 +28,11 @@ export function ScenarioSummary({
   actualIncome,
 }: ScenarioSummaryProps) {
   const format = useFormat();
+  const per = usePrefs((s) => s.plannerPeriod);
+  const monthly = per === 'month';
+  /** A yearly amount in the chosen period. */
+  const money = (yearly: number) => format.money(monthly ? Math.round(yearly / 12) : yearly);
+  const unit = monthly ? '/ mo' : '/ yr';
   const deductions = result.pretaxDeductions + result.posttaxDeductions;
   const leftover = result.takeHome - savings - budgetPerYear;
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
@@ -52,10 +61,30 @@ export function ScenarioSummary({
           {result.error}
         </Alert>
       )}
-      <div className={styles.hero}>
-        <span className={styles.label}>Take-home pay</span>
-        <span className={styles.big}>{format.money(result.monthlyTakeHome)}</span>
-        <span className={styles.sub}>a month · {format.money(result.takeHome)} a year</span>
+      <div className={styles.top}>
+        <div className={styles.hero}>
+          <span className={styles.label}>Take-home pay</span>
+          <span className={styles.big}>
+            {format.money(monthly ? result.monthlyTakeHome : result.takeHome)}
+          </span>
+          <span className={styles.sub}>
+            {monthly
+              ? `a month · ${format.money(result.takeHome)} a year`
+              : `a year · ${format.money(result.monthlyTakeHome)} a month`}
+          </span>
+        </div>
+        <SegmentedControl
+          size="xs"
+          aria-label="Show amounts per"
+          value={per}
+          data={[
+            { value: 'month', label: 'Month' },
+            { value: 'year', label: 'Year' },
+          ]}
+          onChange={(v) => {
+            prefsStore.getState().setPref('plannerPeriod', v === 'year' ? 'year' : 'month');
+          }}
+        />
       </div>
 
       {total > 0 && (
@@ -65,7 +94,7 @@ export function ScenarioSummary({
               <span
                 key={p.key}
                 style={{ flexGrow: p.value, background: p.color }}
-                title={`${p.label}: ${format.money(p.value)}`}
+                title={`${p.label}: ${money(p.value)}`}
               />
             ))}
           </div>
@@ -75,7 +104,7 @@ export function ScenarioSummary({
                 <span className={styles.swatch} style={{ background: p.color }} />
                 <span>{p.label}</span>
                 <span className={styles.legendValue}>
-                  {format.money(p.value)} <span className={styles.dim}>{pct(p.value / total)}</span>
+                  {money(p.value)} <span className={styles.dim}>{pct(p.value / total)}</span>
                 </span>
               </li>
             ))}
@@ -85,29 +114,29 @@ export function ScenarioSummary({
 
       <dl className={styles.waterfall}>
         <dt>Gross income</dt>
-        <dd>{format.money(result.gross)}</dd>
+        <dd>{money(result.gross)}</dd>
         {result.taxes.map((t) => (
           <div key={t.rule.id} className={styles.indent}>
             <dt>{t.rule.name}</dt>
             <dd className={t.amount === 0 ? styles.dim : undefined}>
-              {t.amount === 0 ? '—' : `−${format.money(t.amount)}`}
+              {t.amount === 0 ? '—' : `−${money(t.amount)}`}
             </dd>
           </div>
         ))}
         {result.pretaxDeductions > 0 && (
           <div className={styles.indent}>
             <dt>Pre-tax deductions</dt>
-            <dd>−{format.money(result.pretaxDeductions)}</dd>
+            <dd>−{money(result.pretaxDeductions)}</dd>
           </div>
         )}
         {result.posttaxDeductions > 0 && (
           <div className={styles.indent}>
             <dt>After-tax deductions</dt>
-            <dd>−{format.money(result.posttaxDeductions)}</dd>
+            <dd>−{money(result.posttaxDeductions)}</dd>
           </div>
         )}
         <dt className={styles.total}>Take-home</dt>
-        <dd className={styles.total}>{format.money(result.takeHome)}</dd>
+        <dd className={styles.total}>{money(result.takeHome)}</dd>
       </dl>
 
       <dl className={styles.stats}>
@@ -118,18 +147,23 @@ export function ScenarioSummary({
         {savings > 0 && (
           <>
             <dt>Savings</dt>
-            <dd>{format.money(savings)} / yr</dd>
+            <dd>
+              {money(savings)} {unit}
+            </dd>
           </>
         )}
         <dt>Default budget</dt>
-        <dd>{format.money(budgetPerYear)} / yr</dd>
+        <dd>
+          {money(budgetPerYear)} {unit}
+        </dd>
         <dt>{leftover >= 0 ? 'Left after budget' : 'Budget shortfall'}</dt>
         <dd className={clsx(leftover >= 0 ? styles.good : styles.bad)}>
-          {format.money(Math.abs(leftover))} / yr ·{' '}
-          {format.money(Math.round(Math.abs(leftover) / 12))} / mo
+          {money(Math.abs(leftover))} {unit}
         </dd>
-        <dt>Actual income, last 12 months</dt>
-        <dd className={styles.dim}>{format.money(actualIncome)}</dd>
+        <dt>{monthly ? 'Actual income, monthly average' : 'Actual income, last 12 months'}</dt>
+        <dd className={styles.dim}>
+          {money(actualIncome)} {unit}
+        </dd>
       </dl>
     </aside>
   );
