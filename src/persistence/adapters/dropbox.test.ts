@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   completeDropboxSignIn,
   connectDropbox,
+  disconnectDropbox,
   dropboxAdapter,
   dropboxState,
   listDropboxFiles,
@@ -12,7 +13,13 @@ const bytes = (s: string) => new TextEncoder().encode(s);
 
 /** A fake Dropbox: one file with a revision, plus the token endpoint. */
 function fakeDropbox() {
-  const server = { content: 'v1', rev: 'r1', tokenCalls: 0, expireNext: false };
+  const server = {
+    content: 'v1',
+    rev: 'r1',
+    tokenCalls: 0,
+    expireNext: false,
+    revokedWith: [] as string[],
+  };
   const respond = (url: string, init: RequestInit): Response => {
     const headers = (init.headers ?? {}) as Record<string, string>;
     const arg = headers['Dropbox-API-Arg']
@@ -32,6 +39,12 @@ function fakeDropbox() {
         refresh_token: 'refresh',
         expires_in: 14400,
       });
+    }
+    if (url.endsWith('/auth/token/revoke')) {
+      const token = headers.Authorization?.replace('Bearer ', '') ?? '';
+      if (token === 'token0' && server.expireNext) return new Response('', { status: 401 });
+      server.revokedWith.push(token);
+      return Response.json(null);
     }
     if (server.expireNext) {
       server.expireNext = false;
@@ -130,6 +143,69 @@ describe('dropbox adapter', () => {
     });
     vi.stubGlobal('history', { replaceState: vi.fn() });
     await expect(completeDropboxSignIn()).rejects.toThrow(/didn’t match/);
+  });
+
+  it('ignores sign-in parameters when no sign-in was started in this tab', async () => {
+    const { fetchMock } = fakeDropbox();
+    vi.stubGlobal('location', {
+      origin: 'http://localhost',
+      pathname: '/',
+      search: '?error=x&error_description=Session+expired.+Sign+in+at+evil.example',
+      hash: '#/home',
+    });
+    const replaceState = vi.fn();
+    vi.stubGlobal('history', { replaceState });
+    expect(await completeDropboxSignIn()).toBe(false);
+    expect(replaceState).toHaveBeenCalledWith(null, '', 'http://localhost/#/home');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('never shows the error text from the URL', async () => {
+    fakeDropbox();
+    sessionStorage.setItem(
+      'transact:dropbox-pending',
+      JSON.stringify({ verifier: 'v', state: 'expected', hash: '' }),
+    );
+    vi.stubGlobal('location', {
+      origin: 'http://localhost',
+      pathname: '/',
+      search: '?error=server_error&error_description=Visit+evil.example&state=expected',
+      hash: '',
+    });
+    vi.stubGlobal('history', { replaceState: vi.fn() });
+    const failure = completeDropboxSignIn();
+    await expect(failure).rejects.toThrow('Dropbox sign-in failed. Try connecting again.');
+    await expect(failure).rejects.not.toThrow(/evil/);
+  });
+
+  it('revokes access on disconnect, refreshing an expired token first', async () => {
+    const { server } = fakeDropbox();
+    localStorage.setItem(
+      'transact:dropbox',
+      JSON.stringify({ accessToken: 'token0', refreshToken: 'refresh', expiresAt: 0 }),
+    );
+    expect(await disconnectDropbox()).toBe(true);
+    expect(server.tokenCalls).toBe(1);
+    expect(server.revokedWith).toEqual(['token1']);
+    expect(localStorage.getItem('transact:dropbox')).toBeNull();
+  });
+
+  it('retries the revoke with a fresh token when the access token was rejected', async () => {
+    const { server } = fakeDropbox();
+    signedIn();
+    server.expireNext = true; // token0 is rejected
+    expect(await disconnectDropbox()).toBe(true);
+    expect(server.revokedWith).toEqual(['token1']);
+  });
+
+  it('reports a disconnect that could not revoke access', async () => {
+    signedIn();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new TypeError('offline'))),
+    );
+    expect(await disconnectDropbox()).toBe(false);
+    expect(dropboxState.getState().connected).toBe(false);
   });
 
   it('lists, opens and saves with revision checks', async () => {

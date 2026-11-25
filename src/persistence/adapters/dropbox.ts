@@ -124,18 +124,26 @@ export async function connectDropbox(): Promise<void> {
 export async function completeDropboxSignIn(): Promise<boolean> {
   const params = new URLSearchParams(location.search);
   const code = params.get('code');
-  const error = params.get('error_description') ?? params.get('error');
-  const pendingRaw = sessionStorage.getItem(PENDING_KEY);
+  const error = params.get('error');
   if (!code && !error) return false;
+  const pending = readPending();
   sessionStorage.removeItem(PENDING_KEY);
-  const pending = pendingRaw
-    ? (JSON.parse(pendingRaw) as { verifier: string; state: string; hash: string })
-    : null;
   // Drop the query string so a reload doesn't repeat this.
-  history.replaceState(null, '', redirectUri() + (pending?.hash ?? ''));
-  if (error) throw new Error(`Dropbox sign-in failed: ${error}`);
-  if (!pending || params.get('state') !== pending.state) {
+  history.replaceState(null, '', redirectUri() + (pending?.hash ?? location.hash));
+  // Anyone can link to the app with these parameters. Without a sign-in started in this tab
+  // there is nothing to finish, so ignore the link rather than show anything from it.
+  if (!pending) return false;
+  // Messages are fixed text: the URL's own error text is never shown, so a crafted link
+  // can't put its words in the app.
+  if (params.get('state') !== pending.state) {
     throw new Error('Dropbox sign-in failed: the response didn’t match the request.');
+  }
+  if (error) {
+    throw new Error(
+      error === 'access_denied'
+        ? 'Dropbox access wasn’t allowed.'
+        : 'Dropbox sign-in failed. Try connecting again.',
+    );
   }
   const response = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -161,22 +169,51 @@ export async function completeDropboxSignIn(): Promise<boolean> {
   return true;
 }
 
-/** Signs out of Dropbox on this device. */
-export async function disconnectDropbox(): Promise<void> {
-  const tokens = readTokens();
-  writeTokens(null);
-  if (tokens) {
-    await fetch(`${API}/auth/token/revoke`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${tokens.accessToken}` },
-    }).catch(() => undefined);
+function readPending(): { verifier: string; state: string; hash: string } | null {
+  try {
+    const raw = sessionStorage.getItem(PENDING_KEY);
+    return raw ? (JSON.parse(raw) as { verifier: string; state: string; hash: string }) : null;
+  } catch {
+    return null;
   }
 }
 
-async function accessToken(forceRefresh = false): Promise<string> {
+/** Shown when this device signed out but Dropbox couldn't be told to revoke access. */
+export const DROPBOX_NOT_REVOKED =
+  'Disconnected on this device, but Dropbox couldn’t be reached to revoke access. You can remove Transact under Connected apps in your Dropbox settings.';
+
+/**
+ * Signs out of Dropbox on this device and revokes the app's access, so a copy of the tokens
+ * taken from this device stops working too. Resolves false if access couldn't be revoked
+ * (e.g. offline): the tokens are gone from this device but still valid at Dropbox.
+ */
+export async function disconnectDropbox(): Promise<boolean> {
   const tokens = readTokens();
-  if (!tokens) throw new Error('Not connected to Dropbox. Connect in Settings → Storage.');
-  if (!forceRefresh && tokens.expiresAt - 60_000 > Date.now()) return tokens.accessToken;
+  writeTokens(null);
+  if (!tokens) return true;
+  const revoke = (token: string) =>
+    fetch(`${API}/auth/token/revoke`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  try {
+    // Revoking with an access token also revokes its refresh token, but an expired access
+    // token can't revoke anything: refresh first when needed.
+    if (tokens.expiresAt - 60_000 > Date.now()) {
+      const response = await revoke(tokens.accessToken);
+      if (response.ok) return true;
+      if (response.status !== 401) return false;
+    }
+    const fresh = await refreshTokens(tokens);
+    if (fresh === 'revoked') return true; // already revoked
+    return (await revoke(fresh.accessToken)).ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Gets a new access token with the refresh token; 'revoked' if access has ended. */
+async function refreshTokens(tokens: Tokens): Promise<Tokens | 'revoked'> {
   const response = await fetch(TOKEN_URL, {
     method: 'POST',
     body: new URLSearchParams({
@@ -185,17 +222,25 @@ async function accessToken(forceRefresh = false): Promise<string> {
       client_id: currentAppKey(),
     }),
   });
-  if (response.status === 400 || response.status === 401) {
-    writeTokens(null); // access was revoked
-    throw new Error('Dropbox access has expired. Connect again in Settings → Storage.');
-  }
+  if (response.status === 400 || response.status === 401) return 'revoked';
   if (!response.ok) throw new Error(`Dropbox is unavailable (${String(response.status)}).`);
   const body = (await response.json()) as { access_token: string; expires_in: number };
-  const next = {
+  return {
     ...tokens,
     accessToken: body.access_token,
     expiresAt: Date.now() + body.expires_in * 1000,
   };
+}
+
+async function accessToken(forceRefresh = false): Promise<string> {
+  const tokens = readTokens();
+  if (!tokens) throw new Error('Not connected to Dropbox. Connect in Settings → Storage.');
+  if (!forceRefresh && tokens.expiresAt - 60_000 > Date.now()) return tokens.accessToken;
+  const next = await refreshTokens(tokens);
+  if (next === 'revoked') {
+    writeTokens(null);
+    throw new Error('Dropbox access has expired. Connect again in Settings → Storage.');
+  }
   writeTokens(next);
   return next.accessToken;
 }

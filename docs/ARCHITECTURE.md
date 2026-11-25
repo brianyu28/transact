@@ -496,6 +496,28 @@ envelope:
 - The plaintext inside the envelope is a normal data file, so schema versioning is independent of
   encryption.
 - A lost passphrase cannot be recovered. The UI says so before encryption is turned on.
+- An encrypted file never becomes unencrypted without the user's say-so. If an unencrypted copy
+  of the open encrypted file (same file id) is about to be loaded (a reload, an open, "Use
+  theirs") or merged in, the user is asked first, and keeping the encrypted version is the
+  default. Without this, anyone who can write the file (e.g. with access to the user's Dropbox)
+  could swap in an unencrypted copy and have every later save written in the clear.
+- Turning encryption on, changing the passphrase or turning it off rewrites the working copy and
+  the merge base right away, so no local copy is left in the old form. Closing a file removes its
+  merge base, and opening a file removes the bases of other files.
+
+### Security headers
+
+`public/_headers` sets the production headers (`pnpm preview` applies the same ones). The CSP
+allows scripts from this origin only and network requests to this origin and Dropbox's API only.
+It also requires **Trusted Types**: `innerHTML`, script URLs and other code-loading sinks accept
+only values from the single `default` policy in `src/app/trustedTypes.ts`, imported first in
+`main.tsx`. That policy rejects any HTML containing markup (Mantine's CSS text, which has none,
+passes), all script strings, and script URLs from other origins. The Workbox runtime is inlined
+into `sw.js` because `importScripts` is such a sink too.
+
+Dropbox sign-in only completes a sign-in that this tab started (matching `state`), and never shows
+text from the URL, so a crafted link can't put its words in the app. Disconnecting and Clear local
+data revoke the token at Dropbox, refreshing it first if it has expired.
 
 ## 16. UI conventions
 

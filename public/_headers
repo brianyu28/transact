@@ -5,15 +5,19 @@
 # may only come from this origin (no inline or eval), and the page may only talk to this
 # origin and Dropbox's API, so data can't be sent anywhere else. Styles allow 'unsafe-inline'
 # because Mantine sets style attributes and injects its CSS variables at runtime.
+# Trusted Types: DOM sinks that parse markup or load scripts (innerHTML, script URLs, …) only
+# accept values from the single 'default' policy in src/app/trustedTypes.ts, which rejects any
+# HTML that contains markup and allows same-origin script URLs only.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.dropboxapi.com https://content.dropboxapi.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://api.dropboxapi.com https://content.dropboxapi.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; require-trusted-types-for 'script'; trusted-types default
   Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
   Origin-Agent-Cluster: ?1
   Strict-Transport-Security: max-age=31536000
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: no-referrer
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), hid=(), serial=(), midi=(), display-capture=()
 
 # Hashed build output never changes.
 /assets/*

@@ -1,7 +1,9 @@
 import { Button, Group, Modal, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { DROPBOX_NOT_REVOKED } from '@/persistence/adapters/dropbox';
 import { isFsAccessSupported } from '@/persistence/adapters/fsAccess';
 import { session, useSession } from '@/store/sessionStore';
+import { toast } from '@/store/toastStore';
 import { DropboxSettings } from './DropboxSettings';
 import { EncryptionSettings } from './EncryptionSettings';
 import styles from './StorageSettings.module.scss';
@@ -38,8 +40,9 @@ export function StorageSettings() {
       </Button>
       <Modal opened={confirming} onClose={close} title="Clear local data?" size="sm" centered>
         <Text size="sm" mb="md">
-          This closes the file and removes everything Transact keeps in this browser: unsaved
-          changes, remembered files and device preferences. Files on disk are not affected.
+          This closes the file, disconnects Dropbox and removes everything Transact keeps in this
+          browser: unsaved changes, remembered files, keys and device preferences. Your files on
+          disk and in Dropbox are not affected.
         </Text>
         <Group justify="flex-end" gap="xs">
           <Button variant="default" onClick={close}>
@@ -49,7 +52,9 @@ export function StorageSettings() {
             color="red"
             onClick={() => {
               close();
-              void session.clearLocalData();
+              void session.clearLocalData().then((revoked) => {
+                if (!revoked) toast(DROPBOX_NOT_REVOKED);
+              });
             }}
           >
             Clear local data

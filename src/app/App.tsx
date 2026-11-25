@@ -8,6 +8,7 @@ import { Route, Router, Switch } from 'wouter';
 import { useHashLocation } from 'wouter/use-hash-location';
 import { Toaster } from '@/components/Toaster/Toaster';
 import { ConflictDialog } from './file/ConflictDialog';
+import { UnencryptedCopyDialog } from './file/UnencryptedCopyDialog';
 import { UnlockDialog } from './file/UnlockDialog';
 import { DropboxDialog } from './file/DropboxDialog';
 import { PrefsEffects } from './PrefsEffects';
@@ -59,6 +60,7 @@ export function App({ children }: AppProps) {
       </Router>
       <ConflictDialog />
       <UnlockDialog />
+      <UnencryptedCopyDialog />
       <DropboxDialog />
       <CommandPalette />
       <Toaster />

@@ -5,6 +5,7 @@ import {
   IconDeviceFloppy,
   IconFile,
   IconFileExport,
+  IconFileLock,
   IconFilePlus,
   IconFolderOpen,
   IconX,
@@ -29,6 +30,7 @@ export function FileMenu() {
   const source = useSession((s) => s.source);
   const saving = useSession((s) => s.saving);
   const lastSavedAt = useSession((s) => s.lastSavedAt);
+  const encrypted = useSession((s) => s.encryption !== null);
   const [guard, discardModal] = useDiscardGuard();
   const dropbox = useStore(dropboxState, (s) => s.connected);
 
@@ -47,8 +49,17 @@ export function FileMenu() {
     <div className={styles.root}>
       <Menu position="bottom-end" width={220}>
         <Menu.Target>
-          <button type="button" className={styles.file} aria-label={`File: ${name}`}>
-            <IconFile size={14} stroke={1.75} aria-hidden />
+          <button
+            type="button"
+            className={styles.file}
+            aria-label={`File: ${name}${encrypted ? ' (encrypted)' : ''}`}
+            title={encrypted ? 'Encrypted with a passphrase' : undefined}
+          >
+            {encrypted ? (
+              <IconFileLock size={14} stroke={1.75} aria-hidden />
+            ) : (
+              <IconFile size={14} stroke={1.75} aria-hidden />
+            )}
             <span className={styles.name}>{name}</span>
             <span className={clsx(styles.status, dirty && styles.dirty)}>{status}</span>
             <IconChevronDown size={12} stroke={1.75} aria-hidden />

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useStore } from 'zustand';
 import {
   DROPBOX_FOLDER,
+  DROPBOX_NOT_REVOKED,
   connectDropbox,
   disconnectDropbox,
   dropboxState,
@@ -51,8 +52,8 @@ export function DropboxSettings() {
             variant="default"
             leftSection={<IconBrandDropbox size={14} />}
             onClick={() =>
-              void disconnectDropbox().then(() => {
-                toast('Disconnected from Dropbox on this device.');
+              void disconnectDropbox().then((revoked) => {
+                toast(revoked ? 'Disconnected from Dropbox.' : DROPBOX_NOT_REVOKED);
               })
             }
           >

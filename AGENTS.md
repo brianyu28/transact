@@ -86,5 +86,8 @@ Other single sources of truth:
   transactions.
 - **Information density**: compact rows (~26px), 13px base type, tabular numbers, minimal chrome and
   explanatory text.
+- **No HTML strings**: never use `dangerouslySetInnerHTML`, `innerHTML` or inline scripts. The
+  CSP enforces Trusted Types and rejects markup (`src/app/trustedTypes.ts`); test UI changes
+  with `pnpm build && pnpm preview`, which applies the production headers.
 - Keep dependencies minimal; justify any new one.
 - Routing is hash-based (`#/path`) so the static build works on any host without rewrites.

@@ -99,6 +99,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: 'index.html',
+        // Bundle the Workbox runtime into sw.js instead of loading it with importScripts,
+        // which the CSP's Trusted Types requirement would block.
+        inlineWorkboxRuntime: true,
       },
       devOptions: { enabled: false },
     }),

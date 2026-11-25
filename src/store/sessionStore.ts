@@ -19,6 +19,7 @@ import { newId } from '@/lib/id';
 import { adapterFor, preferredAdapter } from '@/persistence/adapters';
 import {
   completeDropboxSignIn,
+  disconnectDropbox,
   downloadDropboxFile,
   dropboxState,
   setDropboxAppKey,
@@ -75,6 +76,18 @@ export interface Locked {
   resume: (plaintext: Uint8Array, encryption: EncryptionInfo) => Promise<void>;
 }
 
+/**
+ * The open file is encrypted, but a copy of it that isn't encrypted is about to be loaded
+ * or merged. Nothing proceeds until the user answers: if they didn't turn encryption off
+ * themselves, someone else may have replaced the file.
+ */
+export interface UnencryptedCopy {
+  fileName: string;
+  /** `load` replaces the document (and turns encryption off); `merge` merges its changes in. */
+  action: 'load' | 'merge';
+  resolve: (proceed: boolean) => void;
+}
+
 export interface SessionState {
   status: 'booting' | 'empty' | 'loading' | 'ready';
   source: SourceDescriptor | null;
@@ -91,6 +104,7 @@ export interface SessionState {
   /** Set while the open file is encrypted (the key never leaves memory / IndexedDB). */
   encryption: EncryptionInfo | null;
   locked: Locked | null;
+  unencryptedCopy: UnencryptedCopy | null;
   /** Size in bytes of the open document as it is (or would be) saved, encryption included. */
   fileSize: number | null;
 }
@@ -120,6 +134,7 @@ const initialState: SessionState = {
   recent: null,
   encryption: null,
   locked: null,
+  unencryptedCopy: null,
   fileSize: null,
 };
 
@@ -184,6 +199,67 @@ async function decodeStorage(
     return;
   }
   set({ locked: { fileName, envelope: result.envelope, resume: onLoaded } });
+}
+
+// ── Unencrypted copies of an encrypted file ──────────────────────────────────
+
+/**
+ * Whether loading `fileId` unencrypted would turn encryption off for the open file. An
+ * encrypted file must never become unencrypted without the user saying so: anyone who can
+ * write the file (e.g. with access to the user's Dropbox) could otherwise replace it with
+ * an unencrypted copy and have every later save written in the clear.
+ */
+function dropsEncryption(fileId: string): boolean {
+  return get().encryption !== null && docStore.getState().doc?.meta.fileId === fileId;
+}
+
+function isEncryptedBytes(bytes: Uint8Array): boolean {
+  try {
+    return readEnvelope(bytes) !== null;
+  } catch {
+    return true; // a damaged envelope is still not a plaintext file
+  }
+}
+
+/** Asks whether to go ahead with an unencrypted copy of the open encrypted file. */
+function confirmUnencryptedCopy(fileName: string, action: UnencryptedCopy['action']) {
+  get().unencryptedCopy?.resolve(false);
+  return new Promise<boolean>((resolve) => {
+    set({
+      unencryptedCopy: {
+        fileName,
+        action,
+        resolve: (proceed) => {
+          set({ unencryptedCopy: null });
+          resolve(proceed);
+        },
+      },
+    });
+  });
+}
+
+/**
+ * The user kept the encrypted document instead of an unencrypted copy. If that copy is the
+ * open file's own storage, the next save overwrites it, encrypted again.
+ */
+function keepEncrypted(opened: OpenedFile, remoteRevision: number) {
+  const { source } = get();
+  const sameFile =
+    source !== null &&
+    source.kind === opened.descriptor.kind &&
+    source.name === opened.descriptor.name &&
+    source.path === opened.descriptor.path;
+  set({ status: 'ready' });
+  if (!sameFile) return;
+  set({
+    baseVersion: opened.version,
+    baseRevision: Math.max(get().baseRevision, remoteRevision),
+  });
+  docStore.getState().markDirty();
+  addNotice({
+    kind: 'encryption',
+    message: 'Kept your encrypted version. Save to replace the unencrypted file with it.',
+  });
 }
 
 // ── Working copy ──────────────────────────────────────────────────────────────
@@ -259,6 +335,10 @@ function openDocument(
     ...sessionPatch,
   });
   void flushWorkingCopy();
+  // Copies of a previously open file aren't needed any more.
+  void workingCopyStore.pruneBases(doc.meta.fileId).catch((err: unknown) => {
+    console.warn('Could not remove old merge bases', err);
+  });
 }
 
 /** Remembers the file for "Reopen" and later saves. Failure here never fails a save or open. */
@@ -282,6 +362,29 @@ async function rememberBase(fileId: string, bytes: Uint8Array) {
   });
 }
 
+/**
+ * Rewrites the stored merge base for a new encryption setting, so no copy is left behind in
+ * the old form (e.g. plaintext after encryption is turned on). Call before switching keys.
+ */
+async function rewrapBase(fileId: string, next: EncryptionInfo | null) {
+  try {
+    const bytes = await workingCopyStore.loadBase(fileId);
+    if (!bytes) return;
+    const result = await unwrap(bytes);
+    if (!('plain' in result)) {
+      await workingCopyStore.deleteBase(fileId); // unreadable: no use for merging anyway
+      return;
+    }
+    await workingCopyStore.saveBase(
+      fileId,
+      next ? await encryptFile(result.plain, fileId, next) : result.plain,
+    );
+  } catch (err) {
+    console.warn('Could not rewrite the merge base', err);
+    await workingCopyStore.deleteBase(fileId).catch(() => undefined);
+  }
+}
+
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
@@ -295,6 +398,14 @@ async function loadOpened(opened: OpenedFile): Promise<void> {
       return;
     }
     const { model, migrated, originalVersion, integrityIssues } = result;
+    if (
+      encryption === null &&
+      dropsEncryption(model.meta.fileId) &&
+      !(await confirmUnencryptedCopy(opened.descriptor.name, 'load'))
+    ) {
+      keepEncrypted(opened, model.meta.revision);
+      return;
+    }
     set({ encryption });
     openDocument(
       model,
@@ -523,9 +634,10 @@ export const session = {
    * when there are no local edits, or offer to merge when there are.
    */
   checkForChanges: async (): Promise<void> => {
-    const { source, baseVersion, saving, conflict, status } = get();
+    const { source, baseVersion, saving, conflict, status, locked, unencryptedCopy } = get();
     const { doc } = docStore.getState();
-    if (!doc || !source || saving || conflict || status !== 'ready') return;
+    if (!doc || !source || saving || conflict || locked || unencryptedCopy) return;
+    if (status !== 'ready') return;
     const adapter = adapterFor(source.kind);
     if (!adapter.peekVersion) return;
     const handle = await workingCopyStore.loadHandle(doc.meta.fileId);
@@ -660,6 +772,16 @@ export const session = {
       case 'merge': {
         const local = docStore.getState().doc;
         if (!local) return;
+        // An unencrypted copy of an encrypted file isn't protected against tampering:
+        // don't merge its changes in unless the user knows about it.
+        if (
+          get().encryption !== null &&
+          !isEncryptedBytes(conflict.remoteBytes) &&
+          !(await confirmUnencryptedCopy(get().source?.name ?? suggestedName(), 'merge'))
+        ) {
+          set({ conflict });
+          return;
+        }
         const remote = await decodeModel(conflict.remoteBytes);
         if (!remote || remote.meta.fileId !== local.meta.fileId) {
           addNotice({
@@ -728,10 +850,13 @@ export const session = {
     const key = await deriveKey(passphrase, salt, DEFAULT_ITERATIONS);
     const encryption: EncryptionInfo = { key, salt, iterations: DEFAULT_ITERATIONS };
     const wasEncrypted = get().encryption !== null;
+    await rewrapBase(doc.meta.fileId, encryption);
     set({ encryption });
     if (remember) await workingCopyStore.saveKey(doc.meta.fileId, encryption);
     else await workingCopyStore.deleteKey(doc.meta.fileId);
     docStore.getState().markDirty();
+    // Replace the working copy now, so it isn't left in the old form until the next edit.
+    await flushWorkingCopy();
     addNotice({
       kind: 'encryption',
       message: wasEncrypted
@@ -744,9 +869,12 @@ export const session = {
   disableEncryption: async (): Promise<void> => {
     const doc = docStore.getState().doc;
     if (!doc || !get().encryption) return;
+    await rewrapBase(doc.meta.fileId, null);
     set({ encryption: null });
     await workingCopyStore.deleteKey(doc.meta.fileId);
     docStore.getState().markDirty();
+    // Without the key, an encrypted working copy couldn't be restored: rewrite it now.
+    await flushWorkingCopy();
     addNotice({
       kind: 'encryption',
       message: 'Encryption is off. Save to write the file unencrypted.',
@@ -765,8 +893,11 @@ export const session = {
     workingCopyTimer = undefined;
     await workingCopyWrite;
     docStore.getState().unload();
+    get().unencryptedCopy?.resolve(false);
     set({ ...initialState, status: 'empty', recent: get().recent });
     await workingCopyStore.remove();
+    // The merge base is a full copy of the file: don't leave it behind.
+    await workingCopyStore.pruneBases();
   },
 
   /** Writes pending changes to the working copy immediately. */
@@ -776,8 +907,12 @@ export const session = {
     set({ notices: get().notices.filter((n) => n.kind !== kind) });
   },
 
-  /** Removes all data Transact keeps in this browser (working copy, handles, keys, preferences). */
-  clearLocalData: async (): Promise<void> => {
+  /**
+   * Removes all data Transact keeps in this browser (working copy, handles, keys, preferences)
+   * and disconnects Dropbox. Resolves false if Dropbox access couldn't be revoked.
+   */
+  clearLocalData: async (): Promise<boolean> => {
+    const revoked = await disconnectDropbox();
     await session.close();
     await workingCopyStore.clearAll();
     for (const key of Object.keys(localStorage)) {
@@ -786,5 +921,6 @@ export const session = {
     setDropboxAppKey('');
     dropboxState.setState({ connected: false });
     set({ recent: null });
+    return revoked;
   },
 };

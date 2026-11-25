@@ -207,4 +207,80 @@ describe('encryption', () => {
     expect(sessionStore.getState().locked).toBeNull();
     expect(docStore.getState().doc).not.toBeNull();
   });
+
+  /** Simulates someone replacing the file with an unencrypted copy of the same file id. */
+  function replaceWithUnencryptedCopy() {
+    const doc = docStore.getState().doc!;
+    writeDisk(encodeDocument({ ...doc, meta: { ...doc.meta, revision: doc.meta.revision + 5 } }));
+  }
+
+  async function answerUnencryptedCopy(pending: Promise<void>, proceed: boolean) {
+    await vi.waitFor(() => {
+      expect(sessionStore.getState().unencryptedCopy).not.toBeNull();
+    });
+    sessionStore.getState().unencryptedCopy!.resolve(proceed);
+    await pending;
+  }
+
+  async function encryptedFile() {
+    await session.newDocument('empty');
+    addAccount('Secret');
+    await session.setPassphrase('correct horse', true);
+    await session.save();
+  }
+
+  it('asks before an unencrypted copy turns encryption off, and keeps it by default', async () => {
+    await encryptedFile();
+    replaceWithUnencryptedCopy();
+
+    await answerUnencryptedCopy(session.open(), false);
+    expect(sessionStore.getState().encryption).not.toBeNull();
+    expect(sessionStore.getState().status).toBe('ready');
+    // The next save puts the encrypted version back over the unencrypted copy.
+    expect(selectIsDirty(docStore.getState())).toBe(true);
+    await session.save();
+    expect(new TextDecoder().decode(disk.bytes!)).toContain('transact-encrypted');
+  });
+
+  it('loads the unencrypted copy when the user confirms', async () => {
+    await encryptedFile();
+    replaceWithUnencryptedCopy();
+    await answerUnencryptedCopy(session.open(), true);
+    expect(sessionStore.getState().encryption).toBeNull();
+    expect(docStore.getState().doc!.meta.revision).toBe(diskRevision());
+  });
+
+  it('asks before merging an unencrypted copy into an encrypted file', async () => {
+    await encryptedFile();
+    replaceWithUnencryptedCopy();
+    addAccount('Local edit');
+    await session.save();
+    expect(sessionStore.getState().conflict).not.toBeNull();
+
+    await answerUnencryptedCopy(session.resolveConflict('merge'), false);
+    // Back to the conflict, so another option can be chosen.
+    expect(sessionStore.getState().conflict).not.toBeNull();
+    expect(new TextDecoder().decode(disk.bytes!)).not.toContain('transact-encrypted');
+  });
+
+  it('re-encrypts the local copies when encryption is turned on, and removes them on close', async () => {
+    await session.newDocument('empty');
+    addAccount('Secret');
+    await session.save();
+    const fileId = docStore.getState().doc!.meta.fileId;
+    const text = (bytes: Uint8Array | undefined) => new TextDecoder().decode(bytes);
+    expect(text(await workingCopyStore.loadBase(fileId))).toContain('Secret');
+
+    await session.setPassphrase('correct horse', false);
+    for (const bytes of [
+      await workingCopyStore.loadBase(fileId),
+      (await workingCopyStore.load())?.bytes,
+    ]) {
+      expect(text(bytes)).toContain('transact-encrypted');
+      expect(text(bytes)).not.toContain('Secret');
+    }
+
+    await session.close();
+    expect(await workingCopyStore.loadBase(fileId)).toBeUndefined();
+  });
 });

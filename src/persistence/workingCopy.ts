@@ -3,7 +3,7 @@
  * so nothing is lost if the tab closes before the user saves to their file. It stores
  * the same encoded bytes as the file, so an encrypted file stays encrypted at rest.
  */
-import { clear, createStore, del, get, set, type UseStore } from 'idb-keyval';
+import { clear, createStore, del, get, keys, set, type UseStore } from 'idb-keyval';
 import type { SourceDescriptor, VersionToken } from './types';
 
 export interface WorkingCopy {
@@ -62,6 +62,18 @@ export const workingCopyStore = {
    */
   loadBase: (fileId: string) => get<Uint8Array>(baseKey(fileId), db()),
   saveBase: (fileId: string, bytes: Uint8Array) => set(baseKey(fileId), bytes, db()),
+  deleteBase: (fileId: string) => del(baseKey(fileId), db()),
+  /**
+   * Removes the merge bases of every file except `keepFileId`. A base is a full copy of a
+   * file, so it shouldn't outlive the file being open here.
+   */
+  async pruneBases(keepFileId?: string): Promise<void> {
+    const keep = keepFileId === undefined ? undefined : baseKey(keepFileId);
+    const stale = (await keys(db())).filter(
+      (k) => typeof k === 'string' && k.startsWith('base:') && k !== keep,
+    );
+    await Promise.all(stale.map((k) => del(k, db())));
+  },
   saveRecent: (recent: RecentFile) => set(RECENT, recent, db()),
 
   /** Removes everything Transact stores in this browser's IndexedDB. */
