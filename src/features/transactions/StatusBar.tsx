@@ -2,6 +2,7 @@ import { Button } from '@mantine/core';
 import {
   IconCategory,
   IconCircleCheck,
+  IconCopy,
   IconEyeOff,
   IconTags,
   IconTrash,
@@ -78,6 +79,9 @@ export function StatusBar({ ids }: { ids: readonly Id[] }) {
         })}
         {action('Exclude', <IconEyeOff size={14} />, () => {
           bulkActions.toggleExcluded(list);
+        })}
+        {action('Copy', <IconCopy size={14} />, () => {
+          bulkActions.copy(list);
         })}
         {action(
           'Delete',

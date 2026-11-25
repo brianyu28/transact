@@ -68,6 +68,74 @@ describe('transfers', () => {
   });
 });
 
+describe('copy', () => {
+  it('copies a transaction to a new date without its reconciliation', () => {
+    const tag = d()('createTag', { name: 'trip' });
+    const id = d()('createTransaction', {
+      accountId: card,
+      date: '2026-10-01',
+      payee: 'Cafe',
+      amount: -450,
+      categoryId: cat('Restaurants'),
+      tags: [tag],
+      note: 'latte',
+    });
+    d()('updateTransaction', { id, changes: { reconciled: true } });
+    const [copyId] = d()('copyTransactions', { ids: [id], date: '2026-11-20' });
+    const copy = getTransaction(doc(), copyId!)!;
+    expect(copy.id).not.toBe(id);
+    expect(copy).toMatchObject({
+      accountId: card,
+      date: '2026-11-20',
+      payee: 'Cafe',
+      amount: -450,
+      categoryId: cat('Restaurants'),
+      tags: [tag],
+      note: 'latte',
+    });
+    expect(copy.reconciled).toBeUndefined();
+  });
+
+  it('copies a transfer as a new linked pair, once per pair', () => {
+    const id = d()('createTransaction', {
+      accountId: checking,
+      date: '2026-10-01',
+      payee: 'Card payment',
+      amount: -50000,
+      transferAccountId: card,
+    });
+    const peerId = getTransaction(doc(), id)!.transfer!.peerId;
+    const copies = d()('copyTransactions', { ids: [id, peerId], date: '2026-11-20' });
+    expect(copies).toHaveLength(1);
+    const copy = getTransaction(doc(), copies[0]!)!;
+    const peer = getTransaction(doc(), copy.transfer!.peerId)!;
+    expect(peer).toMatchObject({
+      accountId: card,
+      amount: 50000,
+      date: '2026-11-20',
+      transfer: { peerId: copy.id },
+    });
+    expect([...iterateTransactions(doc())]).toHaveLength(4);
+  });
+
+  it('gives split copies their own split ids', () => {
+    const id = d()('createTransaction', {
+      accountId: card,
+      date: '2026-10-02',
+      payee: 'M',
+      amount: -100,
+    });
+    const tag = d()('createTag', { name: 'shared' });
+    d()('setSplits', { id, splits: [{ amount: -60, tags: [tag] }, { amount: -40 }] });
+    const [copyId] = d()('copyTransactions', { ids: [id], date: '2026-11-20' });
+    expect(getTransaction(doc(), copyId!)!.splits![0]!.tags).toEqual([tag]);
+    const original = getTransaction(doc(), id)!.splits!.map((s) => s.id);
+    const copied = getTransaction(doc(), copyId!)!.splits!;
+    expect(copied.map((s) => s.amount)).toEqual([-60, -40]);
+    expect(copied.some((s) => original.includes(s.id))).toBe(false);
+  });
+});
+
 describe('splits', () => {
   it('splits and unsplits a transaction', () => {
     const id = d()('createTransaction', {

@@ -46,6 +46,12 @@ export function TransactionsPage() {
     if (activeId && !rows.includes(activeId)) registerStore.setState({ activeId: rows[0] ?? null });
   }, [rows]);
 
+  // Bring the cursor's row into view when it moves to a new row (e.g. a copy).
+  const activeId = useRegister((s) => s.activeId);
+  useEffect(() => {
+    if (activeId) scrollTo.current(activeId);
+  }, [activeId]);
+
   const move = (delta: number) => {
     const { activeId } = registerStore.getState();
     const i = activeId ? rows.indexOf(activeId) : -1;
@@ -148,6 +154,12 @@ export function TransactionsPage() {
         notEditing() &&
         activeTransaction()?.transfer === undefined &&
         activeTransaction() !== undefined,
+    },
+    'txn.copy': {
+      run: () => {
+        bulkActions.copy(registerActions.targets());
+      },
+      enabled: hasTargets,
     },
     'txn.delete': {
       run: () => {

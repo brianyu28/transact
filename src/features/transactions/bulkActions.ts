@@ -1,8 +1,9 @@
 /** Actions on one or more transactions (from the bulk bar or keyboard). */
 import { getTransaction } from '@/domain/model';
 import type { Id } from '@/domain/schema/types';
+import { today } from '@/lib/date';
 import { pluralize } from '@/lib/format';
-import { toastWithUndo, tryRun } from '@/store/actions';
+import { toastWithUndo, tryDispatch, tryRun } from '@/store/actions';
 import { docStore } from '@/store/docStore';
 import { registerStore } from './registerStore';
 
@@ -35,6 +36,18 @@ export const bulkActions = {
       ids,
       changes: { excluded: !every(ids, (t) => t.excluded === true) },
     });
+  },
+  /** Copies to today and moves the cursor to the (first) copy. */
+  copy(ids: readonly Id[]) {
+    if (ids.length === 0) return;
+    const copies = tryDispatch('copyTransactions', { ids, date: today() });
+    if (!copies?.length) return;
+    registerStore.setState({ selected: new Set(), activeId: copies[0] ?? null, editing: null });
+    toastWithUndo(
+      copies.length === 1
+        ? 'Copied to today'
+        : `Copied ${pluralize(copies.length, 'transaction')} to today`,
+    );
   },
   delete(ids: readonly Id[]) {
     if (ids.length === 0) return;

@@ -83,6 +83,11 @@
   }
 }
 
+.extraActions {
+  display: flex;
+  gap: $space-2;
+}
+
 .stackActions {
   display: flex;
   justify-content: flex-end;

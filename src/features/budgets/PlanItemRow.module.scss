@@ -1,0 +1,28 @@
+@use '@/styles/tokens' as *;
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  border-radius: 4px;
+}
+
+.dragging {
+  background: var(--tx-bg);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 15%);
+}
+
+.label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.amount {
+  flex: 0 0 110px;
+}
+
+.amountInput {
+  text-align: right;
+
+  @include tabular;
+}

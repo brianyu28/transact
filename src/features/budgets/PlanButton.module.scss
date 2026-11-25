@@ -34,27 +34,6 @@
   gap: $space-1;
 }
 
-.item {
-  display: flex;
-  align-items: center;
-  gap: $space-2;
-}
-
-.label {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.amount {
-  flex: 0 0 110px;
-}
-
-.amountInput {
-  text-align: right;
-
-  @include tabular;
-}
-
 .add {
   margin-top: $space-1;
 }

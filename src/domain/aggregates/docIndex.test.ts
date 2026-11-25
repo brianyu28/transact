@@ -8,7 +8,7 @@ import {
   removeTransaction,
 } from '../model';
 import type { Transaction } from '../schema/types';
-import { DocIndex } from './docIndex';
+import { DocIndex, idFromKey, sortKey } from './docIndex';
 
 const doc = generateDemoDocument({ endDate: '2026-06-30', years: 1, appVersion: 'test', seed: 9 });
 
@@ -66,5 +66,30 @@ describe('DocIndex', () => {
     const ids = index.idsInRange('2026-03-01', '2026-03-31');
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) expect(getTransaction(doc, id)!.date.startsWith('2026-03')).toBe(true);
+  });
+
+  it('orders a day newest-entered first, then payee A–Z, then amount, once reversed', () => {
+    const t = (id: string, createdAt: string, payee: string, amount: number): Transaction => ({
+      id,
+      accountId: 'acc_a',
+      date: '2026-05-01',
+      payee,
+      amount,
+      createdAt,
+      updatedAt: createdAt,
+    });
+    const early = '2026-05-01T09:00:00.000Z';
+    const late = '2026-05-01T18:00:00.000Z';
+    const rows = [
+      t('txn_1', early, 'Bakery', -500),
+      t('txn_2', early, 'bakery', -2000),
+      t('txn_3', early, 'Bake', -100),
+      t('txn_4', early, 'Cafe', -300),
+      t('txn_5', late, 'Zoo', -100),
+      // Same instant written with an offset still counts as the same time.
+      t('txn_6', '2026-05-01T05:00:00.000-04:00', 'Apple', -100),
+    ];
+    const newestFirst = rows.map(sortKey).sort().reverse().map(idFromKey);
+    expect(newestFirst).toEqual(['txn_5', 'txn_6', 'txn_3', 'txn_2', 'txn_1', 'txn_4']);
   });
 });

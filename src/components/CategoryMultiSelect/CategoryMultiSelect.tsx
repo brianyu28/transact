@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { categoryTree } from '@/domain/aggregates/lookups';
 import type { Id } from '@/domain/schema/types';
 import { useDocStore } from '@/store/docStore';
+import { wordFilter } from '@/components/CategorySelect/wordFilter';
 
 interface CategoryMultiSelectProps extends Omit<MultiSelectProps, 'data' | 'value' | 'onChange'> {
   value: Id[];
@@ -35,6 +36,7 @@ export function CategoryMultiSelect({
       searchable
       hidePickedOptions
       selectFirstOptionOnChange
+      filter={wordFilter}
       maxDropdownHeight={280}
       {...props}
       // Mantine keeps the placeholder in the search field after picks; show it only when empty.

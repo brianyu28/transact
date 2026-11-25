@@ -4,6 +4,7 @@ import { categoryTree, sortedAccounts } from '@/domain/aggregates/lookups';
 import type { Id } from '@/domain/schema/types';
 import { useDocStore } from '@/store/docStore';
 import { categoryValue, transferValue, type CategoryValue } from './categoryValue';
+import { wordFilter } from './wordFilter';
 
 interface CategorySelectProps extends Omit<SelectProps, 'data' | 'value' | 'onChange'> {
   value: CategoryValue;
@@ -45,6 +46,7 @@ export function CategorySelect({ value, onChange, transfersFrom, ...props }: Cat
       clearable
       // Typing then Enter picks the best match.
       selectFirstOptionOnChange
+      filter={wordFilter}
       placeholder="Uncategorized"
       nothingFoundMessage="No match"
       maxDropdownHeight={320}

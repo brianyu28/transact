@@ -4,7 +4,7 @@ import { getTransaction, type DocModel } from '../model';
 import type { Id } from '../schema/types';
 import type { CompiledFilter } from './filter';
 
-/** Lower bound in a sorted `date|id` key array. */
+/** Lower bound in a sorted key array (see `sortKey`). */
 function lowerBound(keys: readonly string[], key: string): number {
   let lo = 0;
   let hi = keys.length;

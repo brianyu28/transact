@@ -1,12 +1,14 @@
-import { ActionIcon, Button, Group, Modal, TextInput, Tooltip } from '@mantine/core';
-import { IconListDetails, IconPlus, IconX } from '@tabler/icons-react';
+import { ActionIcon, Button, Group, Modal, Tooltip } from '@mantine/core';
+import { IconListDetails, IconPlus } from '@tabler/icons-react';
 import { clsx } from 'clsx';
 import { useState } from 'react';
+import { SortableGroup, SortableProvider } from '@/components/Sortable/Sortable';
 import { summarizePlan } from '@/domain/budgets/plan';
 import type { PlanItem } from '@/domain/schema/types';
 import { useFormat } from '@/hooks/useFormat';
 import { centsToInput, parseMoney, type Cents } from '@/lib/money';
 import styles from './PlanButton.module.scss';
+import { PlanItemRow, type PlanItemDraft } from './PlanItemRow';
 import { usePlanStatusText } from './usePlanStatusText';
 
 interface PlanButtonProps {
@@ -27,19 +29,13 @@ interface PlanButtonProps {
   className?: string;
 }
 
-interface ItemDraft {
-  key: number;
-  label: string;
-  amount: string;
-}
-
 let nextKey = 1;
-const toDraft = (item: PlanItem): ItemDraft => ({
+const toDraft = (item: PlanItem): PlanItemDraft => ({
   key: nextKey++,
   label: item.label,
   amount: item.amount === 0 ? '' : centsToInput(item.amount),
 });
-const emptyDraft = (): ItemDraft => ({ key: nextKey++, label: '', amount: '' });
+const emptyDraft = (): PlanItemDraft => ({ key: nextKey++, label: '', amount: '' });
 
 /**
  * A plan icon that opens an editor for the expected costs a budget line should cover. The
@@ -59,7 +55,7 @@ export function PlanButton({
 }: PlanButtonProps) {
   const format = useFormat();
   const statusText = usePlanStatusText();
-  const [items, setItems] = useState<ItemDraft[] | null>(null);
+  const [items, setItems] = useState<PlanItemDraft[] | null>(null);
   const [budget, setBudget] = useState(budgeted);
   const [focusKey, setFocusKey] = useState<number | null>(null);
   const has = Boolean(plan?.length);
@@ -73,8 +69,15 @@ export function PlanButton({
   const close = () => {
     setItems(null);
   };
-  const update = (key: number, patch: Partial<ItemDraft>) => {
+  const update = (key: number, patch: Partial<PlanItemDraft>) => {
     setItems((list) => list?.map((i) => (i.key === key ? { ...i, ...patch } : i)) ?? null);
+  };
+  const reorder = (_group: string, keys: string[]) => {
+    setItems((list) => {
+      if (!list) return list;
+      const byKey = new Map(list.map((i) => [String(i.key), i]));
+      return keys.map((k) => byKey.get(k)).filter((i): i is PlanItemDraft => i !== undefined);
+    });
   };
   const add = () => {
     const item = emptyDraft();
@@ -138,50 +141,28 @@ export function PlanButton({
           List the costs this budget should cover. The plan doesn’t change the budgeted amount.
         </p>
         <div className={styles.items}>
-          {items?.map((item, index) => (
-            <div key={item.key} className={styles.item}>
-              <TextInput
-                size="xs"
-                placeholder="What it’s for"
-                aria-label={`Plan item ${index + 1} label`}
-                maxLength={200}
-                autoFocus={item.key === focusKey}
-                data-autofocus={index === 0 && focusKey === null ? true : undefined}
-                value={item.label}
-                onChange={(e) => {
-                  update(item.key, { label: e.currentTarget.value });
-                }}
-                className={styles.label}
-              />
-              <TextInput
-                size="xs"
-                placeholder="0.00"
-                aria-label={`Plan item ${index + 1} amount`}
-                inputMode="decimal"
-                value={item.amount}
-                error={item.amount.trim() !== '' && parseMoney(item.amount) === null}
-                onChange={(e) => {
-                  update(item.key, { amount: e.currentTarget.value });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && index === items.length - 1) add();
-                }}
-                classNames={{ input: styles.amountInput }}
-                className={styles.amount}
-              />
-              <ActionIcon
-                size="sm"
-                variant="subtle"
-                color="gray"
-                aria-label={`Remove plan item ${index + 1}`}
-                onClick={() => {
-                  setItems((list) => list?.filter((i) => i.key !== item.key) ?? null);
-                }}
-              >
-                <IconX size={14} />
-              </ActionIcon>
-            </div>
-          ))}
+          <SortableProvider onReorder={reorder}>
+            <SortableGroup ids={(items ?? []).map((i) => String(i.key))}>
+              {items?.map((item, index) => (
+                <PlanItemRow
+                  key={item.key}
+                  item={item}
+                  index={index}
+                  autoFocus={item.key === focusKey}
+                  dataAutofocus={index === 0 && focusKey === null}
+                  onChange={(patch) => {
+                    update(item.key, patch);
+                  }}
+                  onRemove={() => {
+                    setItems((list) => list?.filter((i) => i.key !== item.key) ?? null);
+                  }}
+                  onEnter={() => {
+                    if (index === items.length - 1) add();
+                  }}
+                />
+              ))}
+            </SortableGroup>
+          </SortableProvider>
         </div>
         <Button
           size="xs"

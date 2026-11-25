@@ -18,8 +18,9 @@ import {
   type BalanceSnapshot,
   type Cents,
   type Id,
+  type Transaction,
 } from '../schema/types';
-import type { DocIndex } from './docIndex';
+import { idFromKey, sortKey, type DocIndex } from './docIndex';
 
 export interface Anchor {
   snapshot: BalanceSnapshot;
@@ -214,20 +215,20 @@ export function adjustmentsBetween(ledger: AccountLedger, from: ISODate, to: ISO
   return total;
 }
 
-/** Balance of the transaction's account right after this transaction (same-day order: by id). */
+/** Balance of the transaction's account right after this transaction (same-day order: `sortKey`). */
 export function balanceAfterTransaction(
   doc: Pick<DocModel, 'balanceSnapshots' | 'transactions'>,
   index: DocIndex,
-  t: { id: Id; accountId: Id; date: ISODate; amount: Cents },
+  t: Transaction,
 ): Cents {
   const ledger = getLedger(doc, index, t.accountId);
   let balance = balanceAtStart(ledger, t.date);
   const keys = index.byAccount.get(t.accountId) ?? [];
-  const own = `${t.date}|${t.id}`;
+  const own = sortKey(t);
   for (let i = lowerBound(keys, `${t.date}|`); i < keys.length; i++) {
     const key = keys[i] as string;
     if (key > own) break;
-    const id = key.slice(11);
+    const id = idFromKey(key);
     balance += id === t.id ? t.amount : (getTransactionAmount(doc, id) ?? 0);
   }
   return balance;

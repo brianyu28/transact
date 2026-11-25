@@ -231,11 +231,14 @@ patch in O(log n):
 
 | Index                         | Used for                                                           |
 | ----------------------------- | ------------------------------------------------------------------ |
-| `byDate`                      | Sorted `date\|id` keys for the register and date-range queries     |
+| `byDate`                      | Sorted `date\|rank\|id` keys for the register and date ranges      |
 | `byAccount`                   | The same, per account                                              |
 | `categoryByMonth`             | Rollup: month → category → summed split amounts (reports, budgets) |
 | `accountDailyDelta`           | Per account, net change per day with prefix sums (balances)        |
 | `unreconciled`, `byStatement` | Reconciliation candidates and statement contents                   |
+
+Within a day, the register (newest first) lists the most recently entered transaction first,
+then payee A–Z, then amount; `sortKey` encodes that order as a plain string.
 
 The index is mutable for speed. It exposes version counters, and selectors and hooks recompute
 when the version they depend on changes. Expensive derived data, such as effective splits and row

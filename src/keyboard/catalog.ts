@@ -72,6 +72,7 @@ export const COMMANDS = [
   { id: 'txn.reconcile', title: 'Toggle reconciled', group: 'Transactions', keys: ['r'] },
   { id: 'txn.exclude', title: 'Toggle excluded from budgets', group: 'Transactions', keys: ['-'] },
   { id: 'txn.split', title: 'Split transaction', group: 'Transactions', keys: ['s'] },
+  { id: 'txn.copy', title: 'Copy to today', group: 'Transactions', keys: ['d'] },
   { id: 'txn.delete', title: 'Delete', group: 'Transactions', keys: ['delete', 'mod+backspace'] },
   // Budgets
   { id: 'budget.prev', title: 'Previous period', group: 'Budgets', keys: ['['] },

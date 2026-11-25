@@ -1,5 +1,5 @@
 import { ActionIcon, Autocomplete, Button, Select, TextInput, Tooltip } from '@mantine/core';
-import { IconArrowsSplit, IconCheck, IconX } from '@tabler/icons-react';
+import { IconArrowsSplit, IconCheck, IconCopy, IconX } from '@tabler/icons-react';
 import { clsx } from 'clsx';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import {
@@ -23,6 +23,7 @@ import { centsToInput } from '@/lib/money';
 import { tryDispatch } from '@/store/actions';
 import { docStore, useDocStore } from '@/store/docStore';
 import { resolveAmount } from './amount';
+import { bulkActions } from './bulkActions';
 import { registerStore } from './registerStore';
 import { TagsField } from './TagsField';
 import styles from './TransactionEditor.module.scss';
@@ -402,6 +403,22 @@ export function TransactionEditor({
     </Button>
   );
 
+  // Copies the saved transaction (not unsaved edits in this form) to today.
+  const copyButton = !isNew && (
+    <Button
+      size="compact-xs"
+      variant="subtle"
+      color="gray"
+      leftSection={<IconCopy size={12} />}
+      onClick={() => {
+        onDone();
+        bulkActions.copy([transaction.id]);
+      }}
+    >
+      Copy to today
+    </Button>
+  );
+
   if (!compact) {
     return (
       <div
@@ -416,7 +433,12 @@ export function TransactionEditor({
       >
         {fields}
         {note}
-        {splitButton}
+        {!isNew && (
+          <div className={styles.extraActions}>
+            {splitButton}
+            {copyButton}
+          </div>
+        )}
         {error && <span className={styles.error}>{error}</span>}
         <div className={styles.stackActions}>
           <Button variant="default" onClick={onDone}>
@@ -452,6 +474,7 @@ export function TransactionEditor({
       <span className={styles.secondLine}>
         {note}
         {splitButton}
+        {copyButton}
         {error && <span className={styles.error}>{error}</span>}
       </span>
     </div>

@@ -296,6 +296,59 @@ export const deleteTransactions = defineCommand<{ ids: readonly Id[] }>({
   },
 });
 
+/** Copy of `t` with fresh ids on `date`, minus statement/reconcile state and transfer link. */
+function copyOf(t: Transaction, date: ISODate, ctx: CommandContext): Transaction {
+  const copy: Transaction = {
+    ...t,
+    id: ctx.newId('transaction'),
+    date,
+    createdAt: ctx.now,
+    updatedAt: ctx.now,
+  };
+  if (t.splits) {
+    copy.splits = t.splits.map((s) => ({
+      ...s,
+      id: ctx.newId('split'),
+      ...(s.tags && { tags: [...s.tags] }),
+    }));
+  }
+  if (t.tags) copy.tags = [...t.tags];
+  for (const key of ['reconciled', 'statementId', 'transfer'] as const) {
+    Reflect.deleteProperty(copy, key);
+  }
+  return copy;
+}
+
+/**
+ * Copies transactions to a new date (category, splits, tags, note and exclusion included;
+ * reconciliation isn't). A transfer is copied as a new linked pair, once even if both
+ * sides are given. Returns the new ids, in the order given.
+ */
+export const copyTransactions = defineCommand<{ ids: readonly Id[]; date: ISODate }, Id[]>({
+  label: 'Copy transactions',
+  run(draft, { ids, date }, ctx) {
+    const copied = new Set<Id>();
+    const out: Id[] = [];
+    for (const id of ids) {
+      if (copied.has(id)) continue;
+      const t = required<Transaction>(getTransaction(draft, id), 'Transaction');
+      const copy = copyOf(t, date, ctx);
+      copied.add(id);
+      const peer = t.transfer ? getTransaction(draft, t.transfer.peerId) : undefined;
+      if (peer) {
+        const peerCopy = copyOf(peer, date, ctx);
+        copy.transfer = { peerId: peerCopy.id };
+        peerCopy.transfer = { peerId: copy.id };
+        putTransaction(draft, peerCopy);
+        copied.add(peer.id);
+      }
+      putTransaction(draft, copy);
+      out.push(copy.id);
+    }
+    return out;
+  },
+});
+
 export interface TransactionForm {
   /** Existing transaction to update; omit to create a new one. */
   id?: Id;

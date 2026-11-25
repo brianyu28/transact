@@ -14,6 +14,7 @@ import { DragHandle, SortableGroup, SortableProvider } from '@/components/Sortab
 import { useSortableItem } from '@/components/Sortable/useSortableItem';
 import { toastWithUndo, tryDispatch, tryRun } from '@/store/actions';
 import { useDocStore } from '@/store/docStore';
+import { wordFilter } from '@/components/CategorySelect/wordFilter';
 import { NeedsDocument } from './NeedsDocument';
 import styles from './settings.module.scss';
 import local from './CategoriesSettings.module.scss';
@@ -301,6 +302,7 @@ function MoveCategoryDialog({
         data-autofocus
         label="New parent"
         searchable
+        filter={wordFilter}
         data={options}
         value={target}
         allowDeselect={false}
@@ -361,6 +363,7 @@ function DeleteCategoryDialog({
         <Select
           label="Move its transactions to"
           searchable
+          filter={wordFilter}
           data={options}
           value={reassign}
           allowDeselect={false}

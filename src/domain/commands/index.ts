@@ -44,6 +44,7 @@ import {
 } from './statements';
 import { createTag, deleteTag, updateTag } from './tags';
 import {
+  copyTransactions,
   createTransaction,
   deleteTransactions,
   saveTransaction,
@@ -67,6 +68,7 @@ export const commands = {
   updateTag,
   deleteTag,
   createTransaction,
+  copyTransactions,
   saveTransaction,
   updateTransaction,
   updateTransactions,
