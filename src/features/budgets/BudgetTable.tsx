@@ -1,13 +1,14 @@
 import { Tooltip } from '@mantine/core';
 import { clsx } from 'clsx';
 import { MoneyInput } from '@/components/MoneyInput/MoneyInput';
-import { NoteButton } from '@/components/NoteButton/NoteButton';
+import { IconNote } from '@tabler/icons-react';
 import type { BudgetView, LineView } from '@/domain/budgets/views';
 import { useFormat } from '@/hooks/useFormat';
 import { tryRun } from '@/store/actions';
 import { useLocation } from 'wouter';
 import { BudgetBar } from './BudgetBar';
 import { filterRegisterToBudget } from './budgetLinks';
+import { PlanBadge } from './PlanBadge';
 import { budgetStatus } from './budgetStatus';
 import styles from './BudgetTable.module.scss';
 
@@ -129,19 +130,13 @@ function LineRow({
         >
           {line.label}
         </button>
-        {canEdit && periodId && !compact && (
-          <NoteButton
-            note={line.note}
-            subject={line.label}
-            onSave={(note) => {
-              tryRun('setPeriodLine', {
-                periodId,
-                templateLineId: line.lineId,
-                changes: { note },
-              });
-            }}
-          />
+        {/* Read-only here: notes and plans are added and edited in Edit mode. */}
+        {!compact && line.note && (
+          <Tooltip label={line.note} multiline maw={320} openDelay={200}>
+            <IconNote size={14} className={styles.noteIcon} aria-label="Has a note" />
+          </Tooltip>
         )}
+        {!compact && line.plan?.length ? <PlanBadge line={line} /> : null}
       </span>
       <span role="cell" className={styles.num}>
         {canEdit && periodId ? (

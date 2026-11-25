@@ -170,7 +170,7 @@ To change the schema:
 1. Edit `current.ts`.
 2. Add `migrations/vN-to-vN+1.ts` and list it in `migrations/index.ts`.
 3. Bump `CURRENT_SCHEMA_VERSION`.
-4. Generate `fixtures/vN+1.json` with `pnpm gen:demo -- --years 1 --seed 42 --out src/domain/schema/fixtures/vN+1.json`.
+4. Generate `fixtures/vN+1.json` with `pnpm gen:demo --years 1 --seed 42 --end 2026-11-24 --out src/domain/schema/fixtures/vN+1.json`.
 5. Update the demo generator, the commands and the merge (`sync/merge.ts`) if the change adds a
    collection.
 
@@ -309,6 +309,14 @@ engine decides which budget each split counts toward.
 - Template lines and period lines each have an optional `note`. Notes aren't copied when a period
   is created: a default line's note explains the default, a period line's note explains that
   period.
+- Template, period and custom budget lines can also have a **plan** (`plan`, since v5): labeled
+  amounts the line should cover, e.g. car and renters insurance in an Insurance line. A plan
+  never changes the budgeted amount. The UI compares the two and shows an exact match, a buffer
+  or a shortfall (`budgets/plan.ts`). Like notes, plans aren't copied into created periods.
+- A created period can be edited on its own (Edit on the month or year view): amounts,
+  rollovers, categories, names, notes and plans; lines can be removed, re-added from the
+  defaults (`setPeriodLine`), or added just for that period (`addPeriodLine`, which gives the
+  line its own id since no default backs it).
 
 ### 11.2 Rollover
 

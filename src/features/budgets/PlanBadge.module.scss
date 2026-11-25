@@ -1,0 +1,25 @@
+@use '@/styles/tokens' as *;
+
+.icon {
+  flex: none;
+  color: var(--tx-accent);
+}
+
+.short {
+  color: var(--tx-negative);
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  gap: $space-4;
+
+  @include tabular;
+}
+
+.result {
+  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px solid currentcolor;
+  font-weight: 600;
+}

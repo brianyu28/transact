@@ -182,6 +182,16 @@ export const BudgetTargetSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('everythingElse') }),
 ]);
 
+/**
+ * A planning item on a budget line (since v5): one expected cost that the line's amount
+ * should cover, e.g. "Car insurance" in an Insurance line. Planning only: it never changes
+ * the budgeted amount, and isn't copied into created periods.
+ */
+export const PlanItemSchema = z.object({
+  label: z.string().max(200),
+  amount: CentsSchema,
+});
+
 export const TemplateLineSchema = z.object({
   id: IdSchema,
   name: z.string().max(200).optional(),
@@ -192,6 +202,8 @@ export const TemplateLineSchema = z.object({
   order: z.number(),
   /** Why the line is set the way it is (since v4). Not copied into created periods. */
   note: NoteSchema.optional(),
+  /** Expected costs the default amount should cover (since v5). Not copied into periods. */
+  plan: z.array(PlanItemSchema).optional(),
 });
 
 export const BudgetPeriodSchema = z.object({
@@ -207,6 +219,7 @@ export const BudgetPeriodSchema = z.object({
       base: CentsSchema,
       rollover: CentsSchema,
       note: NoteSchema.optional(),
+      plan: z.array(PlanItemSchema).optional(),
     }),
   ),
   createdAt: TimestampSchema,
@@ -231,6 +244,7 @@ export const CustomBudgetSchema = z.object({
       name: z.string().max(200),
       target: BudgetTargetSchema,
       amount: CentsSchema,
+      plan: z.array(PlanItemSchema).optional(),
     }),
   ),
   priority: z.number(),

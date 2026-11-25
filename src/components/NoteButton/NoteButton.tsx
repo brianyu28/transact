@@ -9,6 +9,8 @@ interface NoteButtonProps {
   /** What the note is about, e.g. "Food" (used in the title and labels). */
   subject: string;
   onSave: (note: string) => void;
+  /** Show a labeled button ("Add note") instead of a bare icon, e.g. in a sheet. */
+  labeled?: boolean;
   className?: string;
 }
 
@@ -16,7 +18,7 @@ interface NoteButtonProps {
  * A small note icon that opens an editor. Highlighted when there is a note; otherwise it
  * shows only on row hover/focus (see `.reveal` in the row's styles), keeping rows uncluttered.
  */
-export function NoteButton({ note, subject, onSave, className }: NoteButtonProps) {
+export function NoteButton({ note, subject, onSave, labeled, className }: NoteButtonProps) {
   const [draft, setDraft] = useState<string | null>(null);
   const has = Boolean(note);
   const close = () => {
@@ -24,21 +26,35 @@ export function NoteButton({ note, subject, onSave, className }: NoteButtonProps
   };
   return (
     <>
-      <Tooltip label={has ? note : 'Add a note'} multiline maw={320} openDelay={300}>
-        <ActionIcon
-          size="sm"
-          variant="subtle"
-          color={has ? 'accent' : 'gray'}
-          aria-label={has ? `Note for ${subject}` : `Add a note for ${subject}`}
-          className={clsx(styles.button, !has && styles.empty, className)}
-          onClick={(e) => {
-            e.stopPropagation();
+      {labeled ? (
+        <Button
+          size="xs"
+          variant="default"
+          leftSection={<IconNote size={14} />}
+          className={className}
+          onClick={() => {
             setDraft(note ?? '');
           }}
         >
-          <IconNote size={14} />
-        </ActionIcon>
-      </Tooltip>
+          {has ? 'Edit note' : 'Add note'}
+        </Button>
+      ) : (
+        <Tooltip label={has ? note : 'Add a note'} multiline maw={320} openDelay={300}>
+          <ActionIcon
+            size="sm"
+            variant="subtle"
+            color={has ? 'accent' : 'gray'}
+            aria-label={has ? `Note for ${subject}` : `Add a note for ${subject}`}
+            className={clsx(styles.button, !has && styles.empty, className)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setDraft(note ?? '');
+            }}
+          >
+            <IconNote size={14} />
+          </ActionIcon>
+        </Tooltip>
+      )}
       <Modal opened={draft !== null} onClose={close} title={`Note · ${subject}`} size="md">
         <Textarea
           data-autofocus

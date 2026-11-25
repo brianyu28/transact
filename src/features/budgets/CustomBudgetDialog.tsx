@@ -13,11 +13,12 @@ import { useState } from 'react';
 import { CategoryMultiSelect } from '@/components/CategoryMultiSelect/CategoryMultiSelect';
 import { sortedTags } from '@/domain/aggregates/lookups';
 import type { CustomBudgetInput } from '@/domain/commands';
-import type { CustomBudget, Id } from '@/domain/schema/types';
+import type { CustomBudget, Id, PlanItem } from '@/domain/schema/types';
 import { isISODate } from '@/lib/date';
 import { centsToInput, parseMoney } from '@/lib/money';
 import { tryDispatch, tryRun } from '@/store/actions';
 import { useDocStore } from '@/store/docStore';
+import { PlanButton } from './PlanButton';
 import styles from './CustomBudgetDialog.module.scss';
 
 interface LineDraft {
@@ -27,6 +28,7 @@ interface LineDraft {
   /** Empty = "everything else in this budget". */
   categoryIds: Id[];
   amount: string;
+  plan?: PlanItem[];
 }
 
 let nextKey = 1;
@@ -79,6 +81,7 @@ function CustomBudgetForm({
           name: l.name,
           categoryIds: l.target.kind === 'categories' ? l.target.categoryIds : [],
           amount: centsToInput(l.amount),
+          ...(l.plan ? { plan: l.plan.map((p) => ({ ...p })) } : {}),
         }))
       : [{ key: nextKey++, name: 'Total', categoryIds: [], amount: '' }],
   );
@@ -106,6 +109,7 @@ function CustomBudgetForm({
             ? { kind: 'categories' as const, categoryIds: l.categoryIds }
             : { kind: 'everythingElse' as const },
           amount: parseMoney(l.amount) ?? 0,
+          ...(l.plan ? { plan: l.plan } : {}),
         })),
     };
     const ok = budget
@@ -206,6 +210,18 @@ function CustomBudgetForm({
               onChange={(e) => {
                 update(l.key, { amount: e.currentTarget.value });
               }}
+            />
+            <PlanButton
+              plan={l.plan}
+              budgeted={parseMoney(l.amount) ?? 0}
+              subject={l.name || 'Budget line'}
+              onSave={(plan) => {
+                update(l.key, { plan });
+              }}
+              onSetBudget={(cents) => {
+                update(l.key, { amount: centsToInput(cents) });
+              }}
+              alwaysShow
             />
             <ActionIcon
               color="gray"

@@ -25,6 +25,7 @@ export type Statement = z.infer<typeof S.StatementSchema>;
 export type BudgetTarget = z.infer<typeof S.BudgetTargetSchema>;
 export type BudgetTier = z.infer<typeof S.BudgetTierSchema>;
 export type RolloverPolicy = z.infer<typeof S.RolloverPolicySchema>;
+export type PlanItem = z.infer<typeof S.PlanItemSchema>;
 export type TemplateLine = z.infer<typeof S.TemplateLineSchema>;
 export type BudgetPeriod = z.infer<typeof S.BudgetPeriodSchema>;
 export type CustomBudget = z.infer<typeof S.CustomBudgetSchema>;

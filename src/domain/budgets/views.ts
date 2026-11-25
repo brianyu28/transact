@@ -14,6 +14,7 @@ import type {
   Cents,
   CustomBudget,
   Id,
+  PlanItem,
   RolloverPolicy,
   Transaction,
 } from '../schema/types';
@@ -35,6 +36,8 @@ export interface EffectiveLine extends LineSpec {
   name: string | undefined;
   /** The created period's note for this line (default-line notes stay with the defaults). */
   note: string | undefined;
+  /** The created period's plan items for this line (default-line plans stay too). */
+  plan: readonly PlanItem[] | undefined;
   base: Cents;
   rollover: Cents;
 }
@@ -54,6 +57,7 @@ export function linesFor(
         target: l.target,
         name: l.name,
         note: l.note,
+        plan: l.plan,
         base: l.base,
         rollover: l.rollover,
       })),
@@ -67,6 +71,7 @@ export function linesFor(
       target: l.target,
       name: l.name,
       note: undefined,
+      plan: undefined,
       base: l.defaultAmount,
       rollover: 0,
     }));

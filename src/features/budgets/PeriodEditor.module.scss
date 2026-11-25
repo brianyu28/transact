@@ -1,0 +1,26 @@
+@use '@/styles/tokens' as *;
+
+.root {
+  max-width: 980px;
+}
+
+.intro {
+  margin: 0 0 $space-2;
+  color: var(--tx-text-dim);
+}
+
+.menuAmount {
+  color: var(--tx-text-dim);
+
+  @include tabular;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: $space-2;
+  border-top: 1px solid var(--tx-border);
+
+  @include tabular;
+}

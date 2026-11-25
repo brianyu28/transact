@@ -354,6 +354,7 @@ export function generateDemoDocument(options: DemoOptions): DocModel {
     if (name) l.name = name;
     if (note) l.note = note;
     doc.budgets.template.lines[l.id] = l;
+    return l;
   };
   const cats = (...names: string[]) => ({
     kind: 'categories' as const,
@@ -375,7 +376,11 @@ export function generateDemoDocument(options: DemoOptions): DocModel {
   line('monthly', cats('Health'), 100, 6);
   line('monthly', { kind: 'everythingElse' }, 150, 7, 'Everything Else');
   line('annual', cats('Travel'), 3200, 0);
-  line('annual', cats('Insurance'), 1400, 1);
+  line('annual', cats('Insurance'), 1400, 1).plan = [
+    { label: 'Car insurance', amount: 86000 },
+    { label: 'Renters insurance', amount: 21000 },
+    { label: 'Umbrella policy', amount: 25000 },
+  ];
   line('annual', cats('Gifts'), 600, 2);
 
   // ── Budget periods: the two months before the current one, and this year ──

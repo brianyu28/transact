@@ -1,18 +1,16 @@
-import { ActionIcon, Button, Select, TextInput, Tooltip } from '@mantine/core';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { Select } from '@mantine/core';
 import { clsx } from 'clsx';
-import { useState } from 'react';
-import { CategoryMultiSelect } from '@/components/CategoryMultiSelect/CategoryMultiSelect';
-import { MoneyInput } from '@/components/MoneyInput/MoneyInput';
-import { NoteButton } from '@/components/NoteButton/NoteButton';
 import { DragHandle, SortableGroup, SortableProvider } from '@/components/Sortable/Sortable';
 import { useSortableItem } from '@/components/Sortable/useSortableItem';
 import { lineLabel } from '@/domain/budgets/views';
-import type { BudgetTier, Id, RolloverPolicy, TemplateLine } from '@/domain/schema/types';
+import type { CommandPayload } from '@/domain/commands';
+import type { BudgetTier, RolloverPolicy, TemplateLine } from '@/domain/schema/types';
 import { useFormat } from '@/hooks/useFormat';
-import { parseMoney } from '@/lib/money';
 import { toastWithUndo, tryDispatch, tryRun } from '@/store/actions';
 import { useDocStore } from '@/store/docStore';
+import { AddBudgetLine } from './AddBudgetLine';
+import { BudgetLineHeader } from './BudgetLineHeader';
+import { BudgetLineRow } from './BudgetLineRow';
 import styles from './DefaultsEditor.module.scss';
 
 const POLICIES: { value: RolloverPolicy; label: string }[] = [
@@ -69,20 +67,19 @@ function Section({
         {title}
         <span className={styles.headingTotal}>{format.money(total)}</span>
       </h3>
-      <div className={clsx(styles.row, styles.head)}>
-        <span />
-        <span>Categories</span>
-        <span>Name (optional)</span>
-        <span className={styles.num}>Default</span>
-        <span>Roll over</span>
-        <span />
-      </div>
+      <BudgetLineHeader amount="Default" extra="Roll over" sortable />
       <SortableGroup ids={list.map((l) => l.id)}>
         {list.map((line) => (
           <LineRow key={line.id} line={line} />
         ))}
       </SortableGroup>
-      <AddLine cadence={cadence} hasEverythingElse={hasEverythingElse} />
+      <AddBudgetLine
+        kind={cadence}
+        canAddEverythingElse={!hasEverythingElse}
+        onAdd={(target, defaultAmount) =>
+          tryDispatch('createTemplateLine', { cadence, target, defaultAmount }) !== undefined
+        }
+      />
     </section>
   );
 }
@@ -94,162 +91,62 @@ function LineRow({ line }: { line: TemplateLine }) {
     `template-${line.cadence}`,
   );
   if (!doc) return null;
-  const label = lineLabel(doc, { target: line.target });
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={clsx(styles.row, 'tx-note-row', isDragging && styles.dragging)}
-    >
-      <DragHandle handle={handle} label={`Reorder ${label}`} />
-      {line.target.kind === 'everythingElse' ? (
-        <span className={styles.everythingElse}>Everything Else</span>
-      ) : (
-        <CategoryMultiSelect
-          size="xs"
-          variant="unstyled"
-          expenseOnly
-          aria-label="Categories"
-          value={line.target.categoryIds}
-          onChange={(ids) => {
-            if (ids.length > 0)
-              tryRun('updateTemplateLine', {
-                id: line.id,
-                changes: { target: { kind: 'categories', categoryIds: ids } },
-              });
-          }}
-        />
-      )}
-      <TextInput
-        size="xs"
-        variant="unstyled"
-        aria-label="Line name"
-        placeholder={label}
-        defaultValue={line.name ?? ''}
-        onBlur={(e) => {
-          const name = e.currentTarget.value;
-          if (name !== (line.name ?? ''))
-            tryRun('updateTemplateLine', { id: line.id, changes: { name } });
-        }}
-      />
-      <MoneyInput
-        size="xs"
-        variant="unstyled"
-        aria-label={`Default amount for ${label}`}
-        value={line.defaultAmount}
-        onCommit={(defaultAmount) => {
-          tryRun('updateTemplateLine', { id: line.id, changes: { defaultAmount } });
-        }}
-      />
-      <Select
-        size="xs"
-        variant="unstyled"
-        aria-label="Rollover"
-        data={POLICIES}
-        value={line.rolloverPolicy}
-        allowDeselect={false}
-        onChange={(v) => {
-          if (v)
-            tryRun('updateTemplateLine', {
-              id: line.id,
-              changes: { rolloverPolicy: v },
-            });
-        }}
-      />
-      <span className={styles.actions}>
-        <NoteButton
-          note={line.note}
-          subject={line.name ?? label}
-          onSave={(note) => {
-            tryRun('updateTemplateLine', { id: line.id, changes: { note } });
-          }}
-        />
-        <Tooltip label="Delete line">
-          <ActionIcon
-            color="gray"
-            aria-label={`Delete ${label}`}
-            onClick={() => {
-              if (tryRun('deleteTemplateLine', { id: line.id })) toastWithUndo(`Deleted ${label}`);
-            }}
-          >
-            <IconTrash size={14} />
-          </ActionIcon>
-        </Tooltip>
-      </span>
-    </div>
-  );
-}
-
-function AddLine({
-  cadence,
-  hasEverythingElse,
-}: {
-  cadence: BudgetTier;
-  hasEverythingElse: boolean;
-}) {
-  const [categories, setCategories] = useState<Id[]>([]);
-  const [amount, setAmount] = useState('');
-  const cents = parseMoney(amount);
-  const add = () => {
-    if (categories.length === 0 || cents === null) return;
-    const id = tryDispatch('createTemplateLine', {
-      cadence,
-      target: { kind: 'categories', categoryIds: categories },
-      defaultAmount: cents,
-    });
-    if (id) {
-      setCategories([]);
-      setAmount('');
-    }
+  const label = lineLabel(doc, line);
+  const update = (changes: CommandPayload<'updateTemplateLine'>['changes']) => {
+    tryRun('updateTemplateLine', { id: line.id, changes });
   };
+  const policy = POLICIES.find((p) => p.value === line.rolloverPolicy)?.label;
   return (
-    <div className={styles.add}>
-      <CategoryMultiSelect
-        size="xs"
-        expenseOnly
-        placeholder="Categories for a new line"
-        aria-label={`New ${cadence} line categories`}
-        value={categories}
-        onChange={setCategories}
-        className={styles.addCategories}
-      />
-      <TextInput
-        size="xs"
-        placeholder="Amount"
-        aria-label="New line amount"
-        inputMode="decimal"
-        value={amount}
-        onChange={(e) => {
-          setAmount(e.currentTarget.value);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') add();
-        }}
-        w={110}
-      />
-      <Button
-        size="xs"
-        leftSection={<IconPlus size={14} />}
-        onClick={add}
-        disabled={categories.length === 0 || cents === null}
-      >
-        Add line
-      </Button>
-      {!hasEverythingElse && (
-        <Button
-          size="xs"
-          variant="subtle"
-          onClick={() => {
-            tryDispatch('createTemplateLine', {
-              cadence,
-              target: { kind: 'everythingElse' },
-              defaultAmount: cents ?? 0,
-            });
-          }}
-        >
-          Add “Everything Else”
-        </Button>
-      )}
-    </div>
+    <BudgetLineRow
+      rowRef={setNodeRef}
+      style={style}
+      className={clsx(isDragging && styles.dragging)}
+      handle={<DragHandle handle={handle} label={`Reorder ${label}`} />}
+      label={label}
+      target={line.target}
+      name={line.name}
+      amount={line.defaultAmount}
+      per={line.cadence === 'monthly' ? 'per month' : 'per year'}
+      note={line.note}
+      plan={line.plan}
+      onTarget={(categoryIds) => {
+        update({ target: { kind: 'categories', categoryIds } });
+      }}
+      onName={(name) => {
+        update({ name });
+      }}
+      onAmount={(defaultAmount) => {
+        update({ defaultAmount });
+      }}
+      onNote={(note) => {
+        update({ note });
+      }}
+      onPlan={(plan) => {
+        update({ plan });
+      }}
+      onDelete={() => {
+        if (tryRun('deleteTemplateLine', { id: line.id })) toastWithUndo(`Deleted ${label}`);
+      }}
+      deleteLabel="Delete line"
+      extra={{
+        label: 'Roll over',
+        summary: policy && `Roll over: ${policy}`,
+        control: (place) => (
+          <Select
+            size="xs"
+            {...(place === 'row'
+              ? { variant: 'unstyled' }
+              : { label: 'Roll over what’s left', maw: 200 })}
+            aria-label="Rollover"
+            data={POLICIES}
+            value={line.rolloverPolicy}
+            allowDeselect={false}
+            onChange={(v) => {
+              if (v) update({ rolloverPolicy: v });
+            }}
+          />
+        ),
+      }}
+    />
   );
 }

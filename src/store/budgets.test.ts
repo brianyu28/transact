@@ -121,6 +121,112 @@ describe('budgets end to end', () => {
     expect(doc().budgets.template.lines[food]!.note).toBeUndefined();
   });
 
+  it('keeps plans on default lines, period lines and custom lines, without copying them', () => {
+    const insurance = d()('createTemplateLine', {
+      cadence: 'annual',
+      target: { kind: 'categories', categoryIds: [cat('Food')] },
+      defaultAmount: 150000,
+    });
+    d()('updateTemplateLine', {
+      id: insurance,
+      changes: {
+        plan: [
+          { label: ' Car ', amount: 90000 },
+          { label: '', amount: 0 },
+          { label: 'Renters', amount: 20000 },
+        ],
+      },
+    });
+    expect(doc().budgets.template.lines[insurance]!.plan).toEqual([
+      { label: 'Car', amount: 90000 },
+      { label: 'Renters', amount: 20000 },
+    ]);
+
+    const period = d()('createPeriod', {
+      cadence: 'annual',
+      period: '2026',
+      lines: [{ templateLineId: insurance, base: 150000, rollover: 0 }],
+    });
+    expect(view('annual', '2026').lines[0]!.plan).toBeUndefined();
+    d()('setPeriodLine', {
+      periodId: period,
+      templateLineId: insurance,
+      changes: { plan: [{ label: 'Disability', amount: 40000 }] },
+    });
+    expect(view('annual', '2026').lines[0]!.plan).toEqual([{ label: 'Disability', amount: 40000 }]);
+    expect(doc().budgets.template.lines[insurance]!.plan).toHaveLength(2);
+
+    d()('updateTemplateLine', { id: insurance, changes: { plan: [] } });
+    expect('plan' in doc().budgets.template.lines[insurance]!).toBe(false);
+
+    const trip = d()('createCustomBudget', {
+      name: 'Trip',
+      tagNames: ['trip'],
+      mode: 'any',
+      dateRange: null,
+      lines: [
+        {
+          name: 'Total',
+          target: { kind: 'everythingElse' },
+          amount: 100000,
+          plan: [{ label: 'Flights', amount: 60000 }],
+        },
+        { name: 'Food', target: { kind: 'categories', categoryIds: [cat('Food')] }, amount: 0 },
+      ],
+    });
+    const lines = doc().budgets.custom[trip]!.lines;
+    expect(lines[0]!.plan).toEqual([{ label: 'Flights', amount: 60000 }]);
+    expect('plan' in lines[1]!).toBe(false);
+  });
+
+  it('adds, edits and removes lines in one period without touching the defaults', () => {
+    const food = d()('createTemplateLine', {
+      cadence: 'monthly',
+      target: { kind: 'categories', categoryIds: [cat('Food')] },
+      defaultAmount: 50000,
+    });
+    const period = d()('createPeriod', {
+      cadence: 'monthly',
+      period: '2026-01',
+      lines: [{ templateLineId: food, base: 50000, rollover: 0 }],
+    });
+    const extra = d()('addPeriodLine', {
+      periodId: period,
+      target: { kind: 'everythingElse' },
+      base: 10000,
+      name: ' Misc ',
+    });
+    expect(() =>
+      d()('addPeriodLine', { periodId: period, target: { kind: 'everythingElse' }, base: 0 }),
+    ).toThrow(/already/);
+    spend('2026-01-10', 30, 'Groceries');
+    expect(view('monthly', '2026-01').lines.map((l) => [l.label, l.budgeted, l.spent])).toEqual([
+      ['Food', 50000, 3000],
+      ['Misc', 10000, 0],
+    ]);
+    expect(Object.keys(doc().budgets.template.lines)).toEqual([food]);
+
+    d()('setPeriodLine', {
+      periodId: period,
+      templateLineId: food,
+      changes: {
+        name: 'Groceries only',
+        target: { kind: 'categories', categoryIds: [cat('Groceries')] },
+      },
+    });
+    expect(view('monthly', '2026-01').lines[0]).toMatchObject({
+      label: 'Groceries only',
+      spent: 3000,
+    });
+    expect(doc().budgets.template.lines[food]!.target).toEqual({
+      kind: 'categories',
+      categoryIds: [cat('Food')],
+    });
+
+    d()('removePeriodLine', { periodId: period, templateLineId: extra });
+    expect(view('monthly', '2026-01').lines).toHaveLength(1);
+  });
+
   it('shows defaults provisionally for periods that were not created', () => {
     d()('createTemplateLine', {
       cadence: 'monthly',

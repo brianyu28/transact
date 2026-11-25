@@ -1,5 +1,12 @@
 import { Alert, Button, Group, Menu } from '@mantine/core';
-import { IconDots, IconInfoCircle, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconDots,
+  IconInfoCircle,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import { periodKeyFor, shiftPeriod } from '@/domain/budgets/periods';
 import type { BudgetTier } from '@/domain/schema/types';
@@ -11,6 +18,7 @@ import { useDocStore } from '@/store/docStore';
 import { StatTile } from '@/components/StatTile/StatTile';
 import { BudgetTable } from './BudgetTable';
 import { CreatePeriodDialog } from './CreatePeriodDialog';
+import { PeriodEditor } from './PeriodEditor';
 import { PeriodNav } from './PeriodNav';
 import { useBudgetView } from './useBudgetData';
 import styles from './PeriodBudget.module.scss';
@@ -21,6 +29,7 @@ export function PeriodBudget({ cadence }: { cadence: BudgetTier }) {
   const current = periodKeyFor(cadence, today(), startMonth);
   const [key, setKey] = useState(current);
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(false);
   const view = useBudgetView(cadence, key);
   const format = useFormat();
 
@@ -76,6 +85,17 @@ export function PeriodBudget({ cadence }: { cadence: BudgetTier }) {
             </Button>
           )}
           {period && (
+            <Button
+              variant={editing ? 'filled' : 'default'}
+              leftSection={editing ? <IconCheck size={14} /> : <IconPencil size={14} />}
+              onClick={() => {
+                setEditing(!editing);
+              }}
+            >
+              {editing ? 'Done' : 'Edit'}
+            </Button>
+          )}
+          {period && (
             <Menu position="bottom-end">
               <Menu.Target>
                 <Button variant="subtle" color="gray" px={6} aria-label="Budget actions">
@@ -122,7 +142,11 @@ export function PeriodBudget({ cadence }: { cadence: BudgetTier }) {
         <StatTile label="Income" value={format.money(view.income)} />
       </div>
 
-      <BudgetTable view={view} editable />
+      {period && editing ? (
+        <PeriodEditor period={period} label={view.label} />
+      ) : (
+        <BudgetTable view={view} editable />
+      )}
 
       <CreatePeriodDialog
         cadence={cadence}

@@ -1,5 +1,6 @@
 /** Commands for the budget template (defaults), budget periods and custom budgets. */
 import type { Draft } from 'immer';
+import { normalizePlan } from '../budgets/plan';
 import type { DocModel } from '../model';
 import type {
   BudgetPeriod,
@@ -9,6 +10,7 @@ import type {
   CustomBudget,
   Id,
   ISODate,
+  PlanItem,
   RolloverPolicy,
   TemplateLine,
 } from '../schema/types';
@@ -82,6 +84,7 @@ export const updateTemplateLine = defineCommand<{
     name?: string;
     rolloverPolicy?: RolloverPolicy;
     note?: string;
+    plan?: readonly PlanItem[];
   };
 }>({
   label: 'Edit budget line',
@@ -94,6 +97,7 @@ export const updateTemplateLine = defineCommand<{
       ...(changes.rolloverPolicy ? { rolloverPolicy: changes.rolloverPolicy } : {}),
       ...(changes.name !== undefined ? { name: changes.name.trim() || undefined } : {}),
       ...(changes.note !== undefined ? { note: changes.note.trim() || undefined } : {}),
+      ...(changes.plan !== undefined ? { plan: normalizePlan(changes.plan) } : {}),
     });
     draft.budgets.template.updatedAt = now;
   },
@@ -130,7 +134,7 @@ export interface PeriodLineInput {
 
 /**
  * Creates a month or year budget from the defaults, with the chosen amounts and rollovers.
- * Notes on default lines stay with the defaults; a period's lines start without one.
+ * Notes and plans on default lines stay with the defaults; a period's lines start without.
  */
 export const createPeriod = defineCommand<
   { cadence: BudgetTier; period: string; lines: readonly PeriodLineInput[] },
@@ -168,15 +172,30 @@ export const createPeriod = defineCommand<
   },
 });
 
-/** Changes a line's amounts in a created period, adding it from the defaults if missing. */
+/**
+ * Changes a line in a created period, adding it from the defaults if missing. Changing its
+ * categories or name affects only this period.
+ */
 export const setPeriodLine = defineCommand<{
   periodId: Id;
   templateLineId: Id;
-  changes: { base?: Cents; rollover?: Cents; note?: string };
+  changes: {
+    base?: Cents;
+    rollover?: Cents;
+    note?: string;
+    plan?: readonly PlanItem[];
+    target?: BudgetTarget;
+    name?: string;
+  };
 }>({
   label: 'Edit budget',
   run(draft, { periodId, templateLineId, changes }, { now }) {
     const period = required(draft.budgets.periods[periodId], 'Budget');
+    if (changes.target) {
+      validateTarget(draft, changes.target);
+      if (changes.target.kind === 'everythingElse')
+        throw new CommandError('Add “Everything Else” as its own line.');
+    }
     let line = period.lines.find((l) => l.templateLineId === templateLineId);
     if (!line) {
       const t = required(draft.budgets.template.lines[templateLineId], 'Budget line');
@@ -194,7 +213,41 @@ export const setPeriodLine = defineCommand<{
     if (changes.base !== undefined) line.base = changes.base;
     if (changes.rollover !== undefined) line.rollover = changes.rollover;
     if (changes.note !== undefined) applyChanges(line, { note: changes.note.trim() || undefined });
+    if (changes.plan !== undefined) applyChanges(line, { plan: normalizePlan(changes.plan) });
+    if (changes.target && line.target.kind === 'categories') line.target = changes.target;
+    if (changes.name !== undefined) applyChanges(line, { name: changes.name.trim() || undefined });
     period.updatedAt = now;
+  },
+});
+
+/**
+ * Adds a line to one created period only (the defaults are unchanged), e.g. a one-off
+ * expense this month. It gets its own line id, since no default line backs it.
+ */
+export const addPeriodLine = defineCommand<
+  { periodId: Id; target: BudgetTarget; base: Cents; name?: string },
+  Id
+>({
+  label: 'Add budget line',
+  run(draft, { periodId, target, base, name }, { now, newId }) {
+    const period = required(draft.budgets.periods[periodId], 'Budget');
+    validateTarget(draft, target);
+    if (
+      target.kind === 'everythingElse' &&
+      period.lines.some((l) => l.target.kind === 'everythingElse')
+    ) {
+      throw new CommandError('This budget already has an “Everything Else” line.');
+    }
+    const line: BudgetPeriod['lines'][number] = {
+      templateLineId: newId('budgetLine'),
+      target: copyTarget(target),
+      base,
+      rollover: 0,
+    };
+    applyChanges(line, { name: name?.trim() || undefined });
+    period.lines.push(line);
+    period.updatedAt = now;
+    return line.templateLineId;
   },
 });
 
@@ -224,7 +277,13 @@ export interface CustomBudgetInput {
   tagNames: readonly string[];
   mode: 'any' | 'all';
   dateRange: { start?: ISODate; end?: ISODate } | null;
-  lines: readonly { id?: Id; name: string; target: BudgetTarget; amount: Cents }[];
+  lines: readonly {
+    id?: Id;
+    name: string;
+    target: BudgetTarget;
+    amount: Cents;
+    plan?: readonly PlanItem[];
+  }[];
 }
 
 function resolveTags(draft: Draft<DocModel>, names: readonly string[], ctx: CommandContext): Id[] {
@@ -261,12 +320,16 @@ function buildCustom(
   const budget: Omit<CustomBudget, 'id' | 'priority' | 'updatedAt'> = {
     name: input.name.trim(),
     match: { tags, mode: input.mode },
-    lines: input.lines.map((l) => ({
-      id: l.id ?? ctx.newId('budgetLine'),
-      name: l.name.trim(),
-      target: l.target,
-      amount: l.amount,
-    })),
+    lines: input.lines.map((l) => {
+      const line: CustomBudget['lines'][number] = {
+        id: l.id ?? ctx.newId('budgetLine'),
+        name: l.name.trim(),
+        target: l.target,
+        amount: l.amount,
+      };
+      applyChanges(line, { plan: normalizePlan(l.plan ?? []) });
+      return line;
+    }),
   };
   if (start || end) budget.dateRange = { ...(start ? { start } : {}), ...(end ? { end } : {}) };
   return budget;

@@ -1,0 +1,139 @@
+@use '@/styles/tokens' as *;
+
+// Shared with BudgetLineHeader so headings line up with the inline fields.
+.row {
+  display: grid;
+  grid-template-columns: 22px minmax(180px, 2fr) minmax(120px, 1fr) 110px 100px 78px;
+  align-items: center;
+  gap: $space-2;
+  min-height: 34px;
+  padding: 0 $space-2;
+  border-top: 1px solid var(--tx-border);
+  background: var(--tx-bg);
+}
+
+.row.noHandle {
+  grid-template-columns: minmax(180px, 2fr) minmax(120px, 1fr) 110px 100px 78px;
+}
+
+.compactRow.noHandle {
+  grid-template-columns: minmax(0, 1fr) 104px 16px;
+}
+
+.extra {
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+}
+
+.everythingElse {
+  font-style: italic;
+  color: var(--tx-text-dim);
+}
+
+// ── Compact (below desktop) ────────────────────────────────────────────────────────────────────
+
+.compactRow {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 104px 16px;
+  align-items: center;
+  gap: $space-2;
+  min-height: 48px;
+  padding: $space-1 $space-2;
+  border-top: 1px solid var(--tx-border);
+  background: var(--tx-bg);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: $space-1 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mainLabel {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mainDetails {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  overflow: hidden;
+  font-size: $font-xs;
+  color: var(--tx-text-dim);
+  white-space: nowrap;
+}
+
+.noteIcon {
+  flex: none;
+  color: var(--tx-accent);
+}
+
+.planStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.short {
+  color: var(--tx-negative);
+}
+
+.chevron {
+  color: var(--tx-text-faint);
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+}
+
+.sheetAmount {
+  max-width: 200px;
+}
+
+.sheetButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.sheetFooter {
+  display: flex;
+  justify-content: space-between;
+  padding-top: $space-3;
+  border-top: 1px solid var(--tx-border);
+}
+
+.head {
+  min-height: 22px;
+  border-top: 0;
+  font-size: $font-xs;
+  font-weight: 500;
+  color: var(--tx-text-faint);
+
+  @include below-desktop {
+    display: none;
+  }
+}
+
+.num {
+  text-align: right;
+}
