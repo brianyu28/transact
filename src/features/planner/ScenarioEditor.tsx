@@ -45,7 +45,9 @@ export function ScenarioEditor({
   const format = useFormat();
   const [editingRule, setEditingRule] = useState<TaxRule | null>(null);
   const save = (
-    changes: Partial<Pick<PlannerScenario, 'people' | 'incomes' | 'deductions' | 'taxes'>>,
+    changes: Partial<
+      Pick<PlannerScenario, 'people' | 'incomes' | 'deductions' | 'taxes' | 'savings'>
+    >,
   ) => {
     tryRun('updateScenario', { id: scenario.id, changes });
   };
@@ -441,6 +443,31 @@ export function ScenarioEditor({
         >
           Add tax rule
         </Button>
+      </section>
+
+      <section>
+        <h3 className={styles.heading}>Savings</h3>
+        <div className={clsx(styles.row, styles.savingsRow, styles.head)}>
+          <span />
+          <span className={styles.num}>Per month</span>
+          <span className={styles.num}>Per year</span>
+        </div>
+        <div className={clsx(styles.row, styles.savingsRow)}>
+          <span className={styles.dim}>Set aside from take-home pay</span>
+          <MoneyInput
+            size="xs"
+            variant="unstyled"
+            aria-label="Savings per month"
+            value={Math.round((scenario.savings ?? 0) / 12)}
+            onCommit={(monthly) => {
+              save({ savings: Math.max(0, monthly) * 12 });
+            }}
+          />
+          <span className={clsx(styles.num, styles.dim)}>
+            {format.money(scenario.savings ?? 0)}
+          </span>
+        </div>
+        <p className={styles.note}>Not counted as left over after your budget.</p>
       </section>
 
       <TaxRuleDialog

@@ -298,6 +298,22 @@ export const updateCustomBudget = defineCommand<{ id: Id; input: CustomBudgetInp
   },
 });
 
+/**
+ * Sets custom budget priority (the order they claim tagged spending and are listed in).
+ * `ids` lists every custom budget, highest priority first.
+ */
+export const reorderCustomBudgets = defineCommand<{ ids: readonly Id[] }>({
+  label: 'Reorder custom budgets',
+  run(draft, { ids }, { now }) {
+    ids.forEach((id, priority) => {
+      const budget = required(draft.budgets.custom[id], 'Custom budget');
+      if (budget.priority === priority) return;
+      budget.priority = priority;
+      budget.updatedAt = now;
+    });
+  },
+});
+
 export const setCustomBudgetArchived = defineCommand<{ id: Id; archived: boolean }>({
   label: 'Archive custom budget',
   run(draft, { id, archived }, { now }) {

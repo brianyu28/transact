@@ -10,7 +10,7 @@ import {
 } from '@mantine/core';
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import type { FilingStatus } from '@/domain/planner/templates';
+import { usTaxYearFor, type FilingStatus } from '@/domain/planner/taxYears';
 import { dateParts, today } from '@/lib/date';
 import { tryDispatch } from '@/store/actions';
 
@@ -75,7 +75,7 @@ function NewScenarioForm({ onClose }: { onClose: () => void }) {
       <SegmentedControl
         fullWidth
         data={[
-          { value: 'us', label: 'US tax rules (2026)' },
+          { value: 'us', label: `US tax rules (${String(usTaxYearFor(year).year)})` },
           { value: 'blank', label: 'Blank' },
         ]}
         value={template}
@@ -121,8 +121,7 @@ function NewScenarioForm({ onClose }: { onClose: () => void }) {
             mb="sm"
           />
           <Text size="xs" c="dimmed" mb="sm">
-            Templates are a starting point, not tax advice. Check the rates and limits for your
-            situation; every rule is editable.
+            Templates are a starting point, not tax advice.
           </Text>
         </>
       )}

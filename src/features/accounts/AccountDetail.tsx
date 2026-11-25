@@ -92,7 +92,7 @@ export function AccountDetail({ id }: { id: Id }) {
         formatDate={format.date}
       />
 
-      <h3 className={styles.heading}>Balance history</h3>
+      <h3 className={styles.heading}>Balance adjustments</h3>
       {anchors.length === 0 ? (
         <p className={styles.empty}>
           No balance updates yet. The balance is calculated from transactions alone. Use “Update

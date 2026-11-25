@@ -45,9 +45,7 @@ function CategoriesEditor() {
     <section className={styles.section}>
       <h2 className={styles.heading}>Categories</h2>
       <p className={styles.note}>
-        Drag to reorder. Categories nest: a budget for a parent includes its subcategories unless
-        they have their own budget. Top-level categories are income or expense; subcategories
-        inherit it.
+        Categories group transactions into types of spending and can be included in budgets.
       </p>
       <div className={local.header}>
         <span />
@@ -196,7 +194,7 @@ function CategoryItem({
                 })
               }
             >
-              {c.archived ? 'Unarchive' : 'Archive (hide from pickers)'}
+              {c.archived ? 'Unarchive' : 'Archive'}
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item

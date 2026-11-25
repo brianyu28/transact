@@ -74,7 +74,6 @@ export const SETTINGS: readonly SettingDef[] = [
     key: 'density',
     section: 'appearance',
     label: 'Density',
-    description: 'Row height in tables and lists.',
     control: {
       kind: 'select',
       options: [
@@ -157,7 +156,7 @@ export const SETTINGS: readonly SettingDef[] = [
     key: 'budget.everythingElseTier',
     section: 'budgets',
     label: '“Everything Else” preference',
-    description: 'Which Everything Else line wins when both monthly and annual budgets have one.',
+    description: 'Whether to prefer tracking unbudgeted transactions in monthly or annual budgets',
     control: {
       kind: 'select',
       options: [
@@ -170,13 +169,13 @@ export const SETTINGS: readonly SettingDef[] = [
     scope: 'file',
     key: 'budget.tierOrder',
     section: 'budgets',
-    label: 'When lines tie',
-    description: 'If monthly and annual lines match a category equally specifically.',
+    label: 'Budget preference',
+    description: 'Budget to use when both monthly and annual budgets include same category',
     control: {
       kind: 'select',
       options: [
-        { value: 'monthly,annual', label: 'Monthly wins' },
-        { value: 'annual,monthly', label: 'Annual wins' },
+        { value: 'monthly,annual', label: 'Monthly' },
+        { value: 'annual,monthly', label: 'Annual' },
       ],
     },
   },

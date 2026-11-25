@@ -1,6 +1,5 @@
 import { Button, Group, Modal, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { displayFileName } from '@/lib/format';
 import { isFsAccessSupported } from '@/persistence/adapters/fsAccess';
 import { session, useSession } from '@/store/sessionStore';
 import { DropboxSettings } from './DropboxSettings';
@@ -18,9 +17,7 @@ export function StorageSettings() {
       <h2 className={styles.heading}>Storage</h2>
       <dl className={styles.grid}>
         <dt>File</dt>
-        <dd>
-          {!hasDocument ? 'No file open' : source ? displayFileName(source.name) : 'Not saved yet'}
-        </dd>
+        <dd>{!hasDocument ? 'No file open' : source ? source.name : 'Not saved yet'}</dd>
         <dt>Saving</dt>
         <dd>
           {source?.kind === 'dropbox'

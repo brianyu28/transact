@@ -107,7 +107,7 @@ function TaxRuleForm({
       </Group>
       <Group grow align="flex-start">
         <NumberInput
-          label="Share of base"
+          label="Percent of earnings taxed"
           description="e.g. 92.35% for self-employment"
           value={pct(draft.baseFactor ?? 1)}
           suffix="%"

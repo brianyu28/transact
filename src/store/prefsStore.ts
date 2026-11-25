@@ -16,6 +16,8 @@ export interface DevicePrefs {
   density: DensityPref;
   dateFormat: DateFormatPref;
   sidebarCollapsed: boolean;
+  /** Whether the Income report counts transactions excluded from budgets. */
+  incomeIncludesExcluded: boolean;
   /** User overrides of keyboard shortcuts: command id → key sequences. */
   keybindings: Record<string, string[]>;
 }
@@ -25,6 +27,7 @@ export const DEFAULT_PREFS: DevicePrefs = {
   density: 'compact',
   dateFormat: 'medium',
   sidebarCollapsed: false,
+  incomeIncludesExcluded: true,
   keybindings: {},
 };
 
@@ -59,11 +62,19 @@ export const prefsStore = createStore<DevicePrefs & PrefsActions>()(
       name: PREFS_STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
       version: 1,
-      partialize: ({ theme, density, dateFormat, sidebarCollapsed, keybindings }) => ({
+      partialize: ({
         theme,
         density,
         dateFormat,
         sidebarCollapsed,
+        incomeIncludesExcluded,
+        keybindings,
+      }) => ({
+        theme,
+        density,
+        dateFormat,
+        sidebarCollapsed,
+        incomeIncludesExcluded,
         keybindings,
       }),
     },

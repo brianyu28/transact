@@ -12,7 +12,11 @@ export function CompareScenarios({ scenarios }: { scenarios: PlannerScenario[] }
   const format = useFormat();
   const { budgetPerYear } = usePlannerContext();
   const results = useMemo(
-    () => scenarios.map((s) => ({ scenario: s, result: computeScenario(s) })),
+    () =>
+      scenarios.map((s) => ({
+        scenario: s,
+        result: { ...computeScenario(s), savings: s.savings ?? 0 },
+      })),
     [scenarios],
   );
   const taxNames = [...new Set(results.flatMap((r) => r.result.taxes.map((x) => x.rule.name)))];
@@ -74,7 +78,11 @@ export function CompareScenarios({ scenarios }: { scenarios: PlannerScenario[] }
           {row('Take-home per month', (r) => r.monthlyTakeHome, 'money', true)}
           {row('Effective tax rate', (r) => r.effectiveRate, 'pct')}
           {row('Marginal rate', (r) => r.marginalRate, 'pct')}
-          {row('Left after default budget (per year)', (r) => r.takeHome - budgetPerYear)}
+          {row('Savings (per year)', (r) => r.savings)}
+          {row(
+            'Left after savings and default budget (per year)',
+            (r) => r.takeHome - r.savings - budgetPerYear,
+          )}
         </tbody>
       </table>
     </div>

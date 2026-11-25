@@ -30,6 +30,7 @@ export type BudgetPeriod = z.infer<typeof S.BudgetPeriodSchema>;
 export type CustomBudget = z.infer<typeof S.CustomBudgetSchema>;
 export type PlannerScenario = z.infer<typeof S.PlannerScenarioSchema>;
 export type TaxRule = z.infer<typeof S.TaxRuleSchema>;
+export type TemplateRuleKey = z.infer<typeof S.TemplateRuleKeySchema>;
 export type Tombstone = TransactFile['tombstones'][number];
 
 export const LIABILITY_ACCOUNT_TYPES: ReadonlySet<AccountType> = new Set(['credit', 'loan']);

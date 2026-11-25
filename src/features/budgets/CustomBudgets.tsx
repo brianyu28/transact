@@ -8,6 +8,8 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { useLocation } from 'wouter';
+import { DragHandle, SortableGroup, SortableProvider } from '@/components/Sortable/Sortable';
+import { useSortableItem } from '@/components/Sortable/useSortableItem';
 import { filterRegisterToBudget } from './budgetLinks';
 import { clsx } from 'clsx';
 import { useState } from 'react';
@@ -29,14 +31,31 @@ export function CustomBudgets() {
   const [editing, setEditing] = useState<CustomBudget | 'new' | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const archivedCount = views.filter((v) => v.budget.archived).length;
-  const visible = views.filter((v) => showArchived || !v.budget.archived);
+  // Views come in priority order; active budgets always list above archived ones.
+  const active = views.filter((v) => !v.budget.archived);
+  const archived = views.filter((v) => v.budget.archived);
+  const reorder = (group: string, ids: string[]) => {
+    const rest = (group === 'active' ? archived : active).map((v) => v.budget.id);
+    tryRun('reorderCustomBudgets', {
+      ids: group === 'active' ? [...ids, ...rest] : [...rest, ...ids],
+    });
+  };
+  const card = (v: CustomBudgetView, group: string) => (
+    <CustomBudgetCard
+      key={v.budget.id}
+      view={v}
+      group={group}
+      onEdit={() => {
+        setEditing(v.budget);
+      }}
+    />
+  );
 
   return (
     <div className={styles.root}>
       <div className={styles.toolbar}>
         <p className={styles.intro}>
-          Custom budgets collect tagged spending, like a trip, separately from your monthly and
-          annual budgets.
+          Custom budgets allow budgeting for expenses with a particular tag.
         </p>
         <div className={styles.actions}>
           {archivedCount > 0 && (
@@ -59,16 +78,19 @@ export function CustomBudgets() {
           </Button>
         </div>
       </div>
-      {visible.length === 0 && <p className={styles.empty}>No custom budgets yet.</p>}
-      {visible.map((v) => (
-        <CustomBudgetCard
-          key={v.budget.id}
-          view={v}
-          onEdit={() => {
-            setEditing(v.budget);
-          }}
-        />
-      ))}
+      {active.length === 0 && (!showArchived || archived.length === 0) && (
+        <p className={styles.empty}>No custom budgets yet.</p>
+      )}
+      <SortableProvider onReorder={reorder}>
+        <SortableGroup ids={active.map((v) => v.budget.id)}>
+          {active.map((v) => card(v, 'active'))}
+        </SortableGroup>
+        {showArchived && (
+          <SortableGroup ids={archived.map((v) => v.budget.id)}>
+            {archived.map((v) => card(v, 'archived'))}
+          </SortableGroup>
+        )}
+      </SortableProvider>
       <CustomBudgetDialog
         editing={editing}
         onClose={() => {
@@ -79,8 +101,17 @@ export function CustomBudgets() {
   );
 }
 
-function CustomBudgetCard({ view, onEdit }: { view: CustomBudgetView; onEdit: () => void }) {
+function CustomBudgetCard({
+  view,
+  group,
+  onEdit,
+}: {
+  view: CustomBudgetView;
+  group: string;
+  onEdit: () => void;
+}) {
   const format = useFormat();
+  const { setNodeRef, style, isDragging, handle } = useSortableItem(view.budget.id, group);
   const tags = useDocStore((s) => s.doc?.tags);
   const { budget } = view;
   const ranged = budget.dateRange !== undefined;
@@ -90,8 +121,17 @@ function CustomBudgetCard({ view, onEdit }: { view: CustomBudgetView; onEdit: ()
   const tagNames = budget.match.tags.map((id) => tags?.[id]?.name ?? '?');
 
   return (
-    <section className={clsx(styles.card, budget.archived && styles.archived)}>
+    <section
+      ref={setNodeRef}
+      style={style}
+      className={clsx(
+        styles.card,
+        budget.archived && styles.archived,
+        isDragging && styles.dragging,
+      )}
+    >
       <header className={styles.cardHeader}>
+        <DragHandle handle={handle} label={`Reorder ${budget.name}`} />
         <div className={styles.titleBlock}>
           <h3 className={styles.title}>{budget.name}</h3>
           <span className={styles.meta}>

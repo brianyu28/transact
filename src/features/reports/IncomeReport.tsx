@@ -1,8 +1,10 @@
+import { Switch } from '@mantine/core';
 import { useMemo } from 'react';
 import { ColumnChart } from '@/components/charts/ColumnChart';
 import { StatTile } from '@/components/StatTile/StatTile';
 import { incomeVsSpending } from '@/domain/reports/reports';
 import { useFormat } from '@/hooks/useFormat';
+import { usePrefs } from '@/store/prefsStore';
 import type { MonthKey } from '@/lib/date';
 import { ReportSection } from './ReportSection';
 import { useReportDeps } from './useReportDeps';
@@ -17,10 +19,15 @@ const rate = (income: number, net: number) =>
 export function IncomeReport({ months }: { months: MonthKey[] }) {
   const { index, indexVersion, categories } = useReportDeps();
   const format = useFormat();
+  const includeExcluded = usePrefs((s) => s.incomeIncludesExcluded);
+  const setPref = usePrefs((s) => s.setPref);
   const rows = useMemo(
-    () => (index && categories ? incomeVsSpending({ categories }, index, months) : []),
+    () =>
+      index && categories
+        ? incomeVsSpending({ categories }, index, months, { includeExcluded })
+        : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- indexVersion tracks in-place index changes.
-    [index, indexVersion, categories, months],
+    [index, indexVersion, categories, months, includeExcluded],
   );
   const income = rows.reduce((s, r) => s + r.income, 0);
   const spending = rows.reduce((s, r) => s + r.spending, 0);
@@ -36,7 +43,21 @@ export function IncomeReport({ months }: { months: MonthKey[] }) {
       </div>
       <ReportSection
         title="Income vs. spending"
-        subtitle="Transfers between your accounts and excluded transactions aren’t counted."
+        subtitle={
+          includeExcluded
+            ? 'Transfers between your accounts aren’t counted.'
+            : 'Transfers between your accounts and excluded transactions aren’t counted.'
+        }
+        controls={
+          <Switch
+            size="xs"
+            label="Count excluded transactions"
+            checked={includeExcluded}
+            onChange={(e) => {
+              setPref('incomeIncludesExcluded', e.currentTarget.checked);
+            }}
+          />
+        }
         chart={
           <ColumnChart
             columns={shortMonthLabels(months)}

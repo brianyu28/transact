@@ -59,6 +59,14 @@ describe('reports', () => {
     }
   });
 
+  it('counts excluded splits only when asked', () => {
+    const without = incomeVsSpending(doc, index, months);
+    const withExcluded = incomeVsSpending(doc, index, months, { includeExcluded: true });
+    const total = (rows: typeof without) => rows.reduce((s, r) => s + r.spending, 0);
+    // The demo data excludes others' share of group purchases, which is spending.
+    expect(total(withExcluded)).toBeGreaterThan(total(without));
+  });
+
   it('splits net worth change into saved and market change that add up', () => {
     const rows = netWorthChanges(doc, index, months, TODAY);
     for (let i = 1; i < rows.length; i++) expect(rows[i]?.start).toBe(rows[i - 1]?.end);

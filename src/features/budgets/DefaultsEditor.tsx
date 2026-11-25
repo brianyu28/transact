@@ -32,11 +32,7 @@ export function DefaultsEditor() {
 
   return (
     <div className={styles.root}>
-      <p className={styles.intro}>
-        New budgets start from these amounts. Editing them doesn’t change budgets you’ve already
-        created. A line’s categories include their subcategories, unless a subcategory has its own
-        line.
-      </p>
+      <p className={styles.intro}>Set default amounts for monthly and annual budgets.</p>
       <SortableProvider
         onReorder={(_, ids) => {
           tryRun('reorderTemplateLines', { ids });

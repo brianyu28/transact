@@ -36,10 +36,9 @@ export function WelcomeScreen() {
 
   return (
     <div className={styles.root}>
-      <h2 className={styles.title}>Open your Transact file</h2>
+      <h2 className={styles.title}>Welcome to Transact!</h2>
       <p className={styles.lede}>
-        Your data lives in a file you own. Transact never uploads it anywhere unless you choose
-        Dropbox.
+        Transact is a personal finance application for managing transactions and budgets.
       </p>
       {loadError && (
         <Alert

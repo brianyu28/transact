@@ -8,6 +8,7 @@ import {
   deleteTemplateLine,
   removePeriodLine,
   reorderTemplateLines,
+  reorderCustomBudgets,
   setCustomBudgetArchived,
   setPeriodLine,
   updateCustomBudget,
@@ -27,6 +28,7 @@ import {
   deleteScenario,
   duplicateScenario,
   updateScenario,
+  updateScenarioTaxYear,
 } from './planner';
 import { updateSettings } from './settings';
 import { createSnapshot, deleteSnapshot, updateSnapshot } from './snapshots';
@@ -83,6 +85,7 @@ export const commands = {
   deletePeriod,
   createCustomBudget,
   updateCustomBudget,
+  reorderCustomBudgets,
   setCustomBudgetArchived,
   deleteCustomBudget,
   createStatement,
@@ -94,6 +97,7 @@ export const commands = {
   addReconcileAdjustment,
   createScenario,
   updateScenario,
+  updateScenarioTaxYear,
   addTemplateRules,
   duplicateScenario,
   deleteScenario,

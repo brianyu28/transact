@@ -53,6 +53,8 @@ export class DocIndex {
   readonly byAccount = new Map<Id, string[]>();
   /** month → categoryId (or UNCATEGORIZED) → net amount, excluding transfers and excluded splits. */
   readonly categoryByMonth = new Map<MonthKey, Map<Id, Cents>>();
+  /** Same shape as `categoryByMonth`, for excluded splits only (transfers still left out). */
+  readonly excludedByMonth = new Map<MonthKey, Map<Id, Cents>>();
   /** account → date → net change on that day (all transactions, including transfers). */
   readonly accountDailyDelta = new Map<Id, Map<ISODate, Cents>>();
   /** Per account, `date|id` keys of transactions not yet reconciled (for statements). */
@@ -144,14 +146,14 @@ export class DocIndex {
 
     if (t.transfer) return;
     const month = monthKey(t.date);
-    let byCategory = this.categoryByMonth.get(month);
-    if (!byCategory) {
-      byCategory = new Map();
-      this.categoryByMonth.set(month, byCategory);
-    }
     for (const split of effectiveSplits(t)) {
-      if (!split.excluded)
-        addTo(byCategory, split.categoryId ?? UNCATEGORIZED, sign * split.amount);
+      const target = split.excluded ? this.excludedByMonth : this.categoryByMonth;
+      let byCategory = target.get(month);
+      if (!byCategory) {
+        byCategory = new Map();
+        target.set(month, byCategory);
+      }
+      addTo(byCategory, split.categoryId ?? UNCATEGORIZED, sign * split.amount);
     }
   }
 }

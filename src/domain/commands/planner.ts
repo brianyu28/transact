@@ -1,6 +1,7 @@
 /** Planner scenarios: income, deductions and tax rules for "what will I take home?". */
 import type { PlannerScenario, TaxRule } from '../schema/types';
 import { scenarioTemplate, usTaxRules, type TemplateOptions } from '../planner/templates';
+import { applyTaxYearUpdate, planTaxYearUpdate } from '../planner/taxYearUpdate';
 import { CommandError, defineCommand, required, tombstone } from './define';
 import type { Id } from '../schema/types';
 
@@ -39,7 +40,7 @@ export const createScenario = defineCommand<
 });
 
 export type ScenarioChanges = Partial<
-  Pick<PlannerScenario, 'name' | 'year' | 'people' | 'incomes' | 'deductions' | 'taxes'>
+  Pick<PlannerScenario, 'name' | 'year' | 'people' | 'incomes' | 'deductions' | 'taxes' | 'savings'>
 >;
 
 export const updateScenario = defineCommand<{ id: Id; changes: ScenarioChanges }>({
@@ -54,6 +55,10 @@ export const updateScenario = defineCommand<{ id: Id; changes: ScenarioChanges }
     if (changes.incomes) s.incomes = structuredClone(changes.incomes);
     if (changes.deductions) s.deductions = structuredClone(changes.deductions);
     if (changes.taxes) s.taxes = cleanTaxes(structuredClone(changes.taxes));
+    if (changes.savings !== undefined) {
+      if (changes.savings > 0) s.savings = changes.savings;
+      else Reflect.deleteProperty(s, 'savings');
+    }
     if (changes.people) {
       if (changes.people.some((p) => !p.name.trim()))
         throw new CommandError('Every person needs a name.');
@@ -75,7 +80,27 @@ export const addTemplateRules = defineCommand<{ id: Id; template: TemplateOption
   label: 'Add tax rules',
   run(draft, { id, template }, { now, newId }) {
     const s = required(draft.planner.scenarios[id], 'Scenario');
-    s.taxes.push(...usTaxRules(template, newId));
+    s.taxes.push(...usTaxRules(template, s.year, newId));
+    s.updatedAt = now;
+  },
+});
+
+/**
+ * Moves a scenario to another tax year: template rules take that year's published figures
+ * (edited rules only when listed in `replace`) and the scenario's year changes.
+ */
+export const updateScenarioTaxYear = defineCommand<{
+  id: Id;
+  year: number;
+  replace: readonly Id[];
+}>({
+  label: 'Update tax rules',
+  run(draft, { id, year, replace }, { now }) {
+    const s = required(draft.planner.scenarios[id], 'Scenario');
+    const plan = planTaxYearUpdate(s.taxes, year);
+    if (!plan) throw new CommandError(`Tax figures for ${String(year)} aren’t available yet.`);
+    s.taxes = applyTaxYearUpdate(s.taxes, plan, new Set(replace));
+    s.year = year;
     s.updatedAt = now;
   },
 });

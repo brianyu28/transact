@@ -185,20 +185,26 @@ export function incomeVsSpending(
   doc: Pick<DocModel, 'categories'>,
   index: DocIndex,
   months: readonly MonthKey[],
+  options: { includeExcluded?: boolean } = {},
 ): IncomeSpendingMonth[] {
   const tree = categoryTree(doc.categories);
+  const sources = options.includeExcluded
+    ? [index.categoryByMonth, index.excludedByMonth]
+    : [index.categoryByMonth];
   return months.map((month) => {
     let income = 0;
     let spending = 0;
-    for (const [categoryId, net] of index.categoryByMonth.get(month) ?? []) {
-      const kind =
-        categoryId === UNCATEGORIZED
-          ? net > 0
-            ? 'income'
-            : 'expense'
-          : tree.byId.get(categoryId)?.kind;
-      if (kind === 'income') income += net;
-      else if (kind === 'expense') spending -= net;
+    for (const source of sources) {
+      for (const [categoryId, net] of source.get(month) ?? []) {
+        const kind =
+          categoryId === UNCATEGORIZED
+            ? net > 0
+              ? 'income'
+              : 'expense'
+            : tree.byId.get(categoryId)?.kind;
+        if (kind === 'income') income += net;
+        else if (kind === 'expense') spending -= net;
+      }
     }
     return { month, income, spending, net: income - spending };
   });

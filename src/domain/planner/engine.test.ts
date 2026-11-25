@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { PlannerScenario } from '../schema/types';
 import { applySchedule, computeScenario } from './engine';
+import { US_TAX_YEARS, usTaxYearFor } from './taxYears';
 import { usTaxRules } from './templates';
 
 let n = 0;
@@ -12,7 +13,7 @@ function scenario(
   options = { selfEmployment: false, stateRate: 0 },
   deductions: PlannerScenario['deductions'] = [],
 ) {
-  return { incomes, deductions, taxes: usTaxRules({ filing: 'single', ...options }, newId) };
+  return { incomes, deductions, taxes: usTaxRules({ filing: 'single', ...options }, 2026, newId) };
 }
 const tax = (r: ReturnType<typeof computeScenario>, name: string) =>
   r.taxes.find((t) => t.rule.name === name)?.amount;
@@ -126,7 +127,7 @@ describe('tax engine', () => {
         { id: 'pli_b', name: 'B income', kind: kindB, annual: $(b), person: 'pli_p2' },
       ],
       deductions,
-      taxes: usTaxRules({ filing: 'mfj', selfEmployment: true, stateRate: 0 }, newId),
+      taxes: usTaxRules({ filing: 'mfj', selfEmployment: true, stateRate: 0 }, 2026, newId),
     });
 
     it('caps Social Security per person, not on combined wages', () => {
@@ -170,6 +171,27 @@ describe('tax engine', () => {
       );
       const ss = r.taxes.find((t) => t.rule.name === 'Social Security')?.byPerson;
       expect(ss?.map((p) => p.amount)).toEqual([$(100_000 * 0.062), $(55_000 * 0.062)]);
+    });
+  });
+});
+
+describe('tax years', () => {
+  it('uses the latest published year at or before the requested one', () => {
+    const first = US_TAX_YEARS[0]!;
+    const latest = US_TAX_YEARS.at(-1)!;
+    expect(usTaxYearFor(latest.year + 5)).toBe(latest);
+    expect(usTaxYearFor(first.year - 5)).toBe(first);
+    for (const y of US_TAX_YEARS) expect(usTaxYearFor(y.year)).toBe(y);
+  });
+
+  it('lists years oldest first with ascending brackets', () => {
+    US_TAX_YEARS.forEach((y, i) => {
+      if (i > 0) expect(y.year).toBeGreaterThan(US_TAX_YEARS[i - 1]!.year);
+      for (const status of ['single', 'mfj'] as const) {
+        const bounds = y.federal[status].brackets.map(([upTo]) => upTo ?? Infinity);
+        expect(bounds).toEqual([...bounds].sort((a, b) => a - b));
+        expect(bounds.at(-1)).toBe(Infinity);
+      }
     });
   });
 });

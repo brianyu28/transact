@@ -40,6 +40,11 @@
   border-radius: $radius-md;
 }
 
+.dragging {
+  background: var(--tx-surface);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
+}
+
 .archived {
   opacity: 0.6;
 }

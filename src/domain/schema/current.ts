@@ -240,6 +240,16 @@ export const CustomBudgetSchema = z.object({
 
 export const TaxBaseSchema = z.enum(['gross', 'wages', 'seEarnings', 'taxableIncome']);
 
+/** Rules the US template creates; tagged so a scenario can move to a later tax year. */
+export const TemplateRuleKeySchema = z.enum([
+  'federalIncome',
+  'socialSecurity',
+  'medicare',
+  'additionalMedicare',
+  'seSocialSecurity',
+  'seMedicare',
+]);
+
 export const TaxRuleSchema = z.object({
   id: IdSchema,
   name: NameSchema,
@@ -271,6 +281,17 @@ export const TaxRuleSchema = z.object({
    * self-employment tax is deductible from income for income tax.
    */
   lessTaxes: z.array(z.object({ taxId: IdSchema, fraction: z.number().min(0).max(1) })).optional(),
+  /**
+   * The template rule this came from and the tax year whose figures it was set up with
+   * (since v3), so the scenario can be updated to a later year's figures.
+   */
+  template: z
+    .object({
+      key: TemplateRuleKeySchema,
+      year: z.number().int(),
+      filing: z.enum(['single', 'mfj']),
+    })
+    .optional(),
 });
 
 export const PlannerScenarioSchema = z.object({
@@ -299,6 +320,11 @@ export const PlannerScenarioSchema = z.object({
     }),
   ),
   taxes: z.array(TaxRuleSchema),
+  /**
+   * Yearly amount set aside from take-home pay (since v3): not taxed or deducted, and not
+   * counted as left over after the budget.
+   */
+  savings: CentsSchema.optional(),
   updatedAt: TimestampSchema,
 });
 

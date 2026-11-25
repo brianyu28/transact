@@ -39,6 +39,10 @@
   }
 }
 
+.savingsRow {
+  grid-template-columns: minmax(100px, 1fr) 120px 100px 28px;
+}
+
 .people {
   display: flex;
   flex-wrap: wrap;

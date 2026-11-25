@@ -92,9 +92,6 @@ function AccountsEditor() {
           Add account
         </Button>
       </div>
-      <p className={styles.note}>
-        Credit cards and loans are liabilities: their balances are negative when you owe money.
-      </p>
     </section>
   );
 }

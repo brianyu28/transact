@@ -6,7 +6,6 @@ import {
   IconFile,
   IconFileExport,
   IconFilePlus,
-  IconFlask,
   IconFolderOpen,
   IconX,
 } from '@tabler/icons-react';
@@ -110,16 +109,6 @@ export function FileMenu() {
             }}
           >
             New file
-          </Menu.Item>
-          <Menu.Item
-            leftSection={<IconFlask size={14} />}
-            onClick={() => {
-              guard(() => {
-                void session.newDocument('demo');
-              });
-            }}
-          >
-            New file with demo data
           </Menu.Item>
           <Menu.Divider />
           <Menu.Item

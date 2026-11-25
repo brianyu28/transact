@@ -38,8 +38,8 @@ function render(notice: Notice): {
         title: 'File upgraded',
         body: (
           <>
-            This file was upgraded from schema version {notice.fromVersion}. Saving will write the
-            new format.{' '}
+            This file was upgraded from an older file format (version {notice.fromVersion}). Saving
+            will write the new format.{' '}
             <Anchor
               component="button"
               size="sm"

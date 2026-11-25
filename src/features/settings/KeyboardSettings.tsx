@@ -3,7 +3,7 @@ import { IconPencil, IconRotate } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { KeyBinding } from '@/components/KeyBinding/KeyBinding';
 import { COMMAND_GROUPS, COMMANDS, COMMANDS_BY_ID } from '@/keyboard/catalog';
-import { comboFromEvent, normalizeBinding } from '@/keyboard/keys';
+import { comboFromEvent } from '@/keyboard/keys';
 import { bindingsFor } from '@/keyboard/registry';
 import { prefsStore, usePrefs } from '@/store/prefsStore';
 import styles from './settings.module.scss';
@@ -149,10 +149,6 @@ export function KeyboardSettings() {
           </tbody>
         </table>
       ))}
-      <p className={styles.note}>
-        Tip: shortcuts can be two keys in a row, like {normalizeBinding('g t')} for Go to
-        Transactions.
-      </p>
     </section>
   );
 }

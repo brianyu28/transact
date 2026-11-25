@@ -52,10 +52,7 @@ export function HomePage() {
     return (
       <div className={styles.root}>
         <h2 className={styles.title}>{month.label}</h2>
-        <p className={styles.empty}>
-          You haven’t set up a budget yet. Start with your default budget: the monthly and annual
-          amounts each new period begins with.
-        </p>
+        <p className={styles.empty}>Set up a budget to track spending in each category.</p>
         <Button component={Link} href="/budgets/defaults">
           Set up your budget
         </Button>

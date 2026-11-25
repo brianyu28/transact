@@ -8,6 +8,8 @@ import styles from './ScenarioSummary.module.scss';
 
 interface ScenarioSummaryProps {
   result: PlannerResult;
+  /** Yearly amount set aside from take-home pay. */
+  savings: number;
   /** Yearly total of the default budget (12 × monthly + annual). */
   budgetPerYear: number;
   /** Actual income over the last 12 months, for comparison. */
@@ -15,22 +17,29 @@ interface ScenarioSummaryProps {
 }
 
 /** Gross → taxes → deductions → take-home, and how it compares with the budget. */
-export function ScenarioSummary({ result, budgetPerYear, actualIncome }: ScenarioSummaryProps) {
+export function ScenarioSummary({
+  result,
+  savings,
+  budgetPerYear,
+  actualIncome,
+}: ScenarioSummaryProps) {
   const format = useFormat();
   const deductions = result.pretaxDeductions + result.posttaxDeductions;
-  const leftover = result.takeHome - budgetPerYear;
+  const leftover = result.takeHome - savings - budgetPerYear;
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
-  // Where gross income goes (one whole, split into parts): ≤4 categorical slots.
-  const budgeted = Math.max(0, Math.min(budgetPerYear, result.takeHome));
+  // Where gross income goes (one whole, split into parts): ≤5 categorical slots.
+  const saved = Math.max(0, Math.min(savings, result.takeHome));
+  const budgeted = Math.max(0, Math.min(budgetPerYear, result.takeHome - saved));
   const parts = [
     { key: 'taxes', label: 'Taxes', value: result.totalTax, color: seriesColor(1) },
     { key: 'deductions', label: 'Deductions & benefits', value: deductions, color: seriesColor(2) },
+    { key: 'savings', label: 'Savings', value: saved, color: seriesColor(5) },
     { key: 'budget', label: 'Budgeted spending', value: budgeted, color: seriesColor(3) },
     {
       key: 'left',
       label: 'Left over',
-      value: Math.max(0, result.takeHome - budgeted),
+      value: Math.max(0, result.takeHome - saved - budgeted),
       color: seriesColor(4),
     },
   ].filter((p) => p.value > 0);
@@ -46,10 +55,7 @@ export function ScenarioSummary({ result, budgetPerYear, actualIncome }: Scenari
       <div className={styles.hero}>
         <span className={styles.label}>Take-home pay</span>
         <span className={styles.big}>{format.money(result.monthlyTakeHome)}</span>
-        <span className={styles.sub}>
-          a month · {format.money(result.takeHome)} a year ·{' '}
-          {format.money(Math.round(result.takeHome / 26))} every two weeks
-        </span>
+        <span className={styles.sub}>a month · {format.money(result.takeHome)} a year</span>
       </div>
 
       {total > 0 && (
@@ -109,6 +115,12 @@ export function ScenarioSummary({ result, budgetPerYear, actualIncome }: Scenari
         <dd>{pct(result.effectiveRate)}</dd>
         <dt>Marginal rate</dt>
         <dd>{pct(result.marginalRate)}</dd>
+        {savings > 0 && (
+          <>
+            <dt>Savings</dt>
+            <dd>{format.money(savings)} / yr</dd>
+          </>
+        )}
         <dt>Default budget</dt>
         <dd>{format.money(budgetPerYear)} / yr</dd>
         <dt>{leftover >= 0 ? 'Left after budget' : 'Budget shortfall'}</dt>

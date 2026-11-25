@@ -1,50 +1,15 @@
 /**
- * Starting points for tax rules. These are editable defaults, not tax advice: rates and
- * limits change every year and vary by state, so the planner labels them "verify for
- * your situation". Figures are for US tax year 2026 as published by the IRS and SSA.
+ * Starting points for tax rules. These are editable defaults, not tax advice. The
+ * published figures for each tax year live in `taxYears/`; this file only turns them
+ * into rules, so nothing here changes from year to year.
  */
 import type { IdKind } from '@/lib/id';
-import type { Cents, Id, PlannerScenario, TaxRule } from '../schema/types';
+import type { Cents, Id, PlannerScenario, TaxRule, TemplateRuleKey } from '../schema/types';
+import { usTaxYearFor, type FilingStatus, type UsTaxYear } from './taxYears';
 
-export type FilingStatus = 'single' | 'mfj';
+export type { FilingStatus } from './taxYears';
 
 const $ = (dollars: number): Cents => Math.round(dollars * 100);
-
-const FEDERAL_2026: Record<
-  FilingStatus,
-  { standard: number; brackets: [number | null, number][] }
-> = {
-  single: {
-    standard: 16_100,
-    brackets: [
-      [12_400, 0.1],
-      [50_400, 0.12],
-      [105_700, 0.22],
-      [201_775, 0.24],
-      [256_225, 0.32],
-      [640_600, 0.35],
-      [null, 0.37],
-    ],
-  },
-  mfj: {
-    standard: 32_200,
-    brackets: [
-      [24_800, 0.1],
-      [100_800, 0.12],
-      [211_400, 0.22],
-      [403_550, 0.24],
-      [512_450, 0.32],
-      [768_700, 0.35],
-      [null, 0.37],
-    ],
-  },
-};
-
-const SOCIAL_SECURITY_WAGE_BASE_2026 = 184_500;
-const ADDITIONAL_MEDICARE_THRESHOLD: Record<FilingStatus, number> = {
-  single: 200_000,
-  mfj: 250_000,
-};
 
 export interface TemplateOptions {
   filing: FilingStatus;
@@ -54,89 +19,124 @@ export interface TemplateOptions {
   stateRate: number;
 }
 
-/** US federal income tax, payroll taxes, optional self-employment tax and a flat state tax. */
-export function usTaxRules(options: TemplateOptions, newId: (kind: IdKind) => Id): TaxRule[] {
-  const id = () => newId('plannerItem');
-  const rules: TaxRule[] = [];
-  const seSocialSecurity = id();
-  const seMedicare = id();
-  if (options.selfEmployment) {
-    rules.push(
-      {
-        id: seSocialSecurity,
-        name: 'Self-employment Social Security',
+/** Default names of the rules the template creates. */
+export const TEMPLATE_RULE_NAMES: Record<TemplateRuleKey, string> = {
+  seSocialSecurity: 'Self-employment Social Security',
+  seMedicare: 'Self-employment Medicare',
+  federalIncome: 'Federal income tax',
+  socialSecurity: 'Social Security',
+  medicare: 'Medicare',
+  additionalMedicare: 'Additional Medicare',
+};
+
+/** The parts of a rule that come from a tax year's figures. */
+export type RuleFigures = Omit<TaxRule, 'id' | 'name' | 'lessTaxes' | 'template'>;
+
+/** One template rule's figures for a tax year and filing status. */
+export function templateRuleFigures(
+  key: TemplateRuleKey,
+  figures: UsTaxYear,
+  filing: FilingStatus,
+): RuleFigures {
+  const { socialSecurity, medicare, selfEmployment: se } = figures;
+  switch (key) {
+    case 'seSocialSecurity':
+      return {
         base: 'seEarnings',
-        baseFactor: 0.9235,
-        cap: $(SOCIAL_SECURITY_WAGE_BASE_2026),
+        baseFactor: se.earningsFactor,
+        cap: $(socialSecurity.wageBase),
         capReducedBy: 'wages',
         perPerson: true,
-        schedule: { kind: 'flat', rate: 0.124 },
-      },
-      {
-        id: seMedicare,
-        name: 'Self-employment Medicare',
+        schedule: { kind: 'flat', rate: se.socialSecurityRate },
+      };
+    case 'seMedicare':
+      return {
         base: 'seEarnings',
-        baseFactor: 0.9235,
+        baseFactor: se.earningsFactor,
         perPerson: true,
-        schedule: { kind: 'flat', rate: 0.029 },
-      },
-    );
+        schedule: { kind: 'flat', rate: se.medicareRate },
+      };
+    case 'federalIncome': {
+      const federal = figures.federal[filing];
+      return {
+        base: 'taxableIncome',
+        deduction: $(federal.standardDeduction),
+        schedule: {
+          kind: 'brackets',
+          brackets: federal.brackets.map(([upTo, rate]) => ({
+            upTo: upTo === null ? null : $(upTo),
+            rate,
+          })),
+        },
+      };
+    }
+    case 'socialSecurity':
+      return {
+        base: 'wages',
+        cap: $(socialSecurity.wageBase),
+        perPerson: true,
+        schedule: { kind: 'flat', rate: socialSecurity.rate },
+      };
+    case 'medicare':
+      return {
+        base: 'wages',
+        perPerson: true,
+        schedule: { kind: 'flat', rate: medicare.rate },
+      };
+    // A household rule: for joint filers the threshold applies to combined wages.
+    case 'additionalMedicare':
+      return {
+        base: 'wages',
+        threshold: $(medicare.additionalThreshold[filing]),
+        schedule: { kind: 'flat', rate: medicare.additionalRate },
+      };
   }
-  const federal = FEDERAL_2026[options.filing];
+}
+
+/**
+ * US federal income tax, payroll taxes, optional self-employment tax and a flat state tax,
+ * using the figures for `year` (see `usTaxYearFor`). Each rule except the state tax is
+ * tagged with its template key and tax year.
+ */
+export function usTaxRules(
+  options: TemplateOptions,
+  year: number,
+  newId: (kind: IdKind) => Id,
+): TaxRule[] {
+  const figures = usTaxYearFor(year);
+  const { filing } = options;
+  const rule = (key: TemplateRuleKey, id: Id = newId('plannerItem')): TaxRule => ({
+    id,
+    name: TEMPLATE_RULE_NAMES[key],
+    ...templateRuleFigures(key, figures, filing),
+    template: { key, year: figures.year, filing },
+  });
+  const rules: TaxRule[] = [];
+  const seSocialSecurity = newId('plannerItem');
+  const seMedicare = newId('plannerItem');
+  if (options.selfEmployment)
+    rules.push(rule('seSocialSecurity', seSocialSecurity), rule('seMedicare', seMedicare));
+  const share = figures.selfEmployment.deductibleShare;
   rules.push({
-    id: id(),
-    name: 'Federal income tax',
-    base: 'taxableIncome',
-    deduction: $(federal.standard),
-    schedule: {
-      kind: 'brackets',
-      brackets: federal.brackets.map(([upTo, rate]) => ({
-        upTo: upTo === null ? null : $(upTo),
-        rate,
-      })),
-    },
+    ...rule('federalIncome'),
     ...(options.selfEmployment
       ? {
           lessTaxes: [
-            { taxId: seSocialSecurity, fraction: 0.5 },
-            { taxId: seMedicare, fraction: 0.5 },
+            { taxId: seSocialSecurity, fraction: share },
+            { taxId: seMedicare, fraction: share },
           ],
         }
       : {}),
   });
   if (options.stateRate > 0) {
     rules.push({
-      id: id(),
+      id: newId('plannerItem'),
       name: 'State income tax',
       base: 'taxableIncome',
       schedule: { kind: 'flat', rate: options.stateRate },
     });
   }
-  rules.push(
-    {
-      id: id(),
-      name: 'Social Security',
-      base: 'wages',
-      cap: $(SOCIAL_SECURITY_WAGE_BASE_2026),
-      perPerson: true,
-      schedule: { kind: 'flat', rate: 0.062 },
-    },
-    {
-      id: id(),
-      name: 'Medicare',
-      base: 'wages',
-      perPerson: true,
-      schedule: { kind: 'flat', rate: 0.0145 },
-    },
-    // A household rule: for joint filers the threshold applies to combined wages.
-    {
-      id: id(),
-      name: 'Additional Medicare',
-      base: 'wages',
-      threshold: $(ADDITIONAL_MEDICARE_THRESHOLD[options.filing]),
-      schedule: { kind: 'flat', rate: 0.009 },
-    },
-  );
+  rules.push(rule('socialSecurity'), rule('medicare'), rule('additionalMedicare'));
   return rules;
 }
 
@@ -185,7 +185,7 @@ export function scenarioTemplate(
         reduces: ['wages', 'taxableIncome'],
       },
     ],
-    taxes: usTaxRules(options, newId),
+    taxes: usTaxRules(options, options.year, newId),
     updatedAt: options.now,
   };
 }

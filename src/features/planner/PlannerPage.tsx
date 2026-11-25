@@ -1,10 +1,12 @@
 import { Button, Menu, NumberInput } from '@mantine/core';
-import { IconCopy, IconDots, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconCalendarRepeat, IconCopy, IconDots, IconPlus, IconTrash } from '@tabler/icons-react';
 import { clsx } from 'clsx';
 import { useMemo, useState } from 'react';
 import { Link, useLocation, useParams } from 'wouter';
 import { InlineEdit } from '@/components/InlineEdit/InlineEdit';
 import { computeScenario } from '@/domain/planner/engine';
+import { needsTaxYearUpdate, planTaxYearUpdate } from '@/domain/planner/taxYearUpdate';
+import { US_TAX_YEARS, usTaxYearFor } from '@/domain/planner/taxYears';
 import type { PlannerScenario } from '@/domain/schema/types';
 import { useFormat } from '@/hooks/useFormat';
 import { toastWithUndo, tryDispatch, tryRun } from '@/store/actions';
@@ -13,10 +15,14 @@ import { CompareScenarios } from './CompareScenarios';
 import { NewScenarioDialog } from './NewScenarioDialog';
 import { ScenarioEditor } from './ScenarioEditor';
 import { ScenarioSummary } from './ScenarioSummary';
+import { TaxYearUpdateDialog } from './TaxYearUpdateDialog';
 import { usePlannerContext } from './usePlannerContext';
 import styles from './PlannerPage.module.scss';
 
 const COMPARE = 'compare';
+const MIN_YEAR = 1900;
+const MAX_YEAR = 2200;
+const LATEST_YEAR = (US_TAX_YEARS.at(-1) as { year: number }).year;
 
 /** Plan income: taxes and deductions → take-home pay, compared with the budget. */
 export function PlannerPage() {
@@ -37,12 +43,8 @@ export function PlannerPage() {
   if (scenarios.length === 0) {
     return (
       <div className={styles.empty}>
-        <h2>Plan your take-home pay</h2>
-        <p>
-          Enter your income, taxes and deductions to see what you take home each month and how it
-          compares with your budget. Start from US tax rules or from scratch; everything is
-          editable.
-        </p>
+        <h2>Plan income, taxes, and deductions</h2>
+        <p>Calculate take-home pay based on income, taxes, and deductions.</p>
         <Button
           leftSection={<IconPlus size={14} />}
           onClick={() => {
@@ -98,7 +100,7 @@ export function PlannerPage() {
       {id === COMPARE ? (
         <CompareScenarios scenarios={scenarios} />
       ) : (
-        selected && <ScenarioView scenario={selected} />
+        selected && <ScenarioView key={selected.id} scenario={selected} />
       )}
       <NewScenarioDialog
         opened={creating}
@@ -114,6 +116,24 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
   const result = useMemo(() => computeScenario(scenario), [scenario]);
   const context = usePlannerContext();
   const [, navigate] = useLocation();
+  const [year, setYear] = useState<number | string>(scenario.year);
+  // Follow changes made elsewhere (undo/redo).
+  const [syncedYear, setSyncedYear] = useState(scenario.year);
+  if (syncedYear !== scenario.year) {
+    setSyncedYear(scenario.year);
+    setYear(scenario.year);
+  }
+  const rulesYear = usTaxYearFor(scenario.year).year;
+  const [updatingTo, setUpdatingTo] = useState<number | null>(null);
+  const hasTemplateRules = useMemo(
+    () => (planTaxYearUpdate(scenario.taxes, LATEST_YEAR)?.updates.length ?? 0) > 0,
+    [scenario.taxes],
+  );
+  // The scenario's year has published figures its template rules don't use yet.
+  const outdated = useMemo(
+    () => needsTaxYearUpdate(planTaxYearUpdate(scenario.taxes, scenario.year)),
+    [scenario.taxes, scenario.year],
+  );
   return (
     <div className={styles.scenario}>
       <header className={styles.header}>
@@ -127,15 +147,32 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
         <NumberInput
           size="xs"
           aria-label="Tax year"
-          value={scenario.year}
+          value={year}
           allowDecimal={false}
+          min={MIN_YEAR}
+          max={MAX_YEAR}
           w={80}
-          onBlur={(e) => {
-            const year = Number(e.currentTarget.value);
-            if (Number.isInteger(year) && year !== scenario.year)
-              tryRun('updateScenario', { id: scenario.id, changes: { year } });
+          onChange={(v) => {
+            setYear(v);
+            // Commits whole years as they're stepped or typed; partial input waits.
+            if (typeof v === 'number' && v >= MIN_YEAR && v <= MAX_YEAR && v !== scenario.year)
+              tryRun('updateScenario', { id: scenario.id, changes: { year: v } });
+          }}
+          onBlur={() => {
+            setYear(scenario.year);
           }}
         />
+        {outdated && (
+          <Button
+            size="xs"
+            variant="light"
+            onClick={() => {
+              setUpdatingTo(scenario.year);
+            }}
+          >
+            Update tax rules to {scenario.year}
+          </Button>
+        )}
         <Menu position="bottom-end">
           <Menu.Target>
             <Button variant="subtle" color="gray" px={6} aria-label="Scenario actions">
@@ -152,6 +189,16 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
             >
               Duplicate (for “what if”)
             </Menu.Item>
+            {hasTemplateRules && (
+              <Menu.Item
+                leftSection={<IconCalendarRepeat size={14} />}
+                onClick={() => {
+                  setUpdatingTo(outdated ? scenario.year : LATEST_YEAR);
+                }}
+              >
+                Update tax rules to another year…
+              </Menu.Item>
+            )}
             <Menu.Item
               onClick={() =>
                 tryRun('addTemplateRules', {
@@ -160,7 +207,7 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
                 })
               }
             >
-              Add US tax rules (single, incl. self-employment)
+              Add US {rulesYear} tax rules (single, incl. self-employment)
             </Menu.Item>
             <Menu.Item
               onClick={() =>
@@ -170,7 +217,7 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
                 })
               }
             >
-              Add US tax rules (married filing jointly)
+              Add US {rulesYear} tax rules (married filing jointly)
             </Menu.Item>
             <Menu.Divider />
             <Menu.Item
@@ -188,11 +235,19 @@ function ScenarioView({ scenario }: { scenario: PlannerScenario }) {
           </Menu.Dropdown>
         </Menu>
       </header>
+      <TaxYearUpdateDialog
+        scenario={scenario}
+        year={updatingTo}
+        onClose={() => {
+          setUpdatingTo(null);
+        }}
+      />
       <div className={styles.columns}>
         <ScenarioEditor scenario={scenario} result={result} />
         <div className={styles.summaryColumn}>
           <ScenarioSummary
             result={result}
+            savings={scenario.savings ?? 0}
             budgetPerYear={context.budgetPerYear}
             actualIncome={context.actualIncome}
           />

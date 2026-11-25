@@ -31,10 +31,7 @@ function TagsEditor() {
   return (
     <section className={styles.section}>
       <h2 className={styles.heading}>Tags</h2>
-      <p className={styles.note}>
-        Tags group transactions across categories, for example everything from one trip. Custom
-        budgets are defined by tags.
-      </p>
+      <p className={styles.note}>Tags group transactions across categories.</p>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -74,7 +71,7 @@ function TagsEditor() {
                           })
                         }
                       >
-                        {t.archived ? 'Unarchive' : 'Archive (hide from pickers)'}
+                        {t.archived ? 'Unarchive' : 'Archive'}
                       </Menu.Item>
                       <Menu.Divider />
                       <Menu.Item

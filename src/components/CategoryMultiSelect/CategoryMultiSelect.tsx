@@ -16,6 +16,7 @@ export function CategoryMultiSelect({
   value,
   onChange,
   expenseOnly,
+  placeholder,
   ...props
 }: CategoryMultiSelectProps) {
   const categories = useDocStore((s) => s.doc?.categories);
@@ -36,6 +37,8 @@ export function CategoryMultiSelect({
       selectFirstOptionOnChange
       maxDropdownHeight={280}
       {...props}
+      // Mantine keeps the placeholder in the search field after picks; show it only when empty.
+      placeholder={value.length ? undefined : placeholder}
       data={data}
       value={value}
       onChange={onChange}

@@ -329,7 +329,8 @@ A custom budget is a **tag-based** budget, typically for a trip, a project or an
 - `match`: a set of tags, matched in `any` or `all` mode against a split's effective tags.
 - `dateRange`: an optional start and end date.
 - `lines`: category lines and an optional `everythingElse` line, each with an amount.
-- `priority`: decides which custom budget wins when several match.
+- `priority`: decides which custom budget wins when several match. Users set it by dragging
+  budgets into order on the Custom tab (`reorderCustomBudgets`).
 
 Spending that matches a custom budget counts **only** there and is removed from the monthly and
 annual budgets. A trip's restaurant meals don't consume the monthly Food budget.
@@ -382,7 +383,19 @@ budget history and net worth change. Every chart has a table view. Colors follow
 
 The planner (`planner/engine.ts`) projects take-home pay from user-editable rules. No country's
 tax law is hard-coded in the engine. Templates (`planner/templates.ts`) supply starting rules,
-labeled with their year, and users can edit everything.
+and users can edit everything.
+
+- **Tax years**: published figures (brackets, standard deductions, payroll rates and limits) live
+  in `planner/taxYears/`, one file per year, listed in `taxYears/index.ts`. A scenario's template
+  uses its year's figures, or the latest earlier year when that year isn't published yet. Adding a
+  year is one new file; scenarios keep a copy of their rules, so existing ones don't change.
+- **Updating a scenario's tax year** (`planner/taxYearUpdate.ts`): template rules carry a
+  `template` tag (key, year, filing status). Untagged rules from older files are recognized by
+  matching their figures against every published year, then by default name. A rule whose figures
+  still equal its year's template is updated automatically; an edited rule is replaced only if the
+  user ticks it, and rules not from the template are never touched.
+- **Savings** (`savings`, yearly) is set aside from take-home pay and isn't counted as left over
+  after the budget.
 
 - **Incomes** are typed `w2`, `1099` or `other`, and may belong to a **person** in the household.
 - **Deductions** are pre-tax or post-tax, and list the bases they reduce (a 401(k) reduces taxable
