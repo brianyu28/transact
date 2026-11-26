@@ -74,10 +74,10 @@ export function AccountsOverview() {
         <div className={clsx(styles.row, styles.head)} role="row">
           <span role="columnheader">Account</span>
           <span role="columnheader" className={styles.hideNarrow}>
-            Last 3 months
+            Trend
           </span>
-          <span role="columnheader" className={styles.num}>
-            30-day change
+          <span role="columnheader" className={styles.num} title={`Change ${label}`}>
+            Change
           </span>
           <span role="columnheader" className={styles.num}>
             Balance
@@ -98,7 +98,7 @@ export function AccountsOverview() {
                 </span>
               </div>
               {rows.map((r) => (
-                <AccountRow key={r.account.id} summary={r} />
+                <AccountRow key={r.account.id} summary={r} rangeText={label} />
               ))}
             </div>
           );
@@ -108,9 +108,9 @@ export function AccountsOverview() {
   );
 }
 
-function AccountRow({ summary }: { summary: AccountSummary }) {
+function AccountRow({ summary, rangeText }: { summary: AccountSummary; rangeText: string }) {
   const format = useFormat();
-  const { account, balance, change30, trend } = summary;
+  const { account, balance, change, trend } = summary;
   return (
     <Link
       href={`/accounts/${account.id}`}
@@ -122,16 +122,14 @@ function AccountRow({ summary }: { summary: AccountSummary }) {
         {account.institution && <span className={styles.institution}>{account.institution}</span>}
       </span>
       <span role="cell" className={styles.hideNarrow}>
-        <Sparkline values={trend} label={`${account.name} balance trend`} />
+        <Sparkline values={trend} label={`${account.name} balance ${rangeText}`} />
       </span>
       <span
         role="cell"
-        className={clsx(
-          styles.num,
-          change30 > 0 ? styles.up : change30 < 0 ? styles.down : styles.dim,
-        )}
+        className={clsx(styles.num, change > 0 ? styles.up : change < 0 ? styles.down : styles.dim)}
+        title={`Change ${rangeText}`}
       >
-        {change30 === 0 ? '—' : format.money(change30, { sign: 'always' })}
+        {change === 0 ? '—' : format.money(change, { sign: 'always' })}
       </span>
       <span role="cell" className={clsx(styles.num, styles.balance)}>
         {format.money(balance)}

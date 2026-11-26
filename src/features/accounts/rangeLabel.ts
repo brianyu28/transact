@@ -1,6 +1,7 @@
 import type { RangeSelection } from '@/domain/aggregates/sampling';
 
 const PRESET: Record<Exclude<RangeSelection['key'], 'custom'>, string> = {
+  '1m': 'over 1 month',
   '3m': 'over 3 months',
   '1y': 'over 1 year',
   '5y': 'over 5 years',

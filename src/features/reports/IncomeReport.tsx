@@ -5,10 +5,10 @@ import { StatTile } from '@/components/StatTile/StatTile';
 import { incomeVsSpending } from '@/domain/reports/reports';
 import { useFormat } from '@/hooks/useFormat';
 import { usePrefs } from '@/store/prefsStore';
-import type { MonthKey } from '@/lib/date';
+import type { ReportPeriod } from '@/domain/reports/reports';
 import { ReportSection } from './ReportSection';
 import { useReportDeps } from './useReportDeps';
-import { longMonthLabel, seriesColor, shortMonthLabels } from './useReportMonths';
+import { columnLabels, columnTitles, seriesColor } from './useReportPeriod';
 import styles from './IncomeReport.module.scss';
 import t from './reportTable.module.scss';
 
@@ -16,22 +16,26 @@ const rate = (income: number, net: number) =>
   income > 0 ? `${Math.round((net / income) * 100)}%` : '—';
 
 /** Income vs. spending each month, and how much was saved. */
-export function IncomeReport({ months }: { months: MonthKey[] }) {
-  const { index, indexVersion, categories } = useReportDeps();
+export function IncomeReport({ period }: { period: ReportPeriod }) {
+  const { index, indexVersion, categories, transactions } = useReportDeps();
   const format = useFormat();
   const includeExcluded = usePrefs((s) => s.incomeIncludesExcluded);
   const setPref = usePrefs((s) => s.setPref);
   const rows = useMemo(
     () =>
-      index && categories
-        ? incomeVsSpending({ categories }, index, months, { includeExcluded })
+      index && categories && transactions
+        ? incomeVsSpending({ categories, transactions }, index, period.columns, {
+            includeExcluded,
+          })
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- indexVersion tracks in-place index changes.
-    [index, indexVersion, categories, months, includeExcluded],
+    [index, indexVersion, categories, transactions, period, includeExcluded],
   );
   const income = rows.reduce((s, r) => s + r.income, 0);
   const spending = rows.reduce((s, r) => s + r.spending, 0);
   const net = income - spending;
+  const titles = columnTitles(period, format.date);
+  const daily = period.unit === 'day';
 
   return (
     <div className={styles.root}>
@@ -60,8 +64,8 @@ export function IncomeReport({ months }: { months: MonthKey[] }) {
         }
         chart={
           <ColumnChart
-            columns={shortMonthLabels(months)}
-            columnTitles={months.map(longMonthLabel)}
+            columns={columnLabels(period)}
+            columnTitles={titles}
             series={[
               {
                 key: 'income',
@@ -80,14 +84,14 @@ export function IncomeReport({ months }: { months: MonthKey[] }) {
             height={240}
             formatValue={(c) => format.money(c)}
             formatAxis={format.moneyCompact}
-            label="Monthly income and spending"
+            label={`${daily ? 'Daily' : 'Monthly'} income and spending`}
           />
         }
         table={
           <table className={t.table}>
             <thead>
               <tr>
-                <th>Month</th>
+                <th>{daily ? 'Day' : 'Month'}</th>
                 <th>Income</th>
                 <th>Spending</th>
                 <th>Net</th>
@@ -95,9 +99,9 @@ export function IncomeReport({ months }: { months: MonthKey[] }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.month}>
-                  <td>{longMonthLabel(r.month)}</td>
+              {rows.map((r, i) => (
+                <tr key={period.columns[i]?.key}>
+                  <td>{titles[i]}</td>
                   <td>{format.money(r.income)}</td>
                   <td>{format.money(r.spending)}</td>
                   <td className={r.net < 0 ? t.over : undefined}>{format.money(r.net)}</td>

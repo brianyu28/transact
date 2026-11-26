@@ -470,8 +470,14 @@ storage.
   - Afterwards, links broken by the other side's deletions are repaired: a transfer missing its
     peer, statements, categories and tags.
   - The merged document is saved on top of the remote revision, and the user sees a summary.
-- When the tab becomes visible again, the app checks whether the file changed elsewhere. If there
-  are no local edits, it reloads silently. If there are, it offers the merge.
+- On startup, and whenever the app comes back (visible again, focused, restored from the
+  back/forward cache, or back online), it checks whether the file changed elsewhere; a failed
+  check is retried once. If there are no local edits, it reloads silently. If there are, it
+  offers the merge.
+- Unsaved changes are tracked against the undo history: each step has a content id, and the
+  document is clean when its current id is the one last saved. Undoing back to the saved state
+  makes it clean again. Loads that already differ from the file (migrated, merged) and
+  `markDirty` match no id, so they stay unsaved.
 
 ### Encryption
 

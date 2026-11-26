@@ -3,7 +3,7 @@ import { IconAlertTriangle } from '@tabler/icons-react';
 import { clsx } from 'clsx';
 import type { PlannerResult } from '@/domain/planner/engine';
 import { useFormat } from '@/hooks/useFormat';
-import { seriesColor } from '@/features/reports/useReportMonths';
+import { seriesColor } from '@/features/reports/useReportPeriod';
 import { prefsStore, usePrefs } from '@/store/prefsStore';
 import styles from './ScenarioSummary.module.scss';
 

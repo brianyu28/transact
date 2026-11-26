@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import {
-  adjustmentsBetween,
   balanceAtEnd,
   firstDataDate,
   getLedger,
@@ -10,19 +9,27 @@ import {
 import { sortedAccounts } from '@/domain/aggregates/lookups';
 import { sampleDates, type RangeSelection } from '@/domain/aggregates/sampling';
 import type { Account, BalanceSnapshot, Cents, ISODate } from '@/domain/schema/types';
-import { addDays, today as todayDate } from '@/lib/date';
+import { today as todayDate } from '@/lib/date';
 import { useDocStore } from '@/store/docStore';
 
 export interface AccountSummary {
   account: Account;
   balance: Cents;
-  /** Change over the last 30 days. */
-  change30: Cents;
-  /** Weekly balances over the last ~3 months (for a sparkline). */
+  /** Change in balance over the selected range. */
+  change: Cents;
+  /** Balances across the selected range (for a sparkline). */
   trend: Cents[];
   lastSnapshot: BalanceSnapshot | undefined;
-  /** Market change / discrepancies recorded by snapshots in the last 30 days. */
-  adjustments30: Cents;
+}
+
+/** Sparklines are 80px wide: more points than this add nothing. */
+const TREND_POINTS = 40;
+
+/** Up to `max` dates spread evenly over `dates`, always keeping the first and last. */
+function thin(dates: readonly ISODate[], max: number): ISODate[] {
+  if (dates.length <= max) return [...dates];
+  const step = (dates.length - 1) / (max - 1);
+  return Array.from({ length: max }, (_, i) => dates[Math.round(i * step)] as ISODate);
 }
 
 export interface BalancesView {
@@ -51,8 +58,9 @@ export function useAccountBalances(range: RangeSelection): BalancesView | null {
     const [current] = netWorthSeries(model, index, [today]);
     if (!current) return null;
     const rangeChange = (series.at(-1)?.net ?? 0) - (series[0]?.net ?? 0);
-    const monthAgo = addDays(today, -30);
-    const trendDates = Array.from({ length: 14 }, (_, i) => addDays(today, (i - 13) * 7));
+    const trendDates = thin(dates, TREND_POINTS);
+    const start = dates[0] ?? today;
+    const end = dates.at(-1) ?? today;
 
     const summaries = sortedAccounts({ accounts }).map((account): AccountSummary => {
       const ledger = getLedger(model, index, account.id);
@@ -60,10 +68,9 @@ export function useAccountBalances(range: RangeSelection): BalancesView | null {
       return {
         account,
         balance,
-        change30: balance - balanceAtEnd(ledger, monthAgo),
+        change: balanceAtEnd(ledger, end) - balanceAtEnd(ledger, start),
         trend: trendDates.map((d) => balanceAtEnd(ledger, d)),
         lastSnapshot: ledger.anchors.at(-1)?.snapshot,
-        adjustments30: adjustmentsBetween(ledger, monthAgo, today),
       };
     });
     return { today, series, current, rangeChange, accounts: summaries };

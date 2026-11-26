@@ -9,8 +9,10 @@ import { budgetView, customBudgetViews } from '../src/domain/budgets/views';
 import { reconcileCandidates } from '../src/domain/statements/reconcile';
 import {
   budgetHistory,
+  categoryBreakdown,
   monthsBetween,
   netWorthChanges,
+  reportPeriod,
   spendingByCategory,
 } from '../src/domain/reports/reports';
 import { generateDemoDocument } from '../src/domain/demo/generate';
@@ -160,7 +162,16 @@ const cases: Case[] = [
     name: 'Report: spending by category, 10 years monthly',
     targetMs: 16,
     runs: 20,
-    fn: () => void spendingByCategory(doc, index, monthsBetween('2016-12', '2026-11')),
+    fn: () => void spendingByCategory(doc, index, reportPeriod('2016-12-01', '2026-11-30').columns),
+  },
+  {
+    name: 'Report: categories over a custom year (partial months), with daily columns for a month',
+    targetMs: 16,
+    runs: 20,
+    fn: () => {
+      void categoryBreakdown(doc, index, { from: '2025-11-15', to: '2026-11-14' });
+      void spendingByCategory(doc, index, reportPeriod('2026-10-15', '2026-11-14').columns);
+    },
   },
   {
     name: 'Report: budget history, 12 months',
@@ -172,7 +183,13 @@ const cases: Case[] = [
     name: 'Report: net worth changes, 10 years',
     targetMs: 16,
     runs: 20,
-    fn: () => void netWorthChanges(doc, index, monthsBetween('2016-12', '2026-11'), '2026-11-24'),
+    fn: () =>
+      void netWorthChanges(
+        doc,
+        index,
+        reportPeriod('2016-12-01', '2026-11-30').columns,
+        '2026-11-24',
+      ),
   },
   {
     name: 'Filter all: "budget:food"',

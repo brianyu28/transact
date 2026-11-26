@@ -1,7 +1,7 @@
 /** Sample dates for charts: fine-grained for short ranges, monthly for long ones. */
 import { addDays, addMonths, diffDays, endOfMonth, maxDate, type ISODate } from '@/lib/date';
 
-export type RangeKey = '3m' | '1y' | '5y' | 'all' | 'custom';
+export type RangeKey = '1m' | '3m' | '1y' | '5y' | 'all' | 'custom';
 
 /** A chart range: a preset, or custom bounds (inclusive). */
 export interface RangeSelection {
@@ -12,6 +12,7 @@ export interface RangeSelection {
 }
 
 export const RANGES: readonly { value: RangeKey; label: string }[] = [
+  { value: '1m', label: '1M' },
   { value: '3m', label: '3M' },
   { value: '1y', label: '1Y' },
   { value: '5y', label: '5Y' },
@@ -27,6 +28,8 @@ export function resolveRange(
 ): { from: ISODate; to: ISODate } {
   const earliest = firstDate ?? today;
   switch (range.key) {
+    case '1m':
+      return { from: maxDate(addMonths(today, -1), earliest), to: today };
     case '3m':
       return { from: maxDate(addMonths(today, -3), earliest), to: today };
     case '1y':

@@ -3,21 +3,20 @@ import { useState, type ComponentType } from 'react';
 import { Link, useParams } from 'wouter';
 import { presetRange } from '@/domain/aggregates/sampling';
 import { RangeControl } from '@/features/accounts/RangeControl';
-import { today, type MonthKey } from '@/lib/date';
+import type { ReportPeriod } from '@/domain/reports/reports';
+import { today } from '@/lib/date';
 import { BudgetHistoryReport } from './BudgetHistoryReport';
 import { CategoryReport } from './CategoryReport';
 import { IncomeReport } from './IncomeReport';
 import { NetWorthReport } from './NetWorthReport';
-import { SpendingReport } from './SpendingReport';
-import { useReportMonths } from './useReportMonths';
+import { useReportPeriod } from './useReportPeriod';
 import styles from './ReportsPage.module.scss';
 
 const TABS: readonly {
   id: string;
   title: string;
-  component: ComponentType<{ months: MonthKey[] }>;
+  component: ComponentType<{ period: ReportPeriod }>;
 }[] = [
-  { id: 'spending', title: 'Spending', component: SpendingReport },
   { id: 'categories', title: 'Categories', component: CategoryReport },
   { id: 'income', title: 'Income', component: IncomeReport },
   { id: 'budgets', title: 'Budgets', component: BudgetHistoryReport },
@@ -25,11 +24,12 @@ const TABS: readonly {
 ];
 
 export function ReportsPage() {
-  const { tab = 'spending' } = useParams<{ tab?: string }>();
+  const { tab = 'categories' } = useParams<{ tab?: string }>();
+  // Unknown tabs (including the old "spending" one, now part of Categories) show the first.
   const current = TABS.find((x) => x.id === tab) ?? TABS[0];
   // The range is shared across report tabs.
   const [range, setRange] = useState(() => presetRange('1y', today()));
-  const months = useReportMonths(range);
+  const period = useReportPeriod(range);
   if (!current) return null;
   const Report = current.component;
   return (
@@ -50,7 +50,7 @@ export function ReportsPage() {
         <RangeControl value={range} onChange={setRange} />
       </div>
       <div className={styles.content}>
-        <Report months={months} />
+        <Report period={period} />
       </div>
     </div>
   );

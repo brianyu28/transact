@@ -302,7 +302,10 @@ function subscribeToEdits() {
   if (subscribed) return;
   subscribed = true;
   docStore.subscribe((state, prev) => {
-    if (state.doc && (state.editSeq !== prev.editSeq || state.savedSeq !== prev.savedSeq)) {
+    if (
+      state.doc &&
+      (state.editSeq !== prev.editSeq || state.savedContentId !== prev.savedContentId)
+    ) {
       scheduleWorkingCopy();
     }
   });
@@ -313,8 +316,21 @@ function subscribeToEdits() {
       // Back in view: see whether another device changed the file meanwhile.
       if (document.visibilityState === 'visible') void session.checkForChanges();
     });
+    // Mobile browsers and installed apps don't always report a resume as a visibility change:
+    // also check when the page is restored from the back/forward cache, regains focus, or
+    // comes back online (a check made while offline fails).
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) void session.checkForChanges();
+    });
+    window.addEventListener('focus', () => void session.checkForChanges());
+    window.addEventListener('online', () => void session.checkForChanges());
   }
 }
+
+/** The check in progress, so overlapping triggers (focus + visibility) share one request. */
+let changeCheck: Promise<void> | null = null;
+let changeCheckRetry: ReturnType<typeof setTimeout> | undefined;
+const CHANGE_CHECK_RETRY_MS = 5000;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -485,6 +501,63 @@ async function openFromStorage(opened: OpenedFile): Promise<void> {
   await loadOpened(opened);
 }
 
+/**
+ * If the open file changed elsewhere (another device saved it), loads the new version when
+ * there are no local edits, or offers to merge when there are. A failed check (e.g. the
+ * network isn't back yet after the app resumes) is retried once a few seconds later.
+ */
+async function checkForChanges(retry = true): Promise<void> {
+  clearTimeout(changeCheckRetry);
+  const { source, baseVersion, saving, conflict, status, locked, unencryptedCopy } = get();
+  const { doc } = docStore.getState();
+  if (!doc || !source || saving || conflict || locked || unencryptedCopy) return;
+  if (status !== 'ready') return;
+  const adapter = adapterFor(source.kind);
+  if (!adapter.peekVersion) return;
+  const handle = await workingCopyStore.loadHandle(doc.meta.fileId);
+  try {
+    const version = await adapter.peekVersion(handle, source);
+    const unchanged =
+      version === null ||
+      (version.rev !== undefined
+        ? version.rev === baseVersion.rev
+        : version.lastModified === baseVersion.lastModified);
+    if (unchanged || !adapter.reopen) return;
+    const opened = await adapter.reopen(handle, source);
+    if (!opened) return;
+    const header = await inspect(opened.bytes);
+    if (header.revision === get().baseRevision) {
+      set({ baseVersion: opened.version }); // touched but not changed
+      return;
+    }
+    if (!selectIsDirty(docStore.getState())) {
+      await loadOpened(opened);
+      addNotice({ kind: 'reloaded', savedAt: header.savedAt });
+      return;
+    }
+    set({
+      conflict: {
+        origin: 'open',
+        remoteBytes: opened.bytes,
+        remoteVersion: opened.version,
+        remoteRevision: header.revision,
+        remoteSavedAt: header.savedAt,
+        opened,
+      },
+    });
+  } catch (err) {
+    console.warn('Could not check for changes', err);
+    if (retry) {
+      changeCheckRetry = setTimeout(() => {
+        if (changeCheck) return;
+        changeCheck = checkForChanges(false).finally(() => {
+          changeCheck = null;
+        });
+      }, CHANGE_CHECK_RETRY_MS);
+    }
+  }
+}
+
 // ── Actions ───────────────────────────────────────────────────────────────────
 
 export const session = {
@@ -533,6 +606,8 @@ export const session = {
             fileSize: copy.bytes.length,
           });
           if (copy.dirty) addNotice({ kind: 'restored', updatedAt: copy.updatedAt });
+          // The file may have changed elsewhere while the app was closed.
+          void session.checkForChanges();
         },
       );
       // Waiting for a passphrase: show the welcome screen behind the unlock dialog.
@@ -633,54 +708,20 @@ export const session = {
    * If the open file changed elsewhere (another device saved it), load the new version
    * when there are no local edits, or offer to merge when there are.
    */
-  checkForChanges: async (): Promise<void> => {
-    const { source, baseVersion, saving, conflict, status, locked, unencryptedCopy } = get();
-    const { doc } = docStore.getState();
-    if (!doc || !source || saving || conflict || locked || unencryptedCopy) return;
-    if (status !== 'ready') return;
-    const adapter = adapterFor(source.kind);
-    if (!adapter.peekVersion) return;
-    const handle = await workingCopyStore.loadHandle(doc.meta.fileId);
-    try {
-      const version = await adapter.peekVersion(handle, source);
-      const unchanged =
-        version === null ||
-        (version.rev !== undefined
-          ? version.rev === baseVersion.rev
-          : version.lastModified === baseVersion.lastModified);
-      if (unchanged || !adapter.reopen) return;
-      const opened = await adapter.reopen(handle, source);
-      if (!opened) return;
-      const header = await inspect(opened.bytes);
-      if (header.revision === get().baseRevision) {
-        set({ baseVersion: opened.version }); // touched but not changed
-        return;
-      }
-      if (!selectIsDirty(docStore.getState())) {
-        await loadOpened(opened);
-        addNotice({ kind: 'reloaded', savedAt: header.savedAt });
-        return;
-      }
-      set({
-        conflict: {
-          origin: 'open',
-          remoteBytes: opened.bytes,
-          remoteVersion: opened.version,
-          remoteRevision: header.revision,
-          remoteSavedAt: header.savedAt,
-          opened,
-        },
+  checkForChanges: (): Promise<void> => {
+    if (!changeCheck) {
+      changeCheck = checkForChanges().finally(() => {
+        changeCheck = null;
       });
-    } catch (err) {
-      console.warn('Could not check for changes', err);
     }
+    return changeCheck;
   },
 
   /** Saves to the current file, or prompts for a location if there isn't one. */
   save: async (
     options: { saveAs?: boolean; force?: boolean; name?: string; target?: AdapterKind } = {},
   ): Promise<void> => {
-    const { doc, editSeq } = docStore.getState();
+    const { doc, contentId } = docStore.getState();
     if (!doc || get().saving) return;
     set({ saving: true });
     try {
@@ -740,7 +781,7 @@ export const session = {
       }
 
       docStore.getState().updateMeta((m) => Object.assign(m, meta));
-      docStore.getState().markSaved(editSeq);
+      docStore.getState().markSaved(contentId);
       set({
         source: result.descriptor,
         baseVersion: result.version,

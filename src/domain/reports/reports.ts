@@ -1,17 +1,29 @@
 /**
- * Report aggregations. All work in whole months and read the per-month category rollup
- * the index already maintains, so they cost O(months × categories), not O(transactions).
+ * Report aggregations over date spans. Whole months read the per-month category rollup the
+ * index already maintains; only the days of partially covered months are scanned, so a report
+ * costs O(columns × categories) plus the transactions in its partial months.
  *
  * Spending is the negative of net expense amounts (refunds reduce it); income is the net
  * of income-category amounts. Transfers and excluded splits are never counted.
  */
-import { addDays, addMonthsToKey, type ISODate, type MonthKey } from '@/lib/date';
+import {
+  addDays,
+  addMonthsToKey,
+  diffDays,
+  endOfMonth,
+  maxDate,
+  monthKey,
+  startOfMonth,
+  type ISODate,
+  type MonthKey,
+} from '@/lib/date';
 import { adjustmentsBetween, getLedger, netWorthSeries } from '../aggregates/balances';
 import { UNCATEGORIZED, type DocIndex } from '../aggregates/docIndex';
 import { categoryTree, type CategoryTree } from '../aggregates/lookups';
 import { budgetView, lineLabel } from '../budgets/views';
-import type { DocModel } from '../model';
+import { getTransaction, type DocModel } from '../model';
 import type { Cents, Id } from '../schema/types';
+import { effectiveSplits } from '../transactions/splits';
 
 /** Inclusive list of months from `from` to `to`. */
 export function monthsBetween(from: MonthKey, to: MonthKey): MonthKey[] {
@@ -45,17 +57,110 @@ function bucketFor(tree: CategoryTree, categoryId: Id, parentId: Id | null): Id 
   return node.category.parentId === parentId ? node.category.id : null;
 }
 
-/** Spending per bucket per month (expense categories only; uncategorized at the top level). */
-function spendingMatrix(
-  doc: Pick<DocModel, 'categories'>,
+/** Inclusive date span. */
+export interface Span {
+  from: ISODate;
+  to: ISODate;
+}
+
+/** One chart column / table row of a report: a day or (part of) a month. */
+export interface ReportColumn extends Span {
+  /** The day (ISODate) or month (MonthKey). */
+  key: string;
+}
+
+export interface ReportPeriod extends Span {
+  unit: 'day' | 'month';
+  columns: ReportColumn[];
+  /** Calendar months the period touches. */
+  months: MonthKey[];
+}
+
+/** Spans of up to this many days are shown day by day; longer ones month by month. */
+export const DAILY_MAX_DAYS = 31;
+
+/** Columns for [from, to]: days for short spans, otherwise months clipped to the span. */
+export function reportPeriod(from: ISODate, to: ISODate): ReportPeriod {
+  if (to < from) to = from;
+  const months = monthsBetween(monthKey(from), monthKey(to));
+  if (diffDays(from, to) + 1 <= DAILY_MAX_DAYS) {
+    const columns: ReportColumn[] = [];
+    for (let d = from; d <= to; d = addDays(d, 1)) columns.push({ key: d, from: d, to: d });
+    return { from, to, unit: 'day', columns, months };
+  }
+  const columns = months.map((m) => ({
+    key: m,
+    from: maxDate(`${m}-01`, from),
+    to: minDate(endOfMonth(`${m}-01`), to),
+  }));
+  return { from, to, unit: 'month', columns, months };
+}
+
+/** Whether the span is made of whole calendar months. */
+export const isWholeMonths = (span: Span): boolean =>
+  span.from === startOfMonth(span.from) && span.to === endOfMonth(span.to);
+
+/**
+ * The span of the same length just before: as many whole months for a span of whole
+ * months, otherwise as many days.
+ */
+export function previousSpan(span: Span): Span {
+  const to = addDays(span.from, -1);
+  if (isWholeMonths(span)) {
+    const count = monthsBetween(monthKey(span.from), monthKey(span.to)).length;
+    return { from: `${addMonthsToKey(monthKey(span.from), -count)}-01`, to };
+  }
+  return { from: addDays(span.from, -(diffDays(span.from, span.to) + 1)), to };
+}
+
+const minDate = (a: ISODate, b: ISODate): ISODate => (a < b ? a : b);
+
+/**
+ * Calls `fn` with each category's net amount over the span (several times per category
+ * when the span covers more than one month). `excluded` selects excluded splits instead.
+ */
+export function forEachCategoryNet(
+  doc: Pick<DocModel, 'transactions'>,
   index: DocIndex,
-  months: readonly MonthKey[],
+  span: Span,
+  excluded: boolean,
+  fn: (categoryId: Id, net: Cents) => void,
+): void {
+  const rollup = excluded ? index.excludedByMonth : index.categoryByMonth;
+  for (const month of monthsBetween(monthKey(span.from), monthKey(span.to))) {
+    const first = `${month}-01`;
+    const last = endOfMonth(first);
+    if (span.from <= first && span.to >= last) {
+      for (const [categoryId, net] of rollup.get(month) ?? []) fn(categoryId, net);
+      continue;
+    }
+    if (!rollup.has(month)) continue; // nothing that month
+    for (const id of index.idsInRange(maxDate(first, span.from), minDate(last, span.to))) {
+      const t = getTransaction(doc, id);
+      if (!t || t.transfer) continue;
+      for (const split of effectiveSplits(t)) {
+        if (split.excluded === excluded) fn(split.categoryId ?? UNCATEGORIZED, split.amount);
+      }
+    }
+  }
+}
+
+/** Spending per bucket per column (expense categories only; uncategorized at the top level). */
+function spendingMatrix(
+  doc: Pick<DocModel, 'categories' | 'transactions'>,
+  index: DocIndex,
+  columns: readonly Span[],
   parentId: Id | null,
 ) {
   const tree = categoryTree(doc.categories);
   const matrix = new Map<Id, Cents[]>();
-  months.forEach((month, i) => {
-    for (const [categoryId, net] of index.categoryByMonth.get(month) ?? []) {
+  columns.forEach((column, i) => {
+    // Net per category over the column first: uncategorized inflows only drop out on balance.
+    const nets = new Map<Id, Cents>();
+    forEachCategoryNet(doc, index, column, false, (categoryId, net) => {
+      nets.set(categoryId, (nets.get(categoryId) ?? 0) + net);
+    });
+    for (const [categoryId, net] of nets) {
       let bucket: Id | null;
       if (categoryId === UNCATEGORIZED) {
         if (parentId !== null || net > 0) continue; // uncategorized inflows aren't spending
@@ -67,7 +172,7 @@ function spendingMatrix(
       if (bucket === null) continue;
       let row = matrix.get(bucket);
       if (!row) {
-        row = new Array<Cents>(months.length).fill(0);
+        row = new Array<Cents>(columns.length).fill(0);
         matrix.set(bucket, row);
       }
       row[i] = (row[i] ?? 0) - net;
@@ -91,17 +196,17 @@ export interface Series {
 }
 
 /**
- * Monthly spending by category: the largest `maxSeries` categories by total, with the
+ * Spending by category per column: the largest `maxSeries` categories by total, with the
  * rest folded into "Other" (never more series than the palette can keep distinct).
  */
 export function spendingByCategory(
-  doc: Pick<DocModel, 'categories'>,
+  doc: Pick<DocModel, 'categories' | 'transactions'>,
   index: DocIndex,
-  months: readonly MonthKey[],
+  columns: readonly Span[],
   parentId: Id | null = null,
   maxSeries = 7,
-): { months: readonly MonthKey[]; series: Series[]; totals: Cents[] } {
-  const { tree, matrix } = spendingMatrix(doc, index, months, parentId);
+): { series: Series[]; totals: Cents[] } {
+  const { tree, matrix } = spendingMatrix(doc, index, columns, parentId);
   const all: Series[] = [...matrix].map(([key, values]) => ({
     key,
     label: bucketLabel(tree, key, parentId),
@@ -113,17 +218,16 @@ export function spendingByCategory(
   const series = fold ? all.slice(0, maxSeries) : all;
   if (fold) {
     const rest = all.slice(maxSeries);
-    const values = months.map((_, i) => rest.reduce((s, r) => s + (r.values[i] ?? 0), 0));
+    const values = columns.map((_, i) => rest.reduce((s, r) => s + (r.values[i] ?? 0), 0));
     series.push({
       key: OTHER,
-      label: `Other (${rest.length})`,
+      label: `Other (${String(rest.length)})`,
       values,
       total: values.reduce((s, v) => s + v, 0),
     });
   }
-  const totals = months.map((_, i) => all.reduce((s, r) => s + (r.values[i] ?? 0), 0));
+  const totals = columns.map((_, i) => all.reduce((s, r) => s + (r.values[i] ?? 0), 0));
   return {
-    months,
     series: series.filter((s) => s.total !== 0 || s.values.some((v) => v !== 0)),
     totals,
   };
@@ -138,21 +242,15 @@ export interface BreakdownRow {
   hasChildren: boolean;
 }
 
-/** Spending by category over the months, compared with the same number of months before. */
+/** Spending by category over the span, compared with the span just before (`previousSpan`). */
 export function categoryBreakdown(
-  doc: Pick<DocModel, 'categories'>,
+  doc: Pick<DocModel, 'categories' | 'transactions'>,
   index: DocIndex,
-  months: readonly MonthKey[],
+  span: Span,
   parentId: Id | null = null,
 ): { rows: BreakdownRow[]; total: Cents; previousTotal: Cents } {
-  const first = months[0];
-  if (!first) return { rows: [], total: 0, previousTotal: 0 };
-  const previousMonths = monthsBetween(
-    addMonthsToKey(first, -months.length),
-    addMonthsToKey(first, -1),
-  );
-  const current = spendingMatrix(doc, index, months, parentId);
-  const previous = spendingMatrix(doc, index, previousMonths, parentId).matrix;
+  const current = spendingMatrix(doc, index, [span], parentId);
+  const previous = spendingMatrix(doc, index, [previousSpan(span)], parentId).matrix;
   const sum = (v: readonly Cents[] | undefined) => (v ?? []).reduce((s, x) => s + x, 0);
   const total = [...current.matrix.values()].reduce((s, v) => s + sum(v), 0);
   const keys = new Set([...current.matrix.keys(), ...previous.keys()]);
@@ -174,28 +272,29 @@ export function categoryBreakdown(
   return { rows, total, previousTotal: [...previous.values()].reduce((s, v) => s + sum(v), 0) };
 }
 
-export interface IncomeSpendingMonth {
-  month: MonthKey;
+export interface IncomeSpending {
   income: Cents;
   spending: Cents;
   net: Cents;
 }
 
+/** Income and spending per column. */
 export function incomeVsSpending(
-  doc: Pick<DocModel, 'categories'>,
+  doc: Pick<DocModel, 'categories' | 'transactions'>,
   index: DocIndex,
-  months: readonly MonthKey[],
+  columns: readonly Span[],
   options: { includeExcluded?: boolean } = {},
-): IncomeSpendingMonth[] {
+): IncomeSpending[] {
   const tree = categoryTree(doc.categories);
-  const sources = options.includeExcluded
-    ? [index.categoryByMonth, index.excludedByMonth]
-    : [index.categoryByMonth];
-  return months.map((month) => {
+  return columns.map((column) => {
+    const nets = new Map<Id, Cents>();
+    const add = (categoryId: Id, net: Cents) => {
+      nets.set(categoryId, (nets.get(categoryId) ?? 0) + net);
+    };
     let income = 0;
     let spending = 0;
-    for (const source of sources) {
-      for (const [categoryId, net] of source.get(month) ?? []) {
+    const tally = () => {
+      for (const [categoryId, net] of nets) {
         const kind =
           categoryId === UNCATEGORIZED
             ? net > 0
@@ -205,8 +304,15 @@ export function incomeVsSpending(
         if (kind === 'income') income += net;
         else if (kind === 'expense') spending -= net;
       }
+      nets.clear();
+    };
+    forEachCategoryNet(doc, index, column, false, add);
+    tally();
+    if (options.includeExcluded) {
+      forEachCategoryNet(doc, index, column, true, add);
+      tally();
     }
-    return { month, income, spending, net: income - spending };
+    return { income, spending, net: income - spending };
   });
 }
 
@@ -258,7 +364,6 @@ export function budgetHistory(
 }
 
 export interface NetWorthChange {
-  month: MonthKey;
   start: Cents;
   end: Cents;
   change: Cents;
@@ -268,29 +373,26 @@ export interface NetWorthChange {
   saved: Cents;
 }
 
-/** How net worth changed each month, split into transactions vs. balance updates. */
+/** How net worth changed in each column, split into transactions vs. balance updates. */
 export function netWorthChanges(
   doc: Pick<DocModel, 'accounts' | 'balanceSnapshots'>,
   index: DocIndex,
-  months: readonly MonthKey[],
+  columns: readonly Span[],
   today: ISODate,
 ): NetWorthChange[] {
-  const ends = months.map((m) => {
-    const end = `${addMonthsToKey(m, 1)}-01`;
-    return end > today ? today : dayBefore(end);
-  });
-  const first = months[0];
+  const first = columns[0];
   if (!first) return [];
-  const points = netWorthSeries(doc, index, [dayBefore(`${first}-01`), ...ends]);
+  // Columns after today show no change.
+  const ends = columns.map((c) => minDate(c.to, today));
+  const startDate = minDate(addDays(first.from, -1), today);
+  const points = netWorthSeries(doc, index, [startDate, ...ends]);
   const ledgers = Object.values(doc.accounts).map((a) => getLedger(doc, index, a.id));
-  return months.map((month, i) => {
+  return columns.map((_, i) => {
     const start = points[i]?.net ?? 0;
     const end = points[i + 1]?.net ?? 0;
-    const from = `${month}-01`;
-    const to = `${addMonthsToKey(month, 1)}-01`;
+    const from = i === 0 ? startDate : (ends[i - 1] as ISODate);
+    const to = ends[i] as ISODate;
     const market = ledgers.reduce((s, l) => s + adjustmentsBetween(l, from, to), 0);
-    return { month, start, end, change: end - start, market, saved: end - start - market };
+    return { start, end, change: end - start, market, saved: end - start - market };
   });
 }
-
-const dayBefore = (date: ISODate): ISODate => addDays(date, -1);

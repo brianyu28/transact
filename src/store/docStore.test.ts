@@ -37,8 +37,38 @@ describe('docStore', () => {
     expect(selectIsDirty(store.getState())).toBe(false);
     addAccountAndTxn();
     expect(selectIsDirty(store.getState())).toBe(true);
-    store.getState().markSaved(store.getState().editSeq);
+    store.getState().markSaved(store.getState().contentId);
     expect(selectIsDirty(store.getState())).toBe(false);
+  });
+
+  it('is clean again after undoing back to the saved state, and dirty when redone', () => {
+    const { txnId } = addAccountAndTxn();
+    const { dispatch } = store.getState();
+    store.getState().markSaved(store.getState().contentId);
+    dispatch('updateTransaction', { id: txnId, changes: { amount: -1 } });
+    dispatch('updateTransaction', { id: txnId, changes: { amount: -2 } });
+    expect(selectIsDirty(store.getState())).toBe(true);
+    store.getState().undo();
+    expect(selectIsDirty(store.getState())).toBe(true);
+    store.getState().undo();
+    expect(selectIsDirty(store.getState())).toBe(false);
+    store.getState().undo(); // before the save: unsaved again
+    expect(selectIsDirty(store.getState())).toBe(true);
+    store.getState().redo();
+    expect(selectIsDirty(store.getState())).toBe(false);
+    store.getState().redo();
+    expect(selectIsDirty(store.getState())).toBe(true);
+  });
+
+  it('stays dirty after undo when the file never matched (markDirty, dirty loads)', () => {
+    const { txnId } = addAccountAndTxn();
+    store.getState().markSaved(store.getState().contentId);
+    store.getState().markDirty();
+    store.getState().dispatch('updateTransaction', { id: txnId, changes: { amount: -1 } });
+    store.getState().undo();
+    expect(selectIsDirty(store.getState())).toBe(true);
+    store.getState().load(store.getState().doc!, { dirty: true });
+    expect(selectIsDirty(store.getState())).toBe(true);
   });
 
   it('undoes and redoes, keeping the index in sync', () => {

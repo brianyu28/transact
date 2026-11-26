@@ -3,15 +3,18 @@ import { clsx } from 'clsx';
 import { useMemo } from 'react';
 import { budgetHistory } from '@/domain/reports/reports';
 import { useFormat } from '@/hooks/useFormat';
-import { today, type MonthKey } from '@/lib/date';
+import type { ReportPeriod } from '@/domain/reports/reports';
+import { today } from '@/lib/date';
 import { ReportSection } from './ReportSection';
 import { useReportDeps } from './useReportDeps';
-import { longMonthLabel, shortMonthLabels } from './useReportMonths';
+import { longMonthLabel, shortMonthLabels } from './useReportPeriod';
 import styles from './BudgetHistoryReport.module.scss';
 import t from './reportTable.module.scss';
 
 /** Each monthly budget line, month by month: spent against budgeted. */
-export function BudgetHistoryReport({ months }: { months: MonthKey[] }) {
+/** Budgets are monthly, so this covers every month the period touches. */
+export function BudgetHistoryReport({ period }: { period: ReportPeriod }) {
+  const { months } = period;
   const { index, indexVersion, budgets, categories, settings, transactions } = useReportDeps();
   const format = useFormat();
   const history = useMemo(

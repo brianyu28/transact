@@ -32,6 +32,8 @@ const MAX_HISTORY = 200;
 
 interface HistoryEntry {
   label: string;
+  /** `contentId` of the document after this step. */
+  contentId: number;
   patches: Patch[];
   inverse: Patch[];
 }
@@ -43,8 +45,13 @@ export interface DocState {
   indexVersion: number;
   /** Incremented by every edit, undo and redo. */
   editSeq: number;
-  /** `editSeq` at the last successful save (or load). */
-  savedSeq: number;
+  /**
+   * Identity of the document's current content: each undo history step has its own, so
+   * undoing back to a state restores its id.
+   */
+  contentId: number;
+  /** `contentId` of what was last saved (or loaded); null when no state matches the file. */
+  savedContentId: number | null;
   undoLabel: string | null;
   redoLabel: string | null;
 }
@@ -57,7 +64,8 @@ export interface DocActions {
   redo(): void;
   /** Non-undoable metadata update (e.g. revision bump on save). */
   updateMeta(recipe: (meta: Draft<DocModel['meta']>) => void): void;
-  markSaved(editSeq: number): void;
+  /** Records that the content with this id (`contentId` when the save started) was saved. */
+  markSaved(contentId: number): void;
   /** Marks the document as having unsaved changes (e.g. after turning on encryption). */
   markDirty(): void;
 }
@@ -69,7 +77,8 @@ const emptyState: DocState = {
   index: null,
   indexVersion: 0,
   editSeq: 0,
-  savedSeq: 0,
+  contentId: 0,
+  savedContentId: 0,
   undoLabel: null,
   redoLabel: null,
 };
@@ -102,6 +111,9 @@ function touchedTransactions(
 export function createDocStore() {
   let past: HistoryEntry[] = [];
   let future: HistoryEntry[] = [];
+  /** `contentId` of the document as loaded, before any history step. */
+  let rootContentId = 0;
+  let nextContentId = 1;
 
   return createStore<DocStore>()((set, get) => {
     /** Commits a new document version and updates the index from the patches. */
@@ -120,6 +132,7 @@ export function createDocStore() {
         index: nextIndex,
         indexVersion: touched === 'all' || touched.size > 0 ? s.indexVersion + 1 : s.indexVersion,
         editSeq: s.editSeq + 1,
+        contentId: past.at(-1)?.contentId ?? rootContentId,
         undoLabel: past.at(-1)?.label ?? null,
         redoLabel: future.at(-1)?.label ?? null,
         ...history,
@@ -132,14 +145,17 @@ export function createDocStore() {
       load(doc, options) {
         past = [];
         future = [];
-        const seq = get().editSeq + 1;
+        rootContentId = nextContentId++;
         set({
           ...emptyState,
           doc,
           index: DocIndex.build(doc),
           indexVersion: get().indexVersion + 1,
-          editSeq: seq,
-          savedSeq: options?.dirty ? seq - 1 : seq,
+          editSeq: get().editSeq + 1,
+          contentId: rootContentId,
+          // A loaded document that already differs from its file (migrated, merged…) stays
+          // unsaved however far back it is undone.
+          savedContentId: options?.dirty ? null : rootContentId,
         });
       },
 
@@ -164,8 +180,9 @@ export function createDocStore() {
           );
         });
         if (patches.length > 0) {
-          past.push({ label: command.label, patches, inverse });
-          if (past.length > MAX_HISTORY) past.shift();
+          past.push({ label: command.label, contentId: nextContentId++, patches, inverse });
+          // Dropping the oldest step makes the state after it the bottom of the history.
+          if (past.length > MAX_HISTORY) rootContentId = past.shift()?.contentId ?? rootContentId;
           future = [];
           commit(next, patches);
         }
@@ -198,12 +215,13 @@ export function createDocStore() {
         });
       },
 
-      markSaved(editSeq) {
-        set({ savedSeq: editSeq });
+      markSaved(contentId) {
+        set({ savedContentId: contentId });
       },
 
       markDirty() {
-        set((s) => ({ editSeq: s.editSeq + 1 }));
+        // The file no longer matches any state in the history (e.g. encryption changed).
+        set((s) => ({ editSeq: s.editSeq + 1, savedContentId: null }));
       },
     };
   });
@@ -216,4 +234,4 @@ export function useDocStore<T>(selector: (state: DocStore) => T): T {
   return useStore(docStore, selector);
 }
 
-export const selectIsDirty = (s: DocState) => s.doc !== null && s.editSeq !== s.savedSeq;
+export const selectIsDirty = (s: DocState) => s.doc !== null && s.contentId !== s.savedContentId;

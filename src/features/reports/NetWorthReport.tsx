@@ -3,28 +3,31 @@ import { ColumnChart } from '@/components/charts/ColumnChart';
 import { StatTile } from '@/components/StatTile/StatTile';
 import { netWorthChanges } from '@/domain/reports/reports';
 import { useFormat } from '@/hooks/useFormat';
-import { today, type MonthKey } from '@/lib/date';
+import type { ReportPeriod } from '@/domain/reports/reports';
+import { today } from '@/lib/date';
 import { ReportSection } from './ReportSection';
 import { useReportDeps } from './useReportDeps';
-import { longMonthLabel, seriesColor, shortMonthLabels } from './useReportMonths';
+import { columnLabels, columnTitles, seriesColor } from './useReportPeriod';
 import styles from './IncomeReport.module.scss';
 import t from './reportTable.module.scss';
 
 /** How net worth changed each month: what you saved vs. what markets (balance updates) did. */
-export function NetWorthReport({ months }: { months: MonthKey[] }) {
+export function NetWorthReport({ period }: { period: ReportPeriod }) {
   const { index, indexVersion, accounts, snapshots } = useReportDeps();
   const format = useFormat();
   const rows = useMemo(
     () =>
       index && accounts && snapshots
-        ? netWorthChanges({ accounts, balanceSnapshots: snapshots }, index, months, today())
+        ? netWorthChanges({ accounts, balanceSnapshots: snapshots }, index, period.columns, today())
         : [],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- indexVersion tracks in-place index changes.
-    [index, indexVersion, accounts, snapshots, months],
+    [index, indexVersion, accounts, snapshots, period],
   );
   const saved = rows.reduce((s, r) => s + r.saved, 0);
   const market = rows.reduce((s, r) => s + r.market, 0);
   const signed = (c: number) => format.money(c, { sign: 'always' });
+  const titles = columnTitles(period, format.date);
+  const daily = period.unit === 'day';
 
   return (
     <div className={styles.root}>
@@ -39,8 +42,8 @@ export function NetWorthReport({ months }: { months: MonthKey[] }) {
         subtitle="Saving: what your transactions added (income minus spending). Market: changes recorded by balance updates, such as investment growth."
         chart={
           <ColumnChart
-            columns={shortMonthLabels(months)}
-            columnTitles={months.map(longMonthLabel)}
+            columns={columnLabels(period)}
+            columnTitles={titles}
             series={[
               {
                 key: 'saved',
@@ -59,14 +62,14 @@ export function NetWorthReport({ months }: { months: MonthKey[] }) {
             height={240}
             formatValue={signed}
             formatAxis={format.moneyCompact}
-            label="Monthly net worth change split into saving and market change"
+            label={`${daily ? 'Daily' : 'Monthly'} net worth change split into saving and market change`}
           />
         }
         table={
           <table className={t.table}>
             <thead>
               <tr>
-                <th>Month</th>
+                <th>{daily ? 'Day' : 'Month'}</th>
                 <th>Start</th>
                 <th>Saving</th>
                 <th>Market & adjustments</th>
@@ -75,9 +78,9 @@ export function NetWorthReport({ months }: { months: MonthKey[] }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
-                <tr key={r.month}>
-                  <td>{longMonthLabel(r.month)}</td>
+              {rows.map((r, i) => (
+                <tr key={period.columns[i]?.key}>
+                  <td>{titles[i]}</td>
                   <td className={t.dim}>{format.money(r.start)}</td>
                   <td>{signed(r.saved)}</td>
                   <td>{signed(r.market)}</td>
