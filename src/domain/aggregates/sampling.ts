@@ -1,7 +1,16 @@
 /** Sample dates for charts: fine-grained for short ranges, monthly for long ones. */
-import { addDays, addMonths, diffDays, endOfMonth, maxDate, type ISODate } from '@/lib/date';
+import {
+  addDays,
+  addMonths,
+  diffDays,
+  endOfMonth,
+  maxDate,
+  startOfMonth,
+  startOfYear,
+  type ISODate,
+} from '@/lib/date';
 
-export type RangeKey = '1m' | '3m' | '1y' | '5y' | 'all' | 'custom';
+export type RangeKey = '1m' | '3m' | '1y' | '5y' | 'mtd' | 'ytd' | 'all' | 'custom';
 
 /** A chart range: a preset, or custom bounds (inclusive). */
 export interface RangeSelection {
@@ -11,11 +20,25 @@ export interface RangeSelection {
   to: ISODate;
 }
 
-export const RANGES: readonly { value: RangeKey; label: string }[] = [
+export interface RangeOption {
+  value: RangeKey;
+  label: string;
+}
+
+/** Trailing ranges counted back from today (account trends). */
+export const RANGES: readonly RangeOption[] = [
   { value: '1m', label: '1M' },
   { value: '3m', label: '3M' },
   { value: '1y', label: '1Y' },
   { value: '5y', label: '5Y' },
+  { value: 'all', label: 'All' },
+  { value: 'custom', label: 'Custom' },
+];
+
+/** Calendar periods up to today (reports). */
+export const REPORT_RANGES: readonly RangeOption[] = [
+  { value: 'mtd', label: 'MTD' },
+  { value: 'ytd', label: 'YTD' },
   { value: 'all', label: 'All' },
   { value: 'custom', label: 'Custom' },
 ];
@@ -36,6 +59,10 @@ export function resolveRange(
       return { from: maxDate(addMonths(today, -12), earliest), to: today };
     case '5y':
       return { from: maxDate(addMonths(today, -60), earliest), to: today };
+    case 'mtd':
+      return { from: maxDate(startOfMonth(today), earliest), to: today };
+    case 'ytd':
+      return { from: maxDate(startOfYear(today), earliest), to: today };
     case 'all':
       return { from: earliest, to: today };
     case 'custom': {

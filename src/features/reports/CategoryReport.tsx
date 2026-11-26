@@ -6,8 +6,8 @@ import { categoryTree } from '@/domain/aggregates/lookups';
 import { UNCATEGORIZED } from '@/domain/aggregates/docIndex';
 import {
   categoryBreakdown,
+  comparisonKind,
   GENERAL,
-  isWholeMonths,
   OTHER,
   spendingByCategory,
   type ReportPeriod,
@@ -60,9 +60,12 @@ export function CategoryReport({ period }: { period: ReportPeriod }) {
   const average = period.columns.length ? Math.round(breakdown.total / period.columns.length) : 0;
   const days = diffDays(period.from, period.to) + 1;
   const months = period.months.length;
-  const previousLabel = isWholeMonths(period)
-    ? `the previous ${months === 1 ? 'month' : `${String(months)} months`}`
-    : `the previous ${String(days)} days`;
+  const previousLabel = {
+    months: `the previous ${months === 1 ? 'month' : `${String(months)} months`}`,
+    days: `the previous ${String(days)} days`,
+    'month-to-date': 'the same days last month',
+    'year-to-date': 'the same dates last year',
+  }[comparisonKind(period)];
 
   const parentName = parentId ? tree.byId.get(parentId)?.category.name : undefined;
   const ancestors: { id: Id; name: string }[] = [];

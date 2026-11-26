@@ -159,12 +159,6 @@ export function ScenarioEditor({
             Add person
           </Button>
         </div>
-        {hasPeople && (
-          <p className={styles.note}>
-            Taxes marked per person (Social Security, Medicare, self-employment) are calculated for
-            each person’s own income and deductions, with caps applied per person.
-          </p>
-        )}
       </section>
 
       <section>
@@ -516,7 +510,6 @@ export function ScenarioEditor({
             {format.money(scenario.savings ?? 0)}
           </span>
         </div>
-        <p className={styles.note}>Not counted as left over after your budget.</p>
       </section>
 
       <TaxRuleDialog

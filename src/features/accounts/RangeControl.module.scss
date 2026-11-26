@@ -17,3 +17,9 @@
 .dash {
   color: var(--tx-text-faint);
 }
+
+.span {
+  color: var(--tx-text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

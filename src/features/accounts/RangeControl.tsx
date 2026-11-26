@@ -1,20 +1,36 @@
 import { SegmentedControl, TextInput } from '@mantine/core';
-import { RANGES, type RangeKey, type RangeSelection } from '@/domain/aggregates/sampling';
-import { isISODate } from '@/lib/date';
+import {
+  RANGES,
+  type RangeKey,
+  type RangeOption,
+  type RangeSelection,
+} from '@/domain/aggregates/sampling';
+import { useFormat } from '@/hooks/useFormat';
+import { isISODate, type ISODate } from '@/lib/date';
 import styles from './RangeControl.module.scss';
 
 interface RangeControlProps {
   value: RangeSelection;
   onChange: (value: RangeSelection) => void;
+  /** The presets offered; trailing ranges by default. */
+  options?: readonly RangeOption[];
+  /** The exact dates the screen covers; shown next to a preset so it isn't ambiguous. */
+  span?: { from: ISODate; to: ISODate } | null;
 }
 
 /** Preset ranges plus "Custom" with from/to dates. */
-export function RangeControl({ value, onChange }: RangeControlProps) {
+export function RangeControl({ value, onChange, options = RANGES, span }: RangeControlProps) {
+  const format = useFormat();
   const setDate = (key: 'from' | 'to', date: string) => {
     if (isISODate(date)) onChange({ ...value, [key]: date });
   };
   return (
     <div className={styles.root}>
+      {value.key !== 'custom' && span && (
+        <span className={styles.span} aria-label="Dates shown">
+          {format.date(span.from)} – {format.date(span.to)}
+        </span>
+      )}
       {value.key === 'custom' && (
         <div className={styles.dates}>
           <TextInput
@@ -42,7 +58,7 @@ export function RangeControl({ value, onChange }: RangeControlProps) {
       )}
       <SegmentedControl<RangeKey>
         size="xs"
-        data={RANGES.map((r) => ({ value: r.value, label: r.label }))}
+        data={options.map((r) => ({ value: r.value, label: r.label }))}
         value={value.key}
         onChange={(key) => {
           onChange({ ...value, key });

@@ -118,6 +118,21 @@ describe('reports', () => {
     });
   });
 
+  it('compares a month or year to date with the same dates a month or year earlier', () => {
+    expect(previousSpan({ from: '2026-03-01', to: '2026-03-31' })).toEqual({
+      from: '2026-02-01',
+      to: '2026-02-28',
+    });
+    expect(previousSpan({ from: '2026-03-01', to: '2026-03-30' })).toEqual({
+      from: '2026-02-01',
+      to: '2026-02-28',
+    });
+    expect(previousSpan({ from: '2026-01-01', to: '2026-11-26' })).toEqual({
+      from: '2025-01-01',
+      to: '2025-11-26',
+    });
+  });
+
   it('counts only transactions inside a partial span', () => {
     const span = { from: '2026-03-10', to: '2026-03-16' };
     const tree = categoryTree(doc.categories);

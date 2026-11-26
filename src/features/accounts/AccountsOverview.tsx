@@ -9,7 +9,7 @@ import { today } from '@/lib/date';
 import { useFormat } from '@/hooks/useFormat';
 import { ACCOUNT_GROUPS } from './accountGroups';
 import { RangeControl } from './RangeControl';
-import { rangeLabel } from './rangeLabel';
+import { rangeLabel, spanOf } from './rangeLabel';
 import { StatTile } from '@/components/StatTile/StatTile';
 import { useAccountBalances, type AccountSummary } from './useAccountBalances';
 import styles from './AccountsOverview.module.scss';
@@ -43,7 +43,11 @@ export function AccountsOverview() {
           <StatTile label="Assets" value={format.money(view.current.assets)} />
           <StatTile label="Liabilities" value={format.money(view.current.liabilities)} />
         </div>
-        <RangeControl value={range} onChange={setRange} />
+        <RangeControl
+          value={range}
+          onChange={setRange}
+          span={spanOf(view.series.map((p) => p.date))}
+        />
       </section>
       <div className={styles.chart}>
         <TimeSeriesChart

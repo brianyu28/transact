@@ -89,6 +89,10 @@ export function startOfMonth(date: ISODate): ISODate {
   return `${date.slice(0, 7)}-01`;
 }
 
+export function startOfYear(date: ISODate): ISODate {
+  return `${date.slice(0, 4)}-01-01`;
+}
+
 export function endOfMonth(date: ISODate): ISODate {
   const { year, month } = dateParts(date);
   return makeDate(year, month, daysInMonth(year, month));

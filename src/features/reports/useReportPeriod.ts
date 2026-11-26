@@ -3,11 +3,9 @@ import { firstDataDate } from '@/domain/aggregates/balances';
 import type { RangeSelection } from '@/domain/aggregates/sampling';
 import { isWholeMonths, reportPeriod, type ReportPeriod } from '@/domain/reports/reports';
 import {
-  addMonthsToKey,
   dateParts,
-  endOfMonth,
-  monthKey,
   startOfMonth,
+  startOfYear,
   today,
   type ISODate,
   type MonthKey,
@@ -31,8 +29,8 @@ const LONG = [
 ];
 
 /**
- * The span a range selection covers. Presets are whole months ending with the current one
- * (1M = this month, 1Y = exactly 12 months), as is "All"; a custom range is exact.
+ * The span a range selection covers: MTD and YTD run from the start of this month or year
+ * to today, "All" from the first month with data to today; a custom range is exact.
  */
 export function useReportPeriod(range: RangeSelection): ReportPeriod {
   const index = useDocStore((s) => s.index);
@@ -40,27 +38,17 @@ export function useReportPeriod(range: RangeSelection): ReportPeriod {
   const snapshots = useDocStore((s) => s.doc?.balanceSnapshots);
   return useMemo(() => {
     const now = today();
-    const end = endOfMonth(now);
-    const count = PRESET_MONTHS[range.key];
-    if (count !== undefined) {
-      return reportPeriod(`${addMonthsToKey(monthKey(now), 1 - count)}-01`, end);
-    }
+    if (range.key === 'mtd') return reportPeriod(startOfMonth(now), now);
+    if (range.key === 'ytd') return reportPeriod(startOfYear(now), now);
     if (range.key === 'custom')
       return reportPeriod(range.from, range.to < range.from ? range.from : range.to);
     const first =
       index && accounts && snapshots
         ? firstDataDate({ accounts, balanceSnapshots: snapshots }, index)
         : null;
-    return reportPeriod(startOfMonth(first ?? now), end);
+    return reportPeriod(startOfMonth(first ?? now), now);
   }, [range, index, accounts, snapshots]);
 }
-
-const PRESET_MONTHS: Partial<Record<RangeSelection['key'], number>> = {
-  '1m': 1,
-  '3m': 3,
-  '1y': 12,
-  '5y': 60,
-};
 
 /** Short column labels: months as "Nov" (with the year at boundaries), days as "Nov 3" / "4". */
 export function columnLabels(period: ReportPeriod): string[] {

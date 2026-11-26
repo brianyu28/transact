@@ -8,6 +8,7 @@
  */
 import {
   addDays,
+  addMonths,
   addMonthsToKey,
   diffDays,
   endOfMonth,
@@ -100,17 +101,42 @@ export function reportPeriod(from: ISODate, to: ISODate): ReportPeriod {
 export const isWholeMonths = (span: Span): boolean =>
   span.from === startOfMonth(span.from) && span.to === endOfMonth(span.to);
 
+/** How a span is compared: the months or days before it, or the same dates a month or year earlier. */
+export type Comparison = 'months' | 'days' | 'month-to-date' | 'year-to-date';
+
+export function comparisonKind(span: Span): Comparison {
+  if (isWholeMonths(span)) return 'months';
+  if (span.from === startOfMonth(span.from) && monthKey(span.from) === monthKey(span.to))
+    return 'month-to-date';
+  if (span.from.endsWith('-01-01') && span.from.slice(0, 4) === span.to.slice(0, 4))
+    return 'year-to-date';
+  return 'days';
+}
+
 /**
- * The span of the same length just before: as many whole months for a span of whole
- * months, otherwise as many days.
+ * The span it is compared with: as many whole months before a span of whole months, the
+ * same days of the previous month (or year) for a month (or year) to date, otherwise as
+ * many days just before.
  */
 export function previousSpan(span: Span): Span {
-  const to = addDays(span.from, -1);
-  if (isWholeMonths(span)) {
-    const count = monthsBetween(monthKey(span.from), monthKey(span.to)).length;
-    return { from: `${addMonthsToKey(monthKey(span.from), -count)}-01`, to };
+  switch (comparisonKind(span)) {
+    case 'months': {
+      const count = monthsBetween(monthKey(span.from), monthKey(span.to)).length;
+      return {
+        from: `${addMonthsToKey(monthKey(span.from), -count)}-01`,
+        to: addDays(span.from, -1),
+      };
+    }
+    case 'month-to-date':
+      return { from: addMonths(span.from, -1), to: addMonths(span.to, -1) };
+    case 'year-to-date':
+      return { from: addMonths(span.from, -12), to: addMonths(span.to, -12) };
+    case 'days':
+      return {
+        from: addDays(span.from, -(diffDays(span.from, span.to) + 1)),
+        to: addDays(span.from, -1),
+      };
   }
-  return { from: addDays(span.from, -(diffDays(span.from, span.to) + 1)), to };
 }
 
 const minDate = (a: ISODate, b: ISODate): ISODate => (a < b ? a : b);

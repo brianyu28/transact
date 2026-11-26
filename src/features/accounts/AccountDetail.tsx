@@ -13,6 +13,7 @@ import { toastWithUndo, tryRun } from '@/store/actions';
 import { useDocStore } from '@/store/docStore';
 import { INVESTMENT_TYPES } from './accountGroups';
 import { RangeControl } from './RangeControl';
+import { spanOf } from './rangeLabel';
 import { filterRegisterToAccount } from './showTransactions';
 import { StatTile } from '@/components/StatTile/StatTile';
 import { UpdateBalanceDialog } from './UpdateBalanceDialog';
@@ -80,7 +81,7 @@ export function AccountDetail({ id }: { id: Id }) {
 
       <div className={styles.summary}>
         <StatTile primary label="Balance today" value={format.money(view.balance)} />
-        <RangeControl value={range} onChange={setRange} />
+        <RangeControl value={range} onChange={setRange} span={spanOf(view.dates)} />
       </div>
       <TimeSeriesChart
         label={`${account.name} balance`}
