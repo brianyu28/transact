@@ -27,7 +27,7 @@ and how the ledger, balances, budgets, statements, reports and planner work.
 
 - **No backend.** Transact is a static site. All logic runs in the browser and all data lives in a
   JSON file the user owns. The optional Dropbox sync talks to Dropbox directly from the browser.
-- **The file is the product.** Its format is documented, versioned and migrated forward forever. A
+- **The file contains all data.** Its format is documented, versioned and migrated forward forever. A
   file written by any past version must open in every later version.
 - **Fast at scale.** Assume 50,000+ transactions. Nothing on the interactive path scans all
   transactions. Indexes update incrementally, lists are virtualized, and charts plot pre-bucketed
